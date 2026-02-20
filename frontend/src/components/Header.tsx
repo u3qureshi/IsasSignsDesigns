@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Search, ShoppingCart } from "lucide-react";
 import Brand from "./Brand";
+import MadeInCanadaLogo from "../assets/brand/MadeInCanadaLogo.svg";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -56,6 +57,13 @@ export default function Header() {
         <div ref={topRowRef} className="bg-white">
           <div className="mx-auto flex max-w-6xl items-start px-3 pt-[5px] pb-0">
             <div className="w-72 shrink-0 pt-10">
+              <div className="mb-2">
+                <img
+                  src={MadeInCanadaLogo}
+                  alt="Made in Canada"
+                  className="h-8 w-auto"
+                />
+              </div>
               <div className="-ml-24 w-56">
               <div className="flex items-center gap-2 border-b border-[hsl(var(--theme-sage-200))] pb-1">
                 <Search className="h-5 w-5 text-[hsl(var(--theme-green-700))]" />
