@@ -1,0 +1,144 @@
+Project & Development Plan
+Version 1.0 • Internal documentation for build and launch
+
+Business	Isa’s Signs & Designs (laser-cut + engraving; personal + business/events)
+Primary goals	Fast, simple storefront; premium UX; easy maintenance (solo dev); Canada-first performance.
+Tech stack	Frontend: React (Vite) + Tailwind + shadcn/ui • Backend: Spring Boot • DB: Postgres • Payments: Stripe Checkout
+Status	Brand assets done; UI/UX direction finalized; development starting now.
+
+Contents
+1. What we have completed so far
+2. Website goals and UX decisions
+3. Information architecture (pages and navigation)
+4. Frontend plan (React + shadcn/ui)
+5. Backend plan (Spring Boot + Postgres)
+6. Checkout and order flow (Stripe)
+7. Performance plan (Canada-first speed)
+8. Deployment plan (dev/staging/prod)
+9. Roadmap and milestones
+10. Next steps to start development
+1. What we have completed so far
+We intentionally completed brand assets and UX decisions first to unblock development. The focus is speed, clarity, and a premium-but-simple storefront experience.
+Completed assets
+Asset	Output	Notes
+Logo mark	user_logo.png	Palm/tree + pen nib mark (modern, natural, crafted)
+Title lockup	IsaSignsAndDesignsTITLELOGO (SVG + PNG)	SVG: editable AOKI text + embedded fallback
+Typography	AOKI	AOKI for brand consistency (with system-ui fallback for performance where needed)
+Header UX (desktop)	mockup_desktop_before_after.png	Double stacked header that collapses into sticky nav
+Header UX (mobile)	mockup_mobile_before_after.png	Sticky nav with hamburger + cart
+Shop UX	mockup_collection_filters.png	Sticky nav + filter sidebar for fast browsing
+
+Reference mockups (alignment)
+
+
+2. Website goals and UX decisions
+Top priorities
+Speed over aesthetics: fast initial load, fast navigation, fast checkout.
+Clarity: customers immediately understand what you offer (Personal + Business/Events).
+Premium feel without complexity: whitespace, strong typography, simple components.
+Solo-dev maintainability: minimal dependencies, predictable structure, simple deployment.
+Sticky header behavior
+Double stacked header:- Header Row 1 (top): logo mark + company name- Header Row 2 (nav): menu, search, cartOn scroll, Row 2 becomes sticky and Row 1 collapses; the logo + name animate into the left side of the sticky nav.
+What this achieves
+Navigation, search, and cart are always accessible.
+Brand presence at the top without stealing space while browsing.
+Matches premium reference patterns (Apple/Brooklinen-style clarity).
+3. Information architecture (pages and navigation)
+Primary routes:
+Route	Purpose
+/	Home (hero + featured + collections + trust)
+/shop/personal	Personal storefront (grid + filters)
+/shop/business-events	Business/Events (packages + gallery + inquiry; optional products)
+/product/:slug	Product details
+/cart	Cart (or cart drawer)
+/checkout	Redirect to Stripe Checkout (hosted)
+/order/success	Order confirmation
+/faq	FAQ (shipping, processing time, materials)
+/about	About + story + craftsmanship
+/contact	Contact / custom request
+
+Sticky navigation menu items
+Shop • Wall Art • Kids • Nikkah / Events • Business Signs • About • FAQ • Search • Cart
+4. Frontend plan (React + shadcn/ui)
+Why shadcn/ui
+shadcn/ui is a set of components copied into your project, which helps keep the shipped UI lightweight because you only include what you use. It’s a strong fit for a modern, fast storefront.
+Core frontend libraries
+Tool	Why
+React + Vite	Fast development and builds
+Tailwind CSS	Consistent layout + typography, easy to maintain
+shadcn/ui (Radix)	Accessible UI primitives (NavigationMenu, Sheet, Dialog, etc.)
+React Router	Simple routing (or Next.js later if needed)
+
+Frontend MVP deliverables
+Header: double-stack -> sticky transform; responsive mobile nav drawer
+Home: hero, featured products, collections, trust section, footer
+Shop: grid, filter sidebar (desktop), filter drawer (mobile)
+Product: gallery, variations (size/material), add-to-cart
+Cart + checkout button
+5. Backend plan (Spring Boot + Postgres)
+Responsibilities
+Serve product catalog and pricing (public).
+Create Stripe Checkout sessions (server-side).
+Receive Stripe webhooks and mark orders as PAID.
+Admin endpoints later: add/edit products, manage inventory, fulfillment status.
+Minimal data model
+Table	Fields (summary)
+products	id, slug, name, description, price_cents, collection, material, active
+product_images	id, product_id, url, sort_order
+orders	id, email, total_cents, status, stripe_session_id, created_at
+order_items	id, order_id, product_id, qty, unit_price_cents
+
+6. Checkout and order flow (Stripe)
+MVP checkout will use Stripe-hosted Checkout for speed and reliability. Frontend requests a Checkout Session from the backend and redirects the user to Stripe. A Stripe webhook confirms payment and updates the Order record.
+Flow
+User adds items to cart (frontend).
+Frontend calls POST /checkout/session with cart items.
+Backend validates prices and creates Stripe Checkout Session.
+Frontend redirects to Stripe-hosted checkout URL.
+Stripe sends webhook event to backend.
+Backend marks order PAID and triggers fulfillment workflow.
+7. Performance plan (Canada-first speed)
+Primary levers
+CDN in front of static assets (images, JS, CSS).
+Next-gen images (WebP/AVIF) + compression.
+Avoid heavy fonts: if using AOKI, load only the weights you need.
+Lazy-load below-the-fold images and prefetch key routes.
+Cache product API responses (ETag/short TTL).
+CDN options
+CDN	Notes
+Cloudflare	Great default; easy setup and strong performance.
+AWS CloudFront	Excellent if using AWS (S3/RDS/App Runner).
+Vercel CDN	Excellent DX if hosting frontend on Vercel.
+
+8. Deployment plan (dev/staging/prod)
+Recommended simple setup
+Frontend: static hosting with CDN (Vercel or AWS Amplify). Backend: container deployment (AWS App Runner/ECS) or EC2 + Docker if necessary. Database: managed Postgres when possible.
+Environments
+Environment	Purpose
+Local	Docker Compose for Postgres; run frontend/backend locally.
+Staging	Test Stripe in test mode; verify webhooks; content review.
+Production	CDN enabled; monitoring; backups; rate limiting.
+
+9. Roadmap and milestones
+MVP roadmap for a solo developer:
+Milestone	Deliverable	Target
+Milestone 1	Repo setup + styling system + header animation + routing	1-2 days
+Milestone 2	Home + Shop + Product pages with mock data	2-3 days
+Milestone 3	Backend /products API + Postgres schema + seed data	2-3 days
+Milestone 4	Cart + Stripe Checkout + webhook + order confirmation	2-3 days
+Milestone 5	Deployment (staging -> prod) + CDN + monitoring	1-2 days
+
+10. Next steps to start development
+Start here (Day 1)
+Create a Git repo (monorepo recommended: /frontend and /backend).
+Initialize frontend: Vite + React + Tailwind + shadcn/ui.
+Build the header + sticky transform first (core UX).
+Create routes: /, /shop/personal, /shop/business-events, /product/:slug.
+Stub product data (JSON) and build UI flows end-to-end.
+Then start backend with Spring Boot + Postgres + GET /products.
+
+Definition of done for MVP
+Customer can browse products, view a product, add to cart, and pay via Stripe Checkout.
+Order is recorded in Postgres and marked PAID via webhook.
+Site is deployed behind a CDN and loads quickly on mobile.
+FAQ/Shipping/Processing pages are present and clear.
