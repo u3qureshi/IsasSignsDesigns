@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Search, ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
 import Brand from "./Brand";
-import MadeInCanadaLogo from "../assets/brand/MadeInCanadaLogo.svg";
+import mapleLeafLogo from "../assets/brand/Maple_Leaf.svg";
+import handmadeLogo from "../assets/brand/handmade.svg";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [stickySearchOpen, setStickySearchOpen] = useState(false);
   const [showStickySearchPlaceholder, setShowStickySearchPlaceholder] = useState(false);
+  const [showPromoBar, setShowPromoBar] = useState(true);
   const topRowRef = useRef<HTMLDivElement | null>(null);
   const scrollTriggerRef = useRef(80);
 
@@ -53,22 +56,97 @@ export default function Header() {
 
   return (
     <>
+      {showPromoBar && (
+        <div className="relative border-b border-[hsl(var(--theme-sand-300))] bg-[hsl(var(--theme-sand-300))] px-8 py-1 text-center text-xs font-semibold tracking-wide text-[hsl(var(--theme-brown-900))]">
+          <span>FREE SHIPPING ON ORDERS $100 +</span>
+          <Link
+            to="/best-sellers"
+            className="ml-5 underline decoration-2 underline-offset-2 transition-colors hover:text-[hsl(var(--theme-brown-600))]"
+          >
+            SHOP NOW
+          </Link>
+          <button
+            type="button"
+            aria-label="Close free shipping bar"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-sm leading-none text-[hsl(var(--theme-brown-900))]"
+            onClick={() => setShowPromoBar(false)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="relative">
+      {!isScrolled && (
+      <div className="absolute left-[clamp(0.125rem,0.7vw,0.5rem)] top-[clamp(0.5rem,1vw,1rem)] z-[55] hidden flex-col items-center min-[770px]:flex">
+            <Link to="/" aria-label="Go to homepage" className="flex w-[clamp(4.25rem,8.3vw,8rem)] flex-col items-center">
+              <img
+                src={mapleLeafLogo}
+                alt="Maple Leaf"
+                className="h-[clamp(1.65rem,2.6vw,2.5rem)] w-[clamp(1.65rem,2.6vw,2.5rem)] object-contain"
+              />
+              <svg
+                className="-mt-[clamp(0.95rem,1.35vw,1.25rem)] h-[clamp(1.1rem,1.8vw,1.75rem)] w-[clamp(4.25rem,8.3vw,8rem)] overflow-visible"
+                viewBox="0 0 128 32"
+                aria-label="Made in Canada"
+              >
+                <defs>
+                  <path id="madeInCanadaArc" d="M 8 20 A 56 16 0 0 0 120 20" />
+                </defs>
+                <text
+                  fill="hsl(var(--theme-brown-700))"
+                  fontFamily="Quicksand, Arial, Helvetica, sans-serif"
+                  style={{ fontSize: "clamp(0.5rem,0.8vw,0.75rem)" }}
+                  fontWeight="700"
+                  letterSpacing="0.4"
+                >
+                  <textPath href="#madeInCanadaArc" startOffset="50%" textAnchor="middle">
+                    Made in Canada
+                  </textPath>
+                </text>
+              </svg>
+            </Link>
+
+            <Link to="/" aria-label="Go to homepage" className="mt-[clamp(0.2rem,0.7vw,0.75rem)] flex w-[clamp(4.25rem,8.3vw,8rem)] flex-col items-center">
+              <img
+                src={handmadeLogo}
+                alt="Handmade"
+                className="h-[clamp(1.65rem,2.6vw,2.5rem)] w-[clamp(1.65rem,2.6vw,2.5rem)] object-contain"
+              />
+              <svg
+                className="-mt-[clamp(0.7rem,1.1vw,1rem)] h-[clamp(1.1rem,1.8vw,1.75rem)] w-[clamp(4.25rem,8.3vw,8rem)] overflow-visible"
+                viewBox="0 0 128 32"
+                aria-label="Handmade"
+              >
+                <defs>
+                  <path id="madeInCanadaArc2" d="M 8 20 A 56 16 0 0 0 120 20" />
+                </defs>
+                <text
+                  fill="hsl(var(--theme-brown-700))"
+                  fontFamily="Quicksand, Arial, Helvetica, sans-serif"
+                  style={{ fontSize: "clamp(0.5rem,0.8vw,0.75rem)" }}
+                  fontWeight="700"
+                  letterSpacing="0.4"
+                >
+                  <textPath href="#madeInCanadaArc2" startOffset="50%" textAnchor="middle">
+                    Handmade
+                  </textPath>
+                </text>
+              </svg>
+            </Link>
+          </div>
+      )}
+
       <header>
-        <div ref={topRowRef} className="bg-white">
-          <div className="mx-auto flex max-w-6xl items-start px-3 pt-[5px] pb-0">
-            <div className="w-72 shrink-0 pt-10">
-              <div className="mb-2">
-                <img
-                  src={MadeInCanadaLogo}
-                  alt="Made in Canada"
-                  className="h-8 w-auto"
-                />
-              </div>
-              <div className="-ml-24 w-56">
-              <div className="flex items-center gap-2 border-b border-[hsl(var(--theme-sage-200))] pb-1">
-                <Search className="h-5 w-5 text-[hsl(var(--theme-green-700))]" />
+        <div ref={topRowRef} className="relative bg-white">
+
+          <div className="mx-auto flex max-w-6xl items-start px-3 pt-[5px] pb-2">
+            <div className="w-[clamp(0rem,18vw,18rem)] shrink-0 overflow-hidden pt-[clamp(0rem,1.8vw,2.5rem)] pl-[clamp(3rem,4.7vw,4.5rem)] max-[770px]:w-0 max-[770px]:overflow-hidden">
+              <div className="ml-auto w-[clamp(0rem,calc(15vw-2.4rem),14.25rem)] overflow-hidden">
+              <div className="flex items-center gap-[clamp(0.25rem,0.6vw,0.5rem)] border-b border-[hsl(var(--theme-sage-200))] pb-1">
+                <Search className="h-[clamp(0.875rem,1.2vw,1.25rem)] w-[clamp(0.875rem,1.2vw,1.25rem)] text-[hsl(var(--theme-green-700))]" />
                 <input
-                  className="w-full bg-transparent text-sm text-[hsl(var(--theme-sage-300))] placeholder:text-[hsl(var(--theme-sage-300))] outline-none"
+                  className="w-full bg-transparent text-[clamp(0.75rem,0.9vw,0.875rem)] text-[hsl(var(--theme-sage-300))] placeholder:text-[hsl(var(--theme-sage-300))] outline-none"
                   type="text"
                   placeholder="Search"
                   aria-label="Search"
@@ -78,25 +156,31 @@ export default function Header() {
             </div>
 
             <div className="flex flex-1 justify-center">
-              <Brand variant="stacked" />
+              <Link to="/" aria-label="Go to homepage">
+                <Brand variant="stacked" />
+              </Link>
             </div>
 
-            <div className="w-72 shrink-0" />
+            <div className="w-[clamp(0rem,18vw,18rem)] shrink-0 max-[770px]:w-0" />
           </div>
         </div>
       </header>
 
+      </div>
+
       {/* Row 2: Sticky nav */}
       <div className="sticky top-0 z-50 border-b border-[hsl(var(--theme-sand-300))] bg-white">
-        <div className="flex items-center px-3 py-1">
-          <div className="w-80 shrink-0">
-            <div className="flex items-center gap-3 pl-10">
+        <div className="flex items-center px-3 py-0.5">
+          <div className="w-[clamp(0rem,20vw,20rem)] shrink-0 overflow-hidden">
+            <div className="flex items-center gap-3 pl-[clamp(0.5rem,2vw,2.5rem)] max-[1366px]:hidden">
               <div
                 className={[
                   isScrolled ? "visible" : "invisible pointer-events-none",
                 ].join(" ")}
               >
-                <Brand variant="icon" />
+                <Link to="/" aria-label="Go to homepage">
+                  <Brand variant="icon" />
+                </Link>
               </div>
 
               <div
@@ -114,10 +198,10 @@ export default function Header() {
                   <Search className="h-5 w-5" />
                 </button>
 
-                <div className="relative w-48 overflow-hidden">
+                <div className="relative w-[clamp(9rem,12vw,12rem)] overflow-hidden">
                   <input
                     className={[
-                      "w-48 bg-transparent pb-1 text-sm text-[hsl(var(--theme-sage-300))] placeholder:text-[hsl(var(--theme-sage-300))] outline-none transition-opacity duration-200",
+                      "w-full bg-transparent pb-1 text-[clamp(0.75rem,0.9vw,0.875rem)] text-[hsl(var(--theme-sage-300))] placeholder:text-[hsl(var(--theme-sage-300))] outline-none transition-opacity duration-200",
                       stickySearchOpen ? "opacity-100" : "opacity-0 pointer-events-none",
                     ].join(" ")}
                     type="text"
@@ -135,95 +219,14 @@ export default function Header() {
             </div>
           </div>
 
-          <nav className="mx-auto flex flex-1 items-center justify-center gap-11 text-lg font-bold text-[hsl(var(--theme-brown-900))]">
-            <a
-              className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100"
-              href="#sellers"
-            >
-              Best Sellers
-            </a>
-
-            <div className="group relative">
-              <button
-                className="relative inline-flex items-center gap-1.5 pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 group-hover:after:scale-x-100"
-                type="button"
-              >
-                Ramadan Decor
-                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-[12rem] rounded-md border border-neutral-200 bg-white p-2 opacity-0 shadow-sm transition group-hover:visible group-hover:opacity-100">
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#ramadan-lanterns">Lanterns</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#ramadan-banners">Banners</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#ramadan-table">Table Decor</a>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <button
-                className="relative inline-flex items-center gap-1.5 pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 group-hover:after:scale-x-100"
-                type="button"
-              >
-                Wall Art
-                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-[12rem] rounded-md border border-neutral-200 bg-white p-2 opacity-0 shadow-sm transition group-hover:visible group-hover:opacity-100">
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#wall-calligraphy">Calligraphy</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#wall-frames">Framed Pieces</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#wall-custom">Custom Orders</a>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <button
-                className="relative inline-flex items-center gap-1.5 pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 group-hover:after:scale-x-100"
-                type="button"
-              >
-                Home Decor
-                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-[12rem] rounded-md border border-neutral-200 bg-white p-2 opacity-0 shadow-sm transition group-hover:visible group-hover:opacity-100">
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#home-shelves">Shelves</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#home-signs">Signs</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#home-gifts">Gifts</a>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <button
-                className="relative inline-flex items-center gap-1.5 pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 group-hover:after:scale-x-100"
-                type="button"
-              >
-                Kids
-                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-[12rem] rounded-md border border-neutral-200 bg-white p-2 opacity-0 shadow-sm transition group-hover:visible group-hover:opacity-100">
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#kids-nameplates">Name Plates</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#kids-room">Room Decor</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#kids-learning">Learning Boards</a>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <button
-                className="relative inline-flex items-center gap-1.5 pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 group-hover:after:scale-x-100"
-                type="button"
-              >
-                Business/Events
-                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-[13rem] rounded-md border border-neutral-200 bg-white p-2 opacity-0 shadow-sm transition group-hover:visible group-hover:opacity-100">
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#events-signage">Event Signage</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#events-backdrops">Backdrops</a>
-                <a className="block rounded px-3 py-2 text-base hover:bg-neutral-100" href="#events-branding">Business Branding</a>
-              </div>
-            </div>
-
-            <a
-              className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100"
-              href="#faq"
-            >
-              FAQ
-            </a>
+          <nav className="mx-auto flex flex-1 items-center justify-center gap-[clamp(0.75rem,1.8vw,2.75rem)] text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))]">
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/best-sellers">Best Sellers</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/ramadan-decor">Ramadan Decor</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/wall-art">Wall Art</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/home-decor">Home Decor</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/kids">Kids</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/business-events">Business/Events</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/faq">FAQ</Link>
           </nav>
 
           <div className="flex w-24 shrink-0 justify-end">

@@ -26,11 +26,11 @@ export default function Brand({ variant = "stacked", className = "" }: BrandProp
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <img src={LogoMark} alt="Logo" className="h-[5rem] w-[4.5rem] shrink-0 block" />
+      <img src={LogoMark} alt="Logo" className="h-[clamp(3.5rem,6vw,5rem)] w-[clamp(3.125rem,5.4vw,4.5rem)] shrink-0 block" />
       <img
         src={LogoTitle}
         alt="Isa's Signs & Designs"
-        className="h-[4rem] w-auto block"
+        className="h-[clamp(2.7rem,4.5vw,4rem)] w-auto block"
       />
     </div>
   );
