@@ -1,144 +1,241 @@
-Project & Development Plan
-Version 1.0 • Internal documentation for build and launch
+Isa’s Signs & Designs — Project Status & Execution Plan
+Version 2.0 (Living Document)
+Last updated: 2026-02-21
 
-Business	Isa’s Signs & Designs (laser-cut + engraving; personal + business/events)
-Primary goals	Fast, simple storefront; premium UX; easy maintenance (solo dev); Canada-first performance.
-Tech stack	Frontend: React (Vite) + Tailwind + shadcn/ui • Backend: Spring Boot • DB: Postgres • Payments: Stripe Checkout
-Status	Brand assets done; UI/UX direction finalized; development starting now.
+Business
+- Isa’s Signs & Designs (laser-cut + engraving; personal + business/events)
 
-Contents
-1. What we have completed so far
-2. Website goals and UX decisions
-3. Information architecture (pages and navigation)
-4. Frontend plan (React + shadcn/ui)
-5. Backend plan (Spring Boot + Postgres)
-6. Checkout and order flow (Stripe)
-7. Performance plan (Canada-first speed)
-8. Deployment plan (dev/staging/prod)
-9. Roadmap and milestones
-10. Next steps to start development
-1. What we have completed so far
-We intentionally completed brand assets and UX decisions first to unblock development. The focus is speed, clarity, and a premium-but-simple storefront experience.
-Completed assets
-Asset	Output	Notes
-Logo mark	user_logo.png	Palm/tree + pen nib mark (modern, natural, crafted)
-Title lockup	IsaSignsAndDesignsTITLELOGO (SVG + PNG)	SVG: editable AOKI text + embedded fallback
-Typography	AOKI	AOKI for brand consistency (with system-ui fallback for performance where needed)
-Header UX (desktop)	mockup_desktop_before_after.png	Double stacked header that collapses into sticky nav
-Header UX (mobile)	mockup_mobile_before_after.png	Sticky nav with hamburger + cart
-Shop UX	mockup_collection_filters.png	Sticky nav + filter sidebar for fast browsing
+Primary goals
+- Fast, clear storefront UX with premium feel
+- Data-driven catalog so product updates do not require frontend code edits
+- Simple solo-dev operations and maintainability
+- Canada-first performance and dependable checkout
 
-Reference mockups (alignment)
+Tech stack (current)
+- Frontend: React + Vite + Tailwind
+- Backend: Spring Boot (scaffolded)
+- Database: Postgres (Docker Compose local)
+- Payments: Stripe (planned)
 
+================================================================================
+1) Executive summary — where we are now
+================================================================================
 
-2. Website goals and UX decisions
-Top priorities
-Speed over aesthetics: fast initial load, fast navigation, fast checkout.
-Clarity: customers immediately understand what you offer (Personal + Business/Events).
-Premium feel without complexity: whitespace, strong typography, simple components.
-Solo-dev maintainability: minimal dependencies, predictable structure, simple deployment.
-Sticky header behavior
-Double stacked header:- Header Row 1 (top): logo mark + company name- Header Row 2 (nav): menu, search, cartOn scroll, Row 2 becomes sticky and Row 1 collapses; the logo + name animate into the left side of the sticky nav.
-What this achieves
-Navigation, search, and cart are always accessible.
-Brand presence at the top without stealing space while browsing.
-Matches premium reference patterns (Apple/Brooklinen-style clarity).
-3. Information architecture (pages and navigation)
-Primary routes:
-Route	Purpose
-/	Home (hero + featured + collections + trust)
-/shop/personal	Personal storefront (grid + filters)
-/shop/business-events	Business/Events (packages + gallery + inquiry; optional products)
-/product/:slug	Product details
-/cart	Cart (or cart drawer)
-/checkout	Redirect to Stripe Checkout (hosted)
-/order/success	Order confirmation
-/faq	FAQ (shipping, processing time, materials)
-/about	About + story + craftsmanship
-/contact	Contact / custom request
+What is working now
+- Frontend shell and branding are implemented.
+- Header UX has been heavily refined and is responsive.
+- Navigation now uses route-based links (no chevron dropdowns).
+- Page skeletons were added for all current navigation destinations.
+- Backend scaffold exists with Postgres schema + seed data + product read endpoints.
+- Postgres container can be launched locally via Docker Compose.
 
-Sticky navigation menu items
-Shop • Wall Art • Kids • Nikkah / Events • Business Signs • About • FAQ • Search • Cart
-4. Frontend plan (React + shadcn/ui)
-Why shadcn/ui
-shadcn/ui is a set of components copied into your project, which helps keep the shipped UI lightweight because you only include what you use. It’s a strong fit for a modern, fast storefront.
-Core frontend libraries
-Tool	Why
-React + Vite	Fast development and builds
-Tailwind CSS	Consistent layout + typography, easy to maintain
-shadcn/ui (Radix)	Accessible UI primitives (NavigationMenu, Sheet, Dialog, etc.)
-React Router	Simple routing (or Next.js later if needed)
+What is not complete yet
+- Frontend is still not wired to fetch products from backend.
+- Backend runtime is blocked by Gradle wrapper/build config issues.
+- Cart, checkout session creation, webhooks, and order lifecycle are not implemented.
 
-Frontend MVP deliverables
-Header: double-stack -> sticky transform; responsive mobile nav drawer
-Home: hero, featured products, collections, trust section, footer
-Shop: grid, filter sidebar (desktop), filter drawer (mobile)
-Product: gallery, variations (size/material), add-to-cart
-Cart + checkout button
-5. Backend plan (Spring Boot + Postgres)
-Responsibilities
-Serve product catalog and pricing (public).
-Create Stripe Checkout sessions (server-side).
-Receive Stripe webhooks and mark orders as PAID.
-Admin endpoints later: add/edit products, manage inventory, fulfillment status.
-Minimal data model
-Table	Fields (summary)
-products	id, slug, name, description, price_cents, collection, material, active
-product_images	id, product_id, url, sort_order
-orders	id, email, total_cents, status, stripe_session_id, created_at
-order_items	id, order_id, product_id, qty, unit_price_cents
+Current project phase
+- Transition phase from “UI-first” to “data-driven catalog integration.”
 
-6. Checkout and order flow (Stripe)
-MVP checkout will use Stripe-hosted Checkout for speed and reliability. Frontend requests a Checkout Session from the backend and redirects the user to Stripe. A Stripe webhook confirms payment and updates the Order record.
-Flow
-User adds items to cart (frontend).
-Frontend calls POST /checkout/session with cart items.
-Backend validates prices and creates Stripe Checkout Session.
-Frontend redirects to Stripe-hosted checkout URL.
-Stripe sends webhook event to backend.
-Backend marks order PAID and triggers fulfillment workflow.
-7. Performance plan (Canada-first speed)
-Primary levers
-CDN in front of static assets (images, JS, CSS).
-Next-gen images (WebP/AVIF) + compression.
-Avoid heavy fonts: if using AOKI, load only the weights you need.
-Lazy-load below-the-fold images and prefetch key routes.
-Cache product API responses (ETag/short TTL).
-CDN options
-CDN	Notes
-Cloudflare	Great default; easy setup and strong performance.
-AWS CloudFront	Excellent if using AWS (S3/RDS/App Runner).
-Vercel CDN	Excellent DX if hosting frontend on Vercel.
+================================================================================
+2) Frontend — completed so far
+================================================================================
 
-8. Deployment plan (dev/staging/prod)
-Recommended simple setup
-Frontend: static hosting with CDN (Vercel or AWS Amplify). Backend: container deployment (AWS App Runner/ECS) or EC2 + Docker if necessary. Database: managed Postgres when possible.
-Environments
-Environment	Purpose
-Local	Docker Compose for Postgres; run frontend/backend locally.
-Staging	Test Stripe in test mode; verify webhooks; content review.
-Production	CDN enabled; monitoring; backups; rate limiting.
+Core UI and routing delivered
+- Header rework from static/complex menu to simpler route links.
+- Removed all chevrons/dropdowns from top nav.
+- Added React Router route skeletons for:
+  - /
+  - /best-sellers
+  - /ramadan-decor
+  - /wall-art
+  - /home-decor
+  - /kids
+  - /business-events
+  - /faq
 
-9. Roadmap and milestones
-MVP roadmap for a solo developer:
-Milestone	Deliverable	Target
-Milestone 1	Repo setup + styling system + header animation + routing	1-2 days
-Milestone 2	Home + Shop + Product pages with mock data	2-3 days
-Milestone 3	Backend /products API + Postgres schema + seed data	2-3 days
-Milestone 4	Cart + Stripe Checkout + webhook + order confirmation	2-3 days
-Milestone 5	Deployment (staging -> prod) + CDN + monitoring	1-2 days
+Branding and assets
+- Updated and integrated brand assets for:
+  - Maple leaf icon
+  - Handmade icon
+- Set logo/icon text colors to match brown theme tokens.
+- Made logo/title + decorative blocks clickable to homepage where intended.
 
-10. Next steps to start development
-Start here (Day 1)
-Create a Git repo (monorepo recommended: /frontend and /backend).
-Initialize frontend: Vite + React + Tailwind + shadcn/ui.
-Build the header + sticky transform first (core UX).
-Create routes: /, /shop/personal, /shop/business-events, /product/:slug.
-Stub product data (JSON) and build UI flows end-to-end.
-Then start backend with Spring Boot + Postgres + GET /products.
+Header behavior improvements implemented
+- Promo strip with close action and “SHOP NOW” link.
+- Sticky second row behavior preserved.
+- Decorative left-side maple/handmade block shown only when not scrolled.
+- Responsive tuning for search area + logo blocks.
+- Converted several fixed dimensions to fluid clamp-based sizing.
 
-Definition of done for MVP
-Customer can browse products, view a product, add to cart, and pay via Stripe Checkout.
-Order is recorded in Postgres and marked PAID via webhook.
-Site is deployed behind a CDN and loads quickly on mobile.
-FAQ/Shipping/Processing pages are present and clear.
+Responsive refinement completed
+- Search field in top row now shrinks dynamically rather than abrupt snapping.
+- Search area tuned to avoid overlap with maple/handmade decorative block.
+- Maple/handmade block made fluid and visible down to configured width threshold.
+- Navigation typography/gaps moved toward fluid scaling.
+
+Frontend quality status
+- Frontend builds successfully in current state.
+- UX tuning remains iterative, but base architecture is stable enough for data integration.
+
+================================================================================
+3) Backend — completed so far
+================================================================================
+
+Data layer and local DB setup
+- Docker Compose added for local Postgres.
+- Database init script creates products schema and seeds sample rows.
+- Seed rows include representative categories used by storefront sections.
+
+API scaffold completed
+- Spring Boot project scaffold added with:
+  - application entrypoint
+  - JPA entity for Product
+  - repository with category + slug lookups
+  - controller endpoints for product list/detail
+- Endpoints implemented:
+  - GET /api/products
+  - GET /api/products?category=<category>
+  - GET /api/products/{slug}
+
+Backend status caveats
+- Backend compile/run not yet finalized due to Gradle wrapper/build setup mismatch.
+- Some hardening is still pending:
+  - DTO response layer
+  - proper 404 handling
+  - input validation
+  - CORS config
+  - migration tooling
+
+================================================================================
+4) Current blockers and risks
+================================================================================
+
+Primary blockers
+- Gradle wrapper missing (./gradlew unavailable).
+- build.gradle compatibility issue surfaced during wrapper generation.
+
+Secondary cleanup required
+- Docker Compose version field warning (non-blocking but noisy).
+- Build/Gradle cache artifacts should be cleaned from git tracking in follow-up.
+
+Product/data design decisions pending
+- Whether to keep images as JSON text for MVP or normalize into product_images table now.
+- Whether “Best Sellers” should be computed/tag-based vs static category.
+
+================================================================================
+5) Current information architecture (live in UI)
+================================================================================
+
+Current menu categories/routes
+- Best Sellers
+- Ramadan Decor
+- Wall Art
+- Home Decor
+- Kids
+- Business/Events
+- FAQ
+
+Note
+- FAQ is content-oriented, not product-category-oriented, and should remain a content route.
+
+================================================================================
+6) Next implementation plan (recommended sequence)
+================================================================================
+
+Phase A — Stabilize backend runtime (immediate)
+1. Fix build.gradle and generate Gradle wrapper.
+2. Start backend locally and verify API returns seeded products.
+3. Add basic CORS for local frontend origin.
+
+Definition of done for Phase A
+- Backend runs locally on configured port.
+- /api/products and /api/products/{slug} respond successfully.
+
+Phase B — Connect frontend to live product data
+1. Add API client layer in frontend.
+2. Replace page skeleton placeholders with product-grid rendering by category.
+3. Add loading/error/empty UI states.
+
+Definition of done for Phase B
+- Product cards render from DB-backed API responses.
+- Add/remove products in DB reflected in UI without code changes.
+
+Phase C — Product detail + cart foundation
+1. Add product detail route integration from slug.
+2. Introduce cart state and add-to-cart actions.
+3. Ensure pricing is sourced from backend, not hardcoded.
+
+Phase D — Checkout and order reliability
+1. Implement POST /checkout/session in backend.
+2. Integrate Stripe hosted checkout redirect.
+3. Add webhook endpoint to mark orders PAID.
+4. Persist orders + order_items.
+
+================================================================================
+7) Future goals (post-MVP)
+================================================================================
+
+Product management
+- Internal admin view for add/edit/deactivate products.
+- Inventory and fulfillment status updates.
+
+Storefront enhancements
+- Better filtering, sorting, search relevance.
+- Collections and merchandising (best sellers, seasonal).
+- Improved media handling (multiple images/video).
+
+Reliability and operations
+- Flyway/Liquibase migrations.
+- Structured logging + error monitoring.
+- Staging environment and release checklist.
+
+Performance and SEO
+- Image optimization pipeline (WebP/AVIF).
+- Route-level code splitting and caching strategy.
+- Metadata and structured data for product pages.
+
+================================================================================
+8) MVP definition of done (updated)
+================================================================================
+
+A customer can:
+- Browse category pages powered by backend products
+- Open a product detail page
+- Add products to cart
+- Complete Stripe checkout
+
+The system can:
+- Persist orders in Postgres
+- Confirm payment via webhook and update order status
+- Serve a fast, mobile-friendly experience
+
+================================================================================
+9) Practical operating model for product updates
+================================================================================
+
+Target workflow
+- Add product: insert new DB row
+- Remove product: set is_active=false
+- Update details/pricing/images: update DB row(s)
+
+Outcome
+- Product operations happen in data/admin tools, not frontend code edits.
+
+================================================================================
+10) Short-term action checklist (owner-ready)
+================================================================================
+
+Immediate (today/next session)
+- Fix Gradle wrapper/build configuration
+- Boot backend and verify API with curl
+- Wire one route (e.g., Home Decor) to live API
+
+This week
+- Wire remaining category routes
+- Build product card + product detail from API
+- Start cart state and checkout session endpoint
+
+After that
+- Stripe webhook + order persistence
+- Staging deploy + production hardening

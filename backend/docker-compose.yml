@@ -6,7 +6,7 @@ services:
     container_name: isasigns_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: isa_products
+      POSTGRES_DB: isa_sd
       POSTGRES_USER: isa_user
       POSTGRES_PASSWORD: isa_pass
     ports:

@@ -2,6 +2,9 @@ import './App.css'
 import { Route, Routes } from 'react-router-dom'
 
 import Header from "./components/Header";
+import Footer from "./components/Footer";
+import KidsPage from "./components/pages/KidsPage";
+import FaqPage from "./components/pages/FaqPage";
 
 function PageSkeleton({ title }: { title: string }) {
   return (
@@ -31,19 +34,23 @@ function HomePage() {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <Header />
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/best-sellers" element={<PageSkeleton title="Best Sellers" />} />
-        <Route path="/ramadan-decor" element={<PageSkeleton title="Ramadan Decor" />} />
-        <Route path="/wall-art" element={<PageSkeleton title="Wall Art" />} />
-        <Route path="/home-decor" element={<PageSkeleton title="Home Decor" />} />
-        <Route path="/kids" element={<PageSkeleton title="Kids" />} />
-        <Route path="/business-events" element={<PageSkeleton title="Business & Events" />} />
-        <Route path="/faq" element={<PageSkeleton title="FAQ" />} />
-      </Routes>
+      <div className="flex-1">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/best-sellers" element={<PageSkeleton title="Best Sellers" />} />
+          <Route path="/ramadan-decor" element={<PageSkeleton title="Ramadan Decor" />} />
+          <Route path="/wall-art" element={<PageSkeleton title="Wall Art" />} />
+          <Route path="/home-decor" element={<PageSkeleton title="Home Decor" />} />
+          <Route path="/kids" element={<KidsPage />} />
+          <Route path="/business-events" element={<PageSkeleton title="Business & Events" />} />
+          <Route path="/faq" element={<FaqPage />} />
+        </Routes>
+      </div>
+
+      <Footer />
     </div>
   );
 }

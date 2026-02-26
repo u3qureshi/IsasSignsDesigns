@@ -14,6 +14,7 @@ export default {
   		},
 		fontFamily: {
 			sans: ["Quicksand", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
+			aoki: ["Aoki", "serif"],
       	},
   		colors: {
   			background: 'hsl(var(--background))',

@@ -1,4 +1,20 @@
 @font-face {
+  font-family: "Aoki";
+  src: url("./assets/fonts/Aoki-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aoki";
+  src: url("./assets/fonts/Aoki-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Quicksand";
   src: url("./assets/fonts/Quicksand-Light.woff2") format("woff2");
   font-weight: 300;
@@ -70,17 +86,20 @@ body {
 @layer base {
   :root {
     --theme-green-brand: 120 60.7% 33.9%;
+    --theme-kids-bg: 33 100% 99%;
     --theme-sage-100: 144 34.9% 74.7%;
     --theme-sage-200: 152.4 24.5% 60%;
     --theme-sage-300: 137.1 26.4% 46.9%;
     --theme-green-700: 139.1 25.9% 33.3%;
     --theme-green-900: 150 25.4% 24.7%;
     --theme-brown-900: 24 33% 9%;
+    --theme-brown-footer: 20 36% 21%;
     --theme-brown-700: 20.8 29.7% 32.4%;
     --theme-brown-600: 17.4 32.7% 41.4%;
     --theme-brown-500: 21.4 36.1% 52.7%;
     --theme-sand-300: 33.1 50% 69.4%;
     --theme-isa-green: 120.7 73.4% 15.5%;
+    --theme-white: 0 0% 100%;
     --background: var(--theme-sand-300);
     --foreground: var(--theme-green-900);
     --card: var(--theme-sage-100);

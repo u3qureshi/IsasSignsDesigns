@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart, Truck } from "lucide-react";
 import { Link } from "react-router-dom";
 import Brand from "./Brand";
 import mapleLeafLogo from "../assets/brand/Maple_Leaf.svg";
@@ -61,9 +61,10 @@ export default function Header() {
           <span>FREE SHIPPING ON ORDERS $100 +</span>
           <Link
             to="/best-sellers"
-            className="ml-5 underline decoration-2 underline-offset-2 transition-colors hover:text-[hsl(var(--theme-brown-600))]"
+            className="ml-5 inline-flex items-center gap-1.5 underline decoration-2 underline-offset-2 transition-colors hover:text-[hsl(var(--theme-brown-600))]"
           >
             SHOP NOW
+            <Truck size={15} strokeWidth={2} />
           </Link>
           <button
             type="button"
