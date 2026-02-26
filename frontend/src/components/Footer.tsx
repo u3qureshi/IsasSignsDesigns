@@ -141,7 +141,7 @@ export default function Footer() {
                 Check us out:
               </span>
 
-              <div className="flex flex-col items-center md:items-start gap-3 pt-3">
+              <div className="flex flex-col items-center md:items-start gap-3 ">
                 {SOCIAL_LINKS.map(({ label, href, Icon }) => (
                   <a
                     key={label}
