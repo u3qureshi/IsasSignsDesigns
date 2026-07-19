@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getCloudinaryUrl } from "../../lib/cloudinary";
 
 interface OnSale {
@@ -87,7 +88,7 @@ function ProductCard({ product }: { product: Product }) {
           {images.map((_, i) => (
             <button
               key={i}
-              onClick={() => setActiveIndex(i)}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveIndex(i); }}
               aria-label={`View image ${i + 1}`}
               className={`h-3 w-3 rounded-full transition-colors ${
                 i === activeIndex
@@ -164,7 +165,9 @@ export default function KidsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <Link key={product.id} to={`/products/${product.slug}`} className="block">
+              <ProductCard product={product} />
+            </Link>
           ))}
         </div>
       </div>

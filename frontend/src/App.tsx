@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import KidsPage from "./components/pages/KidsPage";
 import FaqPage from "./components/pages/FaqPage";
+import ProductDetailPage from "./components/pages/ProductDetailPage";
 
 function PageSkeleton({ title }: { title: string }) {
   return (
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/kids" element={<KidsPage />} />
           <Route path="/business-events" element={<PageSkeleton title="Business & Events" />} />
           <Route path="/faq" element={<FaqPage />} />
+          <Route path="/products/:slug" element={<ProductDetailPage />} />
         </Routes>
       </div>
 

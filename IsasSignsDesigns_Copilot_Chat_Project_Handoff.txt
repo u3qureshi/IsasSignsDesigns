@@ -1,0 +1,1225 @@
+Isa’s Signs & Designs — Project Handoff
+
+1. Project Goal
+
+Build and operate a custom ecommerce website for a Canadian small business selling:
+
+- Islamic wall art
+- Islamic children’s products
+- Montessori wooden toys and learning boards
+- Personalized nursery decor and lamps
+- Ramadan and Eid products
+- Nikkah and wedding signs
+- Business signs, plaques, QR signs, cards, and custom displays
+
+The project is being developed by one developer and should remain simple to maintain, fast for customers, data-driven, easy to deploy, scalable enough for a small ecommerce business, and usable without changing frontend code whenever products change.
+
+Products are designed and produced in Canada.
+
+
+2. Repository
+
+GitHub repository:
+
+u3qureshi/IsasSignsDesigns
+
+Primary branch:
+
+main
+
+Project structure:
+
+isa-signs-designs/
+├── frontend/
+├── backend/
+├── infra/
+├── IsaSignsAndDesignsDoc.txt
+└── README/documentation files
+
+The frontend, backend, infrastructure placeholders, design assets, and documentation have been pushed to main.
+
+Important security note:
+
+A GitHub personal access token was previously pasted into a chat and used in a remote URL. That token should be revoked/rotated, and the Git remote should not contain credentials.
+
+Check:
+
+git remote -v
+
+Safe remote format:
+
+git remote set-url origin https://github.com/u3qureshi/IsasSignsDesigns.git
+
+
+3. Technology Stack
+
+Frontend
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS 3
+- shadcn/ui foundations
+- React Router
+- Lucide React icons
+- Cloudinary for product images
+- Quicksand as the main website font
+- AOKI as an optional display/product-name font
+
+Backend
+
+- Java 21
+- Spring Boot
+- Spring MVC
+- Spring Data JPA
+- Hibernate
+- PostgreSQL 15
+- Gradle
+- Springdoc OpenAPI / Swagger UI
+- Jackson JSON serialization
+
+Local Infrastructure
+
+- Docker Desktop
+- Docker Compose
+- PostgreSQL container
+- DBeaver for database management
+
+Planned Commerce
+
+- Stripe Checkout
+- Stripe webhook
+- guest checkout by default
+- optional accounts later
+- Cloudinary image delivery
+- backend-managed products and pricing
+
+
+4. Local Development Setup
+
+Prerequisites
+
+Verify:
+
+node -v
+npm -v
+java -version
+gradle -v
+docker -v
+docker compose version
+git --version
+
+Expected Java:
+
+Java 21
+
+Start PostgreSQL
+
+Open Docker Desktop first.
+
+Then:
+
+cd backend
+docker compose up -d
+docker compose ps
+
+Current PostgreSQL connection:
+
+Host: localhost
+Port: 5432
+Database: isa_sd
+User: isa_user
+Password: isa_pass
+Schema: public
+
+Connect in DBeaver and open:
+
+Databases
+└── isa_sd
+    └── Schemas
+        └── public
+            └── Tables
+                └── products
+
+Terminal database access:
+
+docker exec -it isasigns_db psql -U isa_user -d isa_sd
+
+Useful commands:
+
+\dt
+\d products
+SELECT * FROM products;
+SELECT * FROM products WHERE category = 'Kids';
+\q
+
+Full database reset:
+
+docker compose down -v
+docker compose up -d
+
+Warning: this deletes the database volume and reseeds using init.sql.
+
+Start Backend
+
+cd backend
+./gradlew bootRun
+
+Backend:
+
+http://localhost:8081
+
+Start Frontend
+
+cd frontend
+npm install
+npm run dev
+
+Frontend normally runs at:
+
+http://localhost:5173
+
+Vite proxies /api requests to:
+
+http://localhost:8081
+
+Restart Vite after modifying:
+
+- .env
+- vite.config.ts
+- tailwind.config.js
+
+
+5. Frontend Architecture
+
+Main Files
+
+frontend/src/
+├── App.tsx
+├── main.tsx
+├── index.css
+├── components/
+│   ├── Header.tsx
+│   ├── Brand.tsx
+│   ├── Footer.tsx
+│   └── pages/
+│       ├── KidsPage.tsx
+│       ├── ProductDetailPage.tsx
+│       ├── FaqPage.tsx
+│       └── skeleton pages
+├── lib/
+│   └── cloudinary.ts
+└── assets/
+    ├── brand/
+    └── fonts/
+
+Routing
+
+main.tsx wraps the application with BrowserRouter.
+
+Current routes include:
+
+/
+/best-sellers
+/ramadan-decor
+/wall-art
+/home-decor
+/kids
+/business-events
+/faq
+/products/:slug
+
+Several category pages still use skeleton content.
+
+Implemented pages:
+
+- Kids page
+- FAQ page
+- Product detail page
+
+
+6. Header Implementation
+
+The header was heavily iterated and ultimately simplified to avoid flickering.
+
+Final behavior
+
+There are two header levels.
+
+Header 1 contains:
+
+- centered company logo and title logo
+- top search input
+- optional Made in Canada / Handmade decorative blocks
+- branding assets that scroll away naturally
+
+Header 2 contains:
+
+- sticky navigation
+- compact logo that appears when Header 2 reaches sticky state
+- sticky search icon and expandable search input
+- cart icon
+- thin bottom border
+- promotional shipping bar above the headers
+
+Important decision:
+
+Do not reintroduce animated collapsing header-height logic.
+
+Previous implementations using max-height transitions, fixed/sticky switching, scroll locks, hysteresis, and timed state locking caused repeated flickering and scroll-position glitches.
+
+The working model is intentionally simple:
+
+- Header 1 scrolls away naturally
+- Header 2 is always sticky
+- compact logo is shown using a simple threshold
+- no elaborate transition system
+
+Promotional Bar
+
+A thin dismissible bar exists at the top:
+
+FREE SHIPPING ON ORDERS $100 +  SHOP NOW  [Truck icon]
+
+- sand-themed background
+- close button at far right
+- SHOP NOW and truck are one clickable link
+- link goes to /best-sellers
+
+Navigation
+
+Current main menu:
+
+- Best Sellers
+- Ramadan Decor
+- Wall Art
+- Home Decor
+- Kids
+- Business/Events
+- FAQ
+
+Dropdowns and chevrons were removed for the initial small-business launch.
+
+Links have a horizontal underline animation on hover.
+
+Menu color uses the brown theme.
+
+Cart:
+
+- Lucide ShoppingCart
+- brand-colored outline
+- SVG circle stroke draws on hover
+- reserved layout space prevents menu movement
+
+
+7. Responsive Header Behavior
+
+Important goals already implemented:
+
+- main logo/title resize using clamp()
+- menu spacing and font size resize fluidly
+- top search width shrinks gradually
+- top search is anchored so its left edge moves while the right edge remains stable
+- search must not overlap Made in Canada / Handmade graphics
+- side columns collapse rather than reserving invisible width
+- Made in Canada and Handmade artwork disappears on smaller widths
+- compact sticky logo has a reserved layout slot so navigation does not shift
+
+Avoid large hardcoded width jumps unless necessary.
+
+
+8. Fonts
+
+Quicksand
+
+Quicksand is the default font across the website.
+
+WOFF files are stored in:
+
+frontend/src/assets/fonts/
+
+index.css includes multiple @font-face definitions.
+
+Tailwind:
+
+fontFamily: {
+  sans: ["Quicksand", "system-ui", "sans-serif"],
+  aoki: ["Aoki", "serif"],
+}
+
+AOKI
+
+AOKI is registered separately and is used for selected display text such as product names.
+
+Tailwind class:
+
+font-aoki
+
+Do not use AOKI globally because its glyph style made normal navigation labels look uppercase.
+
+
+9. Theme Colors
+
+The site uses custom CSS variables defined in index.css.
+
+Important colors include:
+
+--theme-sage-100
+--theme-sage-200
+--theme-sage-300
+--theme-green-700
+--theme-brown-500
+--theme-brown-700
+--theme-brown-900
+--theme-sand-300
+--theme-kids-background
+--theme-brown-footer
+
+Kids and FAQ page background:
+
+#effff4
+
+Menu hover underline:
+
+#4e3b31
+
+Maple leaf and Handmade decorative graphics were eventually changed to brown-700 for consistency.
+
+Be careful with HSL variables:
+
+color: hsl(var(--theme-brown-900));
+
+Inline React style opacity syntax such as:
+
+style={{ color: "hsl(var(--token) / 0.8)" }}
+
+was unreliable in this project. Prefer Tailwind opacity classes when possible.
+
+
+10. Cloudinary
+
+Cloudinary cloud name:
+
+dgxkwhplx
+
+Frontend environment file:
+
+VITE_CLOUDINARY_CLOUD_NAME=dgxkwhplx
+
+Do not store Cloudinary credentials in frontend code.
+
+Only the cloud name is public.
+
+Database image storage
+
+The database stores an array of Cloudinary public IDs, for example:
+
+["montessori-wooden-puzzle-fish"]
+
+Do not store:
+
+/assets/kids-puzzle-fish.jpg
+
+unless it is a real local asset.
+
+Helper
+
+File:
+
+frontend/src/lib/cloudinary.ts
+
+Responsibilities:
+
+- build Cloudinary delivery URLs
+- add automatic format and quality transformations
+- select the first product image
+- support future width, height, crop, format, and quality options
+
+Example:
+
+getCloudinaryUrl("montessori-wooden-puzzle-fish", {
+  width: 600,
+  height: 600,
+});
+
+Generated URL resembles:
+
+https://res.cloudinary.com/dgxkwhplx/image/upload/w_600,h_600,c_fill,q_auto,f_auto/montessori-wooden-puzzle-fish
+
+When an image fails to load, the Kids page swaps to the existing ISA Designs placeholder card.
+
+
+11. Kids Product Page
+
+File:
+
+frontend/src/components/pages/KidsPage.tsx
+
+Data flow
+
+The page requests:
+
+GET /api/products?category=Kids
+
+Category matching is case-insensitive in the backend.
+
+Layout
+
+Desktop:
+
+4 products per row
+
+Responsive behavior:
+
+- 4 columns on large screens
+- 2 columns on tablets
+- 1 column on mobile
+
+Each product card includes:
+
+- large square product image
+- image hover zoom
+- image navigation dots when multiple images exist
+- product title in AOKI
+- regular price or sale display
+- card click navigation to product details
+
+Image dots
+
+Each card maintains its own active image index.
+
+Dots:
+
+- larger than the initial implementation
+- selected dot uses brown-900
+- dots only render when there is more than one image
+- dot clicks stop event propagation so they do not open the product page
+
+Card click
+
+Each card navigates to:
+
+/products/{slug}
+
+
+12. Sale Display
+
+Backend sale field:
+
+{
+  "enabled": true,
+  "percent": 15
+}
+
+Frontend type:
+
+onSale?: {
+  enabled: boolean;
+  percent: number;
+} | null;
+
+For sale products, cards show:
+
+- discounted price in red
+- original price in darker gray with strikethrough
+- green rounded badge: Save 15%
+
+Discount calculation:
+
+salePrice = priceCents × (100 - percent) / 100
+
+Products without a sale object show the normal price.
+
+
+13. Product Detail Page
+
+File:
+
+frontend/src/components/pages/ProductDetailPage.tsx
+
+Route:
+
+/products/:slug
+
+Request:
+
+GET /api/products/{slug}
+
+Layout
+
+Desktop two-column structure.
+
+Left:
+
+- main product image
+- thumbnail images underneath
+- clicking thumbnail changes main image
+- Cloudinary image helper used for delivery
+
+Right:
+
+- product title
+- short description
+- price
+- sale price behavior
+- tags
+- customizable indicator
+
+Accordion sections
+
+Product Details displays longDescription.
+
+Size & Specification currently displays:
+
+- material
+- customizable status
+
+More DB fields will eventually be needed for:
+
+- dimensions
+- weight
+- age recommendation
+- mounting method
+- included components
+- production lead time
+
+Ask a Question contains a frontend form:
+
+- name
+- email
+- message
+- success state
+
+This form is UI-only at the moment. No backend inquiry endpoint has been implemented yet.
+
+
+14. FAQ Page
+
+File:
+
+frontend/src/components/pages/FaqPage.tsx
+
+Background:
+
+#effff4
+
+Text:
+
+brown-900
+
+FAQ sections:
+
+- General Islamic Wall Art
+- Kids & Montessori
+- Weddings & Nikkahs
+- Business & Signage
+- Ordering, Shipping & Care
+
+There are 17 FAQ questions.
+
+The accordion is currently implemented using local React state rather than the shadcn Accordion package.
+
+
+15. Footer
+
+File:
+
+frontend/src/components/Footer.tsx
+
+The footer is rendered outside Routes in App.tsx, so it appears on every page.
+
+First footer level
+
+Heading:
+
+Meaningful Islamic Decor, Crafted in Canada
+
+The description explains:
+
+- Islamic decor
+- affordable pricing
+- Islamic kids products
+- personalized gifts
+- Canadian production
+- Ramadan/Eid gifting
+- nikkah/wedding pieces
+
+It is centered horizontally with expanded text width.
+
+Bottom footer level
+
+Uses three clear sections:
+
+1. Logo on the far left
+2. Navigation links centered
+3. Social icons on the far right
+
+Footer links:
+
+- About Us
+- Contact Us
+- Reviews
+- FAQ
+- Login
+- Track Your Order
+- WhatsApp
+
+Links include relevant Lucide icons.
+
+Social section:
+
+- Instagram
+- Facebook
+- Pinterest
+- TikTok
+- bordered container
+- label: Check us out:
+- label sits over/cuts through the border
+- platform-specific hover colors:
+  - Instagram pink
+  - Facebook blue
+  - Pinterest red
+  - TikTok black
+
+Footer logo
+
+A copy of the original logo was created so the original asset remained untouched:
+
+IsaSignsAndDesignsLOGO_copy.svg
+
+An Islamic-style border was added inside the copied SVG itself.
+
+The footer layout was repeatedly adjusted so:
+
+- logo stays far left with margin
+- links remain centered
+- social block stays far right with margin
+
+
+16. Backend Architecture
+
+Main backend files:
+
+backend/
+├── build.gradle
+├── settings.gradle
+├── docker-compose.yml
+├── init.sql
+├── README.md
+├── BACKEND_OVERVIEW.md
+├── docs/
+│   ├── openapi.json
+│   ├── openapi.yaml
+│   └── BACKEND_OVERVIEW.md
+└── src/main/
+    ├── java/com/isasigns/backend/
+    │   ├── IsasignsBackendApplication.java
+    │   ├── config/OpenApiConfig.java
+    │   ├── controller/ProductController.java
+    │   ├── dto/ProductResponse.java
+    │   ├── model/Product.java
+    │   └── repository/ProductRepository.java
+    └── resources/
+        └── application.yml
+
+
+17. Backend Class Responsibilities
+
+IsasignsBackendApplication.java
+
+Main Spring Boot entry point.
+
+Responsibilities:
+
+- starts Spring Boot
+- triggers component scanning
+- initializes Spring MVC
+- initializes Spring Data JPA
+- initializes Hibernate
+- initializes the embedded Tomcat server
+- creates application-managed beans
+
+SpringApplication.run(...) starts the dependency injection container and web server.
+
+Product.java
+
+JPA entity representing the products table.
+
+Responsibilities:
+
+- maps Java fields to PostgreSQL columns
+- defines database field types and nullability
+- allows Hibernate to convert SQL rows into Java Product objects
+
+Important distinction:
+
+Product is the persistence model. It reflects the database structure and should not be used as the public API contract.
+
+ProductRepository.java
+
+Spring Data JPA repository.
+
+Responsibilities:
+
+- query products without manually writing standard SQL
+- retrieve active products
+- retrieve products by category
+- retrieve a product by slug
+
+Category method is case-insensitive, similar to:
+
+findByCategoryIgnoreCaseAndIsActiveTrue(...)
+
+Spring Data parses this method name and generates the SQL behavior automatically.
+
+ProductResponse.java
+
+Public API DTO.
+
+Responsibilities:
+
+- defines exactly what JSON fields API clients receive
+- prevents database/JPA internals from leaking into the API
+- provides Swagger/OpenAPI field documentation
+- converts database-specific structures into frontend-friendly structures
+
+Examples:
+
+- DB images text → API List<String>
+- DB tags text[] → API List<String>
+- DB on_sale JSONB/raw entity value → API JSON object
+
+ProductController.java
+
+REST API entry point for product requests.
+
+Responsibilities:
+
+- map HTTP routes
+- receive query/path parameters
+- call ProductRepository
+- convert Product entities to ProductResponse DTOs
+- parse images and JSON fields
+- return HTTP responses
+- return 404 when a slug is not found
+
+OpenApiConfig.java
+
+Defines API documentation metadata:
+
+- API title
+- description
+- version
+- local server URL
+
+It affects generated documentation, not product business logic.
+
+
+18. Product API Endpoints
+
+List all active products:
+
+GET /api/products
+
+Filter active products by category:
+
+GET /api/products?category=Kids
+
+The category filter is case-insensitive:
+
+kids
+Kids
+KIDS
+
+all return the same Kids products.
+
+Get one product:
+
+GET /api/products/{slug}
+
+Example:
+
+GET /api/products/kids-montessori-puzzle-fish-matching
+
+Missing product:
+
+HTTP 404
+
+
+19. Backend Data Flow
+
+Example request:
+
+GET /api/products?category=kids
+
+Flow:
+
+1. Browser, Swagger, curl, or frontend sends HTTP request.
+2. Embedded Tomcat receives the request.
+3. Spring MVC finds ProductController.
+4. @RequestParam extracts category=kids.
+5. ProductController calls ProductRepository.
+6. Spring Data JPA interprets the repository method.
+7. Hibernate creates and executes SQL.
+8. HikariCP provides a PostgreSQL connection.
+9. PostgreSQL queries public.products.
+10. PostgreSQL returns matching rows.
+11. Hibernate maps each row into a Product entity.
+12. Controller converts each Product into ProductResponse.
+13. images string is parsed into List<String>.
+14. tags String[] is converted to List<String>.
+15. onSale data is converted to a JSON object.
+16. Jackson serializes ProductResponse objects into JSON.
+17. Spring returns HTTP 200 with application/json.
+18. Frontend receives JSON and renders product cards.
+
+
+20. Current Product Database Schema
+
+The products table currently includes:
+
+- id UUID primary key
+- slug unique varchar
+- name varchar
+- description text
+- long_description text
+- category varchar
+- price_cents bigint
+- currency varchar
+- images text
+- material varchar
+- is_active boolean
+- created_at timestamptz
+- updated_at timestamptz
+- is_featured boolean
+- stock_qty integer nullable
+- is_customizable boolean
+- tags text[]
+- on_sale jsonb
+
+Important:
+
+The exact current schema should be verified using:
+
+\d products
+
+There was a discrepancy at one stage where pasted CREATE TABLE output did not show newer columns even though rows contained them. The live DB should be treated as source of truth.
+
+
+21. JSONB Sale Field
+
+Column:
+
+on_sale jsonb
+
+Example:
+
+{
+  "enabled": true,
+  "percent": 15
+}
+
+Meaning:
+
+- enabled=true means the sale is active
+- percent is the percentage markdown
+- null means no configured sale
+
+Current backend implementation converts this to a native JSON object in the response.
+
+
+22. Seed Data
+
+init.sql:
+
+- creates uuid-ossp extension
+- creates products table
+- seeds original sample products
+- seeds ten additional Kids products
+- includes deterministic UUIDs
+- includes the current expanded schema
+- is used only during initialization of a fresh Docker volume
+
+Kids products include:
+
+- Montessori Wooden Puzzle - Fish Matching
+- Montessori Wooden Puzzle - Dinosaur Matching
+- Montessori Wooden Puzzle - Safari Animals Matching
+- Montessori Wooden Puzzle - Farm Animals Matching
+- Montessori Memory Game - Ramadan
+- Nursery Cloud Lamp Decor
+- Nursery Custom Animal Lamps Decor
+- Montessori Learning Daily Routine
+- Montessori Custom Name Puzzle Board
+- Montessori Busy Board: Natural Wood Activity Toy for Toddlers
+
+Prices are stored in cents.
+
+Examples:
+
+$50.00 = 5000
+$30.00 = 3000
+$100.00 = 10000
+$70.00 = 7000
+
+
+23. Swagger / OpenAPI
+
+Springdoc dependency generates API documentation automatically.
+
+Swagger UI:
+
+http://localhost:8081/swagger-ui/index.html
+
+Raw OpenAPI JSON:
+
+http://localhost:8081/v3/api-docs
+
+Raw OpenAPI YAML:
+
+http://localhost:8081/v3/api-docs.yaml
+
+Export commands:
+
+curl http://localhost:8081/v3/api-docs > docs/openapi.json
+curl http://localhost:8081/v3/api-docs.yaml > docs/openapi.yaml
+
+OpenAPI describes:
+
+- endpoint paths
+- query parameters
+- path variables
+- response status codes
+- DTO schemas
+- field descriptions
+- example values
+
+Swagger UI reads the OpenAPI document and provides a visual interface for testing endpoints.
+
+
+24. Database Management Rules
+
+Add product:
+
+INSERT a new products row.
+
+Remove product from storefront:
+
+Set is_active = false.
+
+Do not delete unless necessary.
+
+Update product:
+
+Modify the row in PostgreSQL or eventually use an admin page.
+
+Best Sellers:
+
+Use is_featured = true.
+
+Images:
+
+Store Cloudinary public IDs in the images array.
+
+Sales:
+
+Update on_sale JSONB.
+
+Product modifications should not require frontend source-code changes.
+
+
+25. Known Gaps / Future Work
+
+Backend
+
+- Stripe Checkout endpoint
+- Stripe webhook endpoint
+- order and order_items tables
+- stock reservation and inventory rules
+- admin product-management API
+- inquiry/contact endpoint
+- authentication if customer accounts are added
+- validation of on_sale JSON
+- dedicated structured product image model
+- dimensions/specification fields
+- Flyway database migrations
+- proper CORS config for production
+- Actuator health endpoint if desired
+- error response DTOs
+- tests for controller, repository, DTO conversion, sales, and category filtering
+
+Frontend
+
+- complete Best Sellers page
+- complete Ramadan Decor page
+- complete Wall Art page
+- complete Home Decor page
+- complete Business/Events page
+- shopping cart state
+- localStorage cart
+- checkout integration
+- mobile navigation/menu
+- product customization controls
+- product image gallery refinements
+- product inquiry form backend integration
+- search result functionality
+- login/account pages if eventually needed
+- track-order implementation
+- reviews page
+- accessibility pass
+- responsive QA
+- loading skeletons instead of simple placeholders
+- SEO metadata
+- legal pages
+- shipping/returns policies
+
+Infrastructure
+
+- production PostgreSQL
+- backend hosting
+- frontend deployment
+- environment variables/secrets
+- domain and SSL
+- logging and monitoring
+- backups
+- Stripe webhook security
+- Cloudinary upload/admin workflow
+- GitHub Actions CI/CD
+
+
+26. Recommended Next Development Order
+
+1. Stabilize ProductDetailPage and confirm all product fields.
+2. Add a reusable ProductCard component rather than keeping card logic inside KidsPage.
+3. Add a reusable category page component.
+4. Implement Best Sellers using isFeatured.
+5. Add cart context/store and localStorage.
+6. Build cart page.
+7. Add orders and order_items schema.
+8. Add Stripe Checkout Session endpoint.
+9. Add Stripe webhook.
+10. Add shipping, returns, privacy, and terms pages.
+11. Build lightweight admin tools or use DBeaver initially.
+12. Deploy staging.
+13. Complete mobile QA.
+14. Launch.
+
+
+27. Important Engineering Decisions
+
+Keep:
+
+- database as product source of truth
+- DTOs separate from entities
+- Cloudinary public IDs rather than hardcoded delivery URLs
+- case-insensitive categories
+- simple sticky header
+- guest checkout
+- is_active soft removal
+- price values in cents
+- Swagger/OpenAPI documentation
+- reusable CSS theme variables
+
+Avoid:
+
+- complex scroll-animation header state
+- storing GitHub tokens in remote URLs
+- returning JPA entities directly
+- putting API secrets in Vite environment variables
+- deleting products instead of deactivating
+- storing formatted prices such as "$50"
+- hardcoding products in frontend components
+- using stale local /assets paths for Cloudinary products
+- editing the DB without updating init.sql or future migrations
+
+
+28. Useful Test Commands
+
+Database:
+
+docker exec -it isasigns_db psql -U isa_user -d isa_sd -c "\dt"
+
+docker exec -it isasigns_db psql -U isa_user -d isa_sd -c "SELECT slug, name, category, price_cents FROM products;"
+
+All products:
+
+curl http://localhost:8081/api/products
+
+Kids products:
+
+curl "http://localhost:8081/api/products?category=kids"
+
+Single product:
+
+curl http://localhost:8081/api/products/kids-montessori-puzzle-fish-matching
+
+Swagger:
+
+open http://localhost:8081/swagger-ui/index.html
+
+Frontend:
+
+open http://localhost:5173/kids
+
+
+29. Daily Handoff Update Template
+
+Date:
+
+Work completed:
+
+- 
+
+Files changed:
+
+- 
+
+Database changes:
+
+- 
+
+API changes:
+
+- 
+
+Frontend behavior changes:
+
+- 
+
+Known bugs:
+
+- 
+
+Decisions made:
+
+- 
+
+Commands needed:
+
+- 
+
+Next tasks:
+
+- 
+
+Agent notes:
+
+- 
+
+
+30. Immediate Context for the Next Agent
+
+Current focus:
+
+The Kids category page, Cloudinary images, sale-price display, product-card navigation, and ProductDetailPage have been implemented.
+
+The immediate work should be:
+
+- inspect current ProductDetailPage visually
+- confirm the product route works for every Kids card
+- improve product detail image gallery
+- review accordion spacing and styling
+- decide which additional specification columns belong in PostgreSQL
+- connect Ask a Question to a backend endpoint
+- extract ProductCard and shared Product Type into reusable files
+- update documentation after each meaningful implementation
