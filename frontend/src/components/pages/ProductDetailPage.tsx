@@ -2,30 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 import { getCloudinaryUrl } from "../../lib/cloudinary";
+import type { Product } from "../../types/product";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
-
-interface OnSale {
-  enabled: boolean;
-  percent: number;
-}
-
-interface Product {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  longDescription: string | null;
-  priceCents: number;
-  currency: string;
-  images: string[];
-  material: string | null;
-  isFeatured: boolean;
-  isCustomizable: boolean;
-  stockQty: number | null;
-  tags: string[];
-  onSale: OnSale | null;
-}
 
 /* ── Price helpers ──────────────────────────────────────────────────────── */
 

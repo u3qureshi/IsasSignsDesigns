@@ -13,5 +13,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     List<Product> findByIsActiveTrue();
 
+    List<Product> findByIsFeaturedTrueAndIsActiveTrue();
+
     Optional<Product> findBySlugAndIsActiveTrue(String slug);
 }

@@ -1,20 +1,15 @@
 import './App.css'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import KidsPage from "./components/pages/KidsPage";
 import FaqPage from "./components/pages/FaqPage";
 import ProductDetailPage from "./components/pages/ProductDetailPage";
-
-function PageSkeleton({ title }: { title: string }) {
-  return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-4xl font-bold text-brown-700">{title}</h1>
-      <p className="mt-4 text-neutral-600">Page content coming soon.</p>
-    </main>
-  );
-}
+import CategoryPage from "./components/pages/CategoryPage";
+import CustomEmbroideryPage from "./components/pages/CustomEmbroideryPage";
+import { EMBROIDERY_COLLECTIONS } from "./config/embroideryCollections";
+import { PRINTING_COLLECTIONS } from "./config/printingCollections";
 
 function HomePage() {
   return (
@@ -41,12 +36,31 @@ export default function App() {
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/best-sellers" element={<PageSkeleton title="Best Sellers" />} />
-          <Route path="/ramadan-decor" element={<PageSkeleton title="Ramadan Decor" />} />
-          <Route path="/wall-art" element={<PageSkeleton title="Wall Art" />} />
-          <Route path="/home-decor" element={<PageSkeleton title="Home Decor" />} />
+          <Route path="/best-sellers" element={<CategoryPage title="Best Sellers" featured />} />
+          <Route path="/embroidery" element={<Navigate to={EMBROIDERY_COLLECTIONS[0].path} replace />} />
+          <Route path="/ramadan-decor" element={<Navigate to="/embroidery/seasonal-holidays" replace />} />
+          {EMBROIDERY_COLLECTIONS.filter(
+            (collection) => collection.path !== "/embroidery/custom-designs",
+          ).map((collection) => (
+            <Route
+              key={collection.path}
+              path={collection.path}
+              element={<CategoryPage title={collection.label} category={collection.category} />}
+            />
+          ))}
+          <Route path="/embroidery/custom-designs" element={<CustomEmbroideryPage />} />
+          <Route path="/printing" element={<Navigate to={PRINTING_COLLECTIONS[0].path} replace />} />
+          {PRINTING_COLLECTIONS.map((collection) => (
+            <Route
+              key={collection.path}
+              path={collection.path}
+              element={<CategoryPage title={collection.label} category={collection.category} />}
+            />
+          ))}
+          <Route path="/wall-art" element={<CategoryPage title="Wall Art" category="wall-art" />} />
+          <Route path="/home-decor" element={<CategoryPage title="Home Decor" category="home-decor" />} />
           <Route path="/kids" element={<KidsPage />} />
-          <Route path="/business-events" element={<PageSkeleton title="Business & Events" />} />
+          <Route path="/business-events" element={<CategoryPage title="Business & Events" category="business-events" />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/products/:slug" element={<ProductDetailPage />} />
         </Routes>

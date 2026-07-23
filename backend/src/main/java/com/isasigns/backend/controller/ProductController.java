@@ -40,13 +40,17 @@ public class ProductController {
         this.repo = repo;
     }
 
-    @Operation(summary = "List products", description = "Returns active products. Optionally filter by category (case-insensitive).")
+    @Operation(summary = "List products", description = "Returns active products. Optionally filter by category (case-insensitive) or request featured products.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Products returned", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductResponse.class)), examples = @ExampleObject(name = "list-products", summary = "Sample response", value = "[{\"id\":\"23e9318b-272c-424e-99d0-671c90b8bcf6\",\"slug\":\"ramadan-lantern\",\"name\":\"Ramadan Lantern\",\"description\":\"Decorative lantern for Ramadan\",\"category\":\"Ramadan Decor\",\"priceCents\":3499,\"currency\":\"CAD\",\"images\":[\"/assets/ramadan1.jpg\"],\"material\":\"metal\",\"isActive\":true}]")))
+            @ApiResponse(responseCode = "200", description = "Products returned", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductResponse.class)), examples = @ExampleObject(name = "list-products", summary = "Sample response", value = "[{\"id\":\"23e9318b-272c-424e-99d0-671c90b8bcf6\",\"slug\":\"ramadan-lantern\",\"name\":\"Ramadan Lantern\",\"description\":\"Decorative lantern for Ramadan\",\"category\":\"ramadan-decor\",\"priceCents\":3499,\"currency\":\"CAD\",\"images\":[\"/assets/ramadan1.jpg\"],\"material\":\"metal\",\"isActive\":true}]")))
     })
     @GetMapping
     public List<ProductResponse> list(
-            @Parameter(description = "Category filter (case-insensitive)", example = "Kids") @RequestParam(required = false) String category) {
+            @Parameter(description = "Category identifier (case-insensitive)", example = "kids") @RequestParam(required = false) String category,
+            @Parameter(description = "When true, return active featured products", example = "true") @RequestParam(required = false) Boolean featured) {
+        if (Boolean.TRUE.equals(featured)) {
+            return repo.findByIsFeaturedTrueAndIsActiveTrue().stream().map(this::toResponse).toList();
+        }
         if (category != null && !category.isBlank()) {
             return repo.findByCategoryIgnoreCaseAndIsActiveTrue(category).stream().map(this::toResponse).toList();
         }

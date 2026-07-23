@@ -1,5 +1,5 @@
-import LogoMark from "../assets/brand/IsaSignsAndDesignsLOGO.svg";
-import LogoTitle from "../assets/brand/IsaSignsAndDesignsTITLELOGO.png";
+import LogoMark from "../assets/brand/threadnbutterLogoIMG.png";
+import LogoTitle from "../assets/brand/threadnbuttertitle.png";
 
 type BrandProps = {
   variant?: "stacked" | "compact" | "icon";

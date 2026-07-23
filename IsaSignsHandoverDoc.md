@@ -51,7 +51,8 @@ The project is currently an early catalog MVP, not a functioning ecommerce store
 - Global two-level header, promotional bar, navigation, branding, and global footer.
 - React Router routes for the primary catalog navigation.
 - A completed FAQ content page with 17 questions across five sections.
-- An API-driven Kids category page with loading, error, and empty states.
+- Shared API-driven category pages for Kids, Wall Art, Business/Events, legacy Home Decor, all Embroidery submenus, and all Printing submenus, with loading, error, and empty states.
+- An API-driven Best Sellers page using the cross-category `is_featured` flag.
 - Product cards with Cloudinary URL generation, fallback images, per-card image dots, hover zoom, regular/sale price rendering, and detail-page navigation.
 - An in-progress product detail page with image gallery, thumbnails, price/sale rendering, tags, customization messaging, detail/specification accordions, and a UI-only question form.
 - Java 21/Spring Boot/PostgreSQL backend scaffold.
@@ -66,7 +67,7 @@ The project is currently an early catalog MVP, not a functioning ecommerce store
 ### What is not implemented
 
 - A real homepage.
-- Real pages for Best Sellers, Ramadan Decor, Wall Art, Home Decor, or Business/Events.
+- Complete merchandising content for every category; the page infrastructure exists, but empty categories still require matching database products and verified images.
 - Search behavior despite two visible search controls.
 - Mobile navigation.
 - Cart state, cart page, cart persistence, or working cart button.
@@ -104,13 +105,13 @@ The project has moved from a UI/header prototype into a partially data-driven ca
 | FAQ | Implemented | 17 local-state accordion questions; no CMS/backend. |
 | Kids listing | Implemented, needs live verification | Fetches backend data through Vite proxy and renders product cards. |
 | Product detail | Partial/uncommitted | Source exists and type-checks, but is currently an untracked file. |
-| Other category pages | Skeleton | Route exists, content says “Page content coming soon.” |
-| Product API | Implemented | Read-only list/category/slug API. |
+| Product category pages | Implemented, content varies | All product menu/submenu routes reuse `CategoryPage` and `ProductCard`; their content depends on matching database rows. |
+| Product API | Implemented | Read-only list/category/featured/slug API. |
 | Database | Implemented locally | PostgreSQL 15 Compose service and initial schema/seed script exist. |
 | Swagger/OpenAPI runtime | Implemented | Runtime endpoints exist; checked-in exports are stale. |
 | Cloudinary delivery | Partial | URL helper exists; seed image values are not valid Cloudinary public IDs. |
 | Sales | Partial | DB/API/UI shapes exist, but seed script contains no non-null sales and validation is absent. |
-| Best Sellers | Planned | `is_featured` exists, but no featured query/API/frontend implementation exists. |
+| Best Sellers | Implemented, needs data | Uses `GET /api/products?featured=true`; products appear when `is_featured = true`. |
 | Search | Visual only | Inputs/icons do not execute searches. |
 | Cart | Visual only | Cart icon has hover animation but no handler/state/page. |
 | Ask a Question | Visual only | Form validates locally, then always shows success without sending data. |
@@ -447,7 +448,7 @@ Useful interactive commands:
 \d products
 SELECT COUNT(*) FROM products;
 SELECT slug, name, category, price_cents, is_active FROM products ORDER BY category, name;
-SELECT slug, is_customizable, tags, on_sale FROM products WHERE category = 'Kids';
+SELECT slug, is_customizable, tags, on_sale FROM products WHERE category = 'kids';
 \q
 ```
 
@@ -483,7 +484,7 @@ Expected default URL:
 http://localhost:5173
 ```
 
-The Vite development server proxies browser requests beginning with `/api` to `http://localhost:8081`. This is why the frontend uses relative fetches such as `/api/products?category=Kids`.
+The Vite development server proxies browser requests beginning with `/api` to `http://localhost:8081`. This is why the frontend uses relative fetches such as `/api/products?category=kids`.
 
 Restart Vite after changing `.env`, `vite.config.ts`, or Tailwind configuration.
 
@@ -578,12 +579,22 @@ There is no catch-all `*` route or dedicated 404 page. Unknown routes render the
 | Route | Component | Status |
 |---|---|---|
 | `/` | `HomePage` in `App.tsx` | Placeholder/filler page |
-| `/best-sellers` | `PageSkeleton` | Skeleton |
-| `/ramadan-decor` | `PageSkeleton` | Skeleton |
-| `/wall-art` | `PageSkeleton` | Skeleton |
-| `/home-decor` | `PageSkeleton` | Skeleton |
-| `/kids` | `KidsPage` | API-driven implementation |
-| `/business-events` | `PageSkeleton` | Skeleton |
+| `/best-sellers` | `CategoryPage` | API-driven; requests active products where `is_featured = true` |
+| `/embroidery` | `Navigate` | Redirects to Anime for direct URL visits; the nav trigger itself does not navigate |
+| `/embroidery/anime` | `CategoryPage` | API-driven; category `embroidery-anime` |
+| `/embroidery/baby-clothing` | `CategoryPage` | API-driven; category `embroidery-baby-clothing` |
+| `/embroidery/fathers-day` | `CategoryPage` | API-driven; category `embroidery-fathers-day` |
+| `/embroidery/mothers-day` | `CategoryPage` | API-driven; category `embroidery-mothers-day` |
+| `/embroidery/seasonal-holidays` | `CategoryPage` | API-driven; category `embroidery-seasonal-holidays` |
+| `/embroidery/custom-designs` | `CustomEmbroideryPage` | Frontend-only eight-step request UI prototype; no backend submission or AI generation yet |
+| `/ramadan-decor` | `Navigate` | Legacy URL redirects to Embroidery Seasonal & Holidays |
+| `/printing` | `Navigate` | Redirects to Popular designs for direct URL visits; the nav trigger itself does not navigate |
+| `/printing/popular-designs` | `CategoryPage` | API-driven; category `printing-popular-designs` |
+| `/printing/custom` | `CategoryPage` | API-driven; category `printing-custom` |
+| `/wall-art` | `CategoryPage` | API-driven; category `wall-art` |
+| `/home-decor` | `CategoryPage` | API-driven; category `home-decor`; direct route retained but removed from header navigation |
+| `/kids` | `KidsPage` → `CategoryPage` | API-driven; category `kids` |
+| `/business-events` | `CategoryPage` | API-driven; category `business-events` |
 | `/faq` | `FaqPage` | Implemented content page |
 | `/products/:slug` | `ProductDetailPage` | Partial; current route/file uncommitted |
 
@@ -666,6 +677,7 @@ When consuming component values, use `hsl(var(--token))`. Opacity forms should b
 - Sticky search underline animates for 300 ms; its placeholder is deliberately delayed by 300 ms.
 - Returning above the threshold closes and resets sticky search.
 - Navigation labels are bold brown with an animated brown underline.
+- Embroidery and Printing are button-only navigation triggers implemented with the shared `NavDropdown` component. Hovering, clicking, or keyboard-activating a trigger opens its collection dropdown; only a collection link navigates.
 - Cart uses a Lucide cart and an SVG circle whose dash offset animates on hover.
 
 ### Deliberate constraint
@@ -676,77 +688,254 @@ Do not reintroduce complex height-collapse/sticky-switch animation without a cle
 
 - Neither search input searches.
 - The cart button does nothing.
-- There is no mobile menu or hamburger; the seven-item nav can overflow on narrow screens.
+- There is no mobile menu or hamburger; the top-level nav can overflow on narrow screens.
 - The sticky compact logo/search is hidden at 1366 px and below, so the intended scrolled identity/search treatment is primarily large-desktop behavior.
 - There is no active-route styling.
 - Promo dismissal is not persistent.
 
 ---
 
-## 12. Kids catalog page
+## 12. Shared database-backed catalog pages
 
-`KidsPage.tsx` is the first real database-backed category implementation.
+Kids was the first database-backed product page. Its behavior has now been extracted into reusable pieces so every product-oriented menu and submenu page renders products in exactly the same way.
 
-### Data request
+### Reusable React pieces
 
-On mount, it performs:
+- `CategoryPage.tsx` receives a visible page title and either a database category ID or the `featured` flag.
+- `ProductCard.tsx` displays the image gallery, name, regular/sale price, and product-detail link behavior.
+- `types/product.ts` defines the shared TypeScript product response shape.
+- `KidsPage.tsx` is now a very small wrapper that renders `CategoryPage` with category `kids`.
+- `App.tsx` maps each route to `CategoryPage` with its canonical category ID.
+- Embroidery and Printing configuration files keep submenu labels, routes, and category IDs together.
 
-```http
-GET /api/products?category=Kids
+### How this works in simple words
+
+React does not contain a hardcoded list of products for each page. A route supplies the category identifier. The shared page asks the backend for active products in that category. When the JSON response arrives, React loops over the array and creates the same `ProductCard` for every product.
+
+In simple pseudocode:
+
+```text
+WHEN customer opens a product category URL:
+    React Router chooses the matching route
+    route gives CategoryPage a title and category ID
+
+    CategoryPage shows "Loading"
+    CategoryPage requests:
+        GET /api/products?category=<category-id>
+
+    backend queries PostgreSQL:
+        category matches <category-id>
+        AND is_active is true
+
+    backend returns a JSON array of products
+    React stores that array in products state
+
+    IF request failed:
+        show error message
+    ELSE IF products array is empty:
+        show "No products found yet"
+    ELSE:
+        FOR EACH product:
+            render the shared ProductCard
+            card links to /products/<product-slug>
 ```
 
-Through Vite, `/api` is proxied to the backend. The backend category comparison is case-insensitive.
+Best Sellers uses the same page/card rendering with a different query:
 
-### Local state
+```text
+GET /api/products?featured=true
+```
 
-- `products`: API result array;
-- `loading`: begins true and becomes false after success/failure;
-- `error`: string message derived from a non-2xx status or fetch failure;
-- each `ProductCard` independently owns `activeIndex` for its image gallery.
+The backend returns active rows with `is_featured = true`. This lets one product remain in `kids`, `wall-art`, `embroidery-anime`, or another real category while also appearing under Best Sellers.
 
-### Render states
+### Exact React pattern
 
-- Loading: centered `Loading...` text.
-- Error: centered `Failed to load products: <message>`.
-- Empty: centered `No kids products found.`.
-- Success: category heading and responsive product grid.
+Conceptually, routes look like:
 
-### Grid/card behavior
+```tsx
+<Route
+  path="/embroidery/anime"
+  element={<CategoryPage title="Anime" category="embroidery-anime" />}
+/>
+
+<Route
+  path="/best-sellers"
+  element={<CategoryPage title="Best Sellers" featured />}
+/>
+```
+
+Inside the shared page, the important idea is:
+
+```tsx
+fetch(`/api/products?category=${category}`)
+  .then(response => response.json())
+  .then(databaseProducts => setProducts(databaseProducts))
+
+return products.map(product => <ProductCard product={product} />)
+```
+
+The real implementation also URL-encodes the category, aborts stale requests when navigating, and shows loading/error/empty states.
+
+### Shared render behavior
 
 - one column by default;
 - two columns from the small breakpoint;
 - four columns from the large breakpoint;
 - square `object-cover` images;
-- rounded image area and subtle zoom on card hover;
+- rounded image area and image hover zoom;
+- image-selection dots when multiple images exist;
 - Aoki product name;
+- Canadian currency formatting through `Intl.NumberFormat`;
 - regular or sale price;
 - each card links to `/products/{slug}`.
 
-When a card has multiple images, dots change the selected image. Dot clicks call both `preventDefault()` and `stopPropagation()` so selecting an image does not navigate to the product route.
-
-### Price behavior
-
-`priceCents` is divided by 100 and displayed with two decimals and the backend currency string.
-
-If `onSale.enabled` is true:
-
-```text
-discounted cents = round(priceCents × (1 - percent / 100))
-```
-
-The UI shows discounted red price, struck-through original price, and a green `Save N%` badge.
-
-This calculation is suitable for display only. Checkout must calculate/validate payable price on the backend; the browser must never be trusted as the price authority.
+When a card has multiple images, dot clicks call `preventDefault()` and `stopPropagation()` so changing the card image does not open the product page.
 
 ### Current technical debt
 
-- Product and sale interfaces are duplicated in `KidsPage` and `ProductDetailPage`.
-- `ProductCard`, price helpers, and `PriceDisplay` are local instead of reusable.
-- Data fetching uses chained promises with no abort controller, retry policy, schema validation, caching, or shared API client.
-- Currency formatting is manually assembled rather than using `Intl.NumberFormat`.
+- Data fetching still uses chained promises rather than a shared API-client module or query library.
+- There is no runtime validation of the returned JSON shape.
+- There is no caching, retry policy, or pagination.
 - Sale percent is not range-validated.
 - There are no loading skeleton cards.
 - The placeholder is an external `placehold.co` URL.
+
+### Custom Embroidery request UI
+
+- Route: `/embroidery/custom-designs`
+- Component: `frontend/src/components/pages/CustomEmbroideryPage.tsx`
+- Planning source: `frontend/documents/thread-n-butter-custom-embroidery-flow.md`
+
+The Custom Designs submenu is intentionally different from ordinary product-category pages. Instead of rendering database product cards, it opens a frontend-only request wizard for exploring the future custom embroidery experience.
+
+Current card order:
+
+1. **Customer** — full name, preferred contact method, and the matching email or phone field.
+2. **Idea** — concept description and optional exact wording.
+3. **Artwork** — one required artwork-handling choice and a conditional local image upload.
+4. **Item** — required customer-supplied or Thread & Butter-supplied choice, item details, and required item type.
+5. **Placement** — item-aware placement selection plus known/recommended size.
+6. **Quantity** — quantity control and bulk-review notice.
+7. **Preview** — uploaded-image preview and current request summary.
+8. **Submit** — final summary, required notices, and prototype submission action.
+
+Navigation/UI behavior:
+
+- labels across the top show every card and highlight the current one;
+- the current and previously completed labels can be selected, but future labels are disabled so a customer cannot skip required cards;
+- successful Back and Next navigation scrolls to just above the progress tabs after React renders the new card; a sticky-header offset keeps the tabs fully visible;
+- the compact page introduction contains only **Custom Embroidery Studio** and **Tell us what you would like embroidered!**;
+- repeated descriptive text has been removed from card headers; the quantity instruction remains directly above the quantity control where it is needed;
+- reduced page, progress-tab, card-header, field, choice-card, upload, preview, and footer spacing keeps more of the active form visible without scrolling;
+- the footer step count is a larger, fully opaque dark brown and remains visible on small screens as `1/8`, `2/8`, and so on;
+- React component state preserves entered values while moving between cards;
+- conditional inputs appear based on contact method, AI choice, item provider, selected item, placement, and size mode;
+- clicking Next validates the current card and shows specific inline feedback if it is incomplete;
+- the final submit action revalidates the entire request and shows specific feedback rather than failing silently;
+- successful prototype submission clearly says that no request was actually sent.
+
+Current validation rules:
+
+- full name is required;
+- the selected contact method is required;
+- email uses both an HTML email input and an explicit email-format check;
+- phone input strips every non-digit character, allows at most 15 digits, and requires 10–15 digits;
+- the embroidery idea description is required;
+- exactly one artwork-handling option must be selected;
+- an upload is optional only for **Create one AI concept from my description** and **No generated image — review my request manually**;
+- an upload is required for **Use my uploaded artwork without AI changes** and **Use my upload as inspiration for one AI concept**;
+- the customer must choose who supplies the item;
+- both provider choices use the same required item-type selector;
+- choosing `Other` with either provider reveals the same required **What item will be embroidered?** field;
+- quantity must be at least one;
+- both final acknowledgements are required.
+
+Item and placement behavior:
+
+- available item types are Hoodie, Crewneck, Pants, Sweatpants, Jeans, Tote bag, Towel, T-shirt, Beanie, Hat, and Other;
+- choosing an item type is mandatory regardless of who supplies it;
+- placement buttons are generated from the chosen item type, not from one global list;
+- hoodies, crewnecks, and T-shirts use garment locations such as chest, front, back, and sleeves;
+- pants, sweatpants, and jeans use thigh, pant-leg, and back-pocket locations;
+- tote bags and towels use locations appropriate to those items;
+- beanies use front and side locations;
+- hats use front, side, and back locations, so invalid garment placements such as `Left chest` never appear for a hat;
+- changing to an item type that does not support the previous placement clears that placement;
+- `Other` placement requires a written description;
+- choosing **I know the approximate size** makes both width and height mandatory positive values.
+
+Artwork limits for this first UI:
+
+- maximum one uploaded image;
+- accepted preview types: PNG, JPG/JPEG, WEBP, and SVG;
+- client-side maximum size: 10 MB;
+- the UI communicates a limit of one future AI-generated concept image per user account daily;
+- the empty upload control is a compact clickable box rather than a large drop zone;
+- no AI image editing;
+- no regeneration, variations, “make simpler,” recolouring, style changes, or other AI editing controls;
+- exact uploaded artwork can be marked as exact artwork, inspiration, or a placement reference.
+
+The browser currently creates a temporary object URL only to preview the chosen local file. It does not upload the image. The object URL is revoked when the image changes or the component unmounts.
+
+UI-only boundaries:
+
+- no `POST` request;
+- no database table or persistence;
+- no permanent upload to Cloudinary/object storage;
+- no Cloudflare/OpenAI image-generation call;
+- no AI credentials in React;
+- no concept generation, image editing, placement composition, stitch estimate, thread-colour estimate, or price estimate;
+- no company/customer notification;
+- no real request number.
+
+Simple state-flow pseudocode:
+
+```text
+currentStep starts at Customer
+formState stores every field for all eight cards
+
+WHEN customer changes a field:
+    update that field in formState
+
+WHEN customer clicks Next:
+    validate fields belonging to currentStep
+    IF any required value is missing or invalid:
+        remain on currentStep
+        show specific errors below that card
+    ELSE:
+        change currentStep to the next card
+    scroll to the top edge of the newly displayed form card
+    keep the same formState
+
+WHEN customer clicks Back or a completed label:
+    move to that earlier card
+    keep the same formState and scroll position
+
+WHEN customer tries to select a future label:
+    do nothing because future labels are disabled
+
+WHEN customer selects one local image:
+    validate image type and size
+    create temporary browser preview
+    do not upload it
+
+WHEN customer selects an item type:
+    load only that item's valid placement choices
+    clear an earlier placement if it is invalid for the new item
+
+WHEN customer reaches Preview:
+    read formState
+    show the current request summary
+    show placeholders for future estimates
+
+WHEN customer clicks Submit:
+    revalidate all cards and both agreements
+    IF validation succeeds:
+        show a UI-only confirmation
+        do not call a backend
+```
+
+Future backend work must follow the architecture in the rough-flow document: React calls Spring Boot; Spring validates and stores the request; image/AI credentials stay server-side; AI generation is asynchronous; storage uses public IDs/URLs rather than image bytes in PostgreSQL; and the business confirms final artwork and price manually.
 
 ---
 
@@ -1037,10 +1226,18 @@ Returns every active product. There is no guaranteed sort order or pagination.
 ### Filter active products by category
 
 ```http
-GET /api/products?category=Kids
+GET /api/products?category=kids
 ```
 
-Category matching is case-insensitive. A missing or blank category returns all active products. Category values with spaces must be URL encoded.
+Category matching is case-insensitive, but canonical values are always lowercase and hyphenated. A missing or blank category returns all active products.
+
+### List active featured products / Best Sellers
+
+```http
+GET /api/products?featured=true
+```
+
+Returns active products where `is_featured = true`. When `featured=true` is supplied, the featured filter takes precedence over a category query.
 
 ### Get active product by slug
 
@@ -1082,7 +1279,7 @@ Representative shape:
   "name": "Montessori Wooden Puzzle - Fish Matching",
   "description": "Short card description",
   "longDescription": "Full detail-page description",
-  "category": "Kids",
+  "category": "kids",
   "priceCents": 5000,
   "currency": "CAD",
   "images": ["montessori-wooden-puzzle-fish"],
@@ -1139,6 +1336,54 @@ There is no database trigger to update `updated_at` for direct SQL changes. The 
 
 ### Data rules
 
+#### Canonical category nomenclature
+
+The `products.category` column is the machine-readable identifier for the menu page where a product belongs. It is not the customer-facing title.
+
+Rules:
+
+- lowercase letters only;
+- separate words with a hyphen;
+- no spaces;
+- no ampersands, apostrophes, slashes, or display punctuation;
+- submenu categories begin with their parent menu identifier;
+- React's category value must exactly match the database value;
+- visible labels remain friendly text such as “Father's Day” or “Popular designs.”
+
+Canonical mapping:
+
+| Menu/page | Visible label | `products.category` |
+|---|---|---|
+| Former direct page | Home Decor | `home-decor` |
+| Main menu | Kids | `kids` |
+| Former direct page | Ramadan Decor | `ramadan-decor` |
+| Main menu | Wall Art | `wall-art` |
+| Main menu | Business/Events | `business-events` |
+| Embroidery submenu | Anime | `embroidery-anime` |
+| Embroidery submenu | Baby clothing | `embroidery-baby-clothing` |
+| Embroidery submenu | Father's Day | `embroidery-fathers-day` |
+| Embroidery submenu | Mother's Day | `embroidery-mothers-day` |
+| Embroidery submenu | Seasonal & Holidays | `embroidery-seasonal-holidays` |
+| Embroidery submenu | Custom Designs | `embroidery-custom-designs` |
+| Printing submenu | Popular designs | `printing-popular-designs` |
+| Printing submenu | Custom | `printing-custom` |
+
+Best Sellers is deliberately not a category. Set `is_featured = true` on any product to show it there while preserving its real category.
+
+Examples:
+
+```text
+visible menu: Embroidery > Anime
+React filter: embroidery-anime
+database row: category = 'embroidery-anime'
+
+visible menu: Printing > Custom
+React filter: printing-custom
+database row: category = 'printing-custom'
+```
+
+The normalization helper is `backend/docs/category_nomenclature_migration.sql`. Back up and review a shared database before running it. Changing `backend/init.sql` affects only newly initialized Docker volumes; it does not rewrite an existing volume.
+
 #### Slug
 
 - lowercase;
@@ -1162,8 +1407,8 @@ There is no database trigger to update `updated_at` for direct SQL changes. The 
 #### Featured state
 
 - `Best Sellers` is not a category value;
-- it is intended to be a cross-category merchandising view driven by `is_featured`;
-- no endpoint/query currently implements it.
+- it is a cross-category merchandising view driven by `is_featured`;
+- `GET /api/products?featured=true` and the Best Sellers React route implement it.
 
 #### Inventory
 
@@ -1362,7 +1607,6 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 
 ### Functional incompleteness
 
-- Best Sellers/filter-by-featured missing.
 - Other category pages missing.
 - Search missing.
 - Cart missing.
@@ -1430,13 +1674,20 @@ Definition of done: fresh clone/setup works reproducibly; build/lint/tests pass;
 
 ### Phase 2 — Complete browsing
 
-1. Build a reusable category page using the shared product grid/card.
-2. Implement all catalog categories.
-3. Add `featured=true` backend query and Best Sellers page.
-4. Replace placeholder homepage with real featured/category content.
-5. Implement mobile navigation.
-6. Implement real search or remove inactive search controls until ready.
-7. Add route 404, loading skeletons, better error states, accessibility, and SEO metadata.
+Completed foundation:
+
+- reusable category page and shared product grid/card;
+- database-backed Kids, Wall Art, Business/Events, legacy Home Decor, Embroidery submenu, and Printing submenu routes;
+- `featured=true` backend query and database-backed Best Sellers page;
+- lowercase hyphenated category nomenclature.
+
+Remaining:
+
+1. Populate/verify all catalog categories with real products and Cloudinary images.
+2. Replace placeholder homepage with real featured/category content.
+3. Implement mobile navigation.
+4. Implement real search or remove inactive search controls until ready.
+5. Add route 404, loading skeletons, better error states, accessibility, and SEO metadata.
 
 ### Phase 3 — Product configuration and cart
 
@@ -1530,6 +1781,174 @@ After editing:
 ## 29. Development Journal / Daily Handoffs
 
 Append new entries at the top of this section, directly below this instruction. Keep older entries.
+
+### 2026-07-23 — Custom Embroidery validation and item-aware placement
+
+**Decisions**
+
+- Standardized the customer-facing business name as **Thread & Butter** in the custom-flow UI, planning document, and this handover.
+- Customers must complete each card before advancing; future progress labels can no longer bypass validation.
+- Artwork upload requirements now depend on the selected artwork-handling option.
+- Item selection is mandatory and controls which embroidery placements are available.
+
+**Work completed**
+
+- Added per-card validation with visible, field-specific error messages.
+- Added explicit email-format validation.
+- Restricted the phone field to digits and validated a length of 10–15 digits.
+- Removed Next/Back/progress navigation scrolling so the browser stays at the customer's current page position.
+- Increased the contrast of every `(optional)` marker using the dark-brown theme colour.
+- Required an artwork-handling selection; exact-upload and inspiration modes require an image, while generate and manual-review modes keep the image optional.
+- Added Beanie and Hat to the item choices.
+- Required an item type for both customer-supplied and business-supplied items.
+- Added item-specific placement sets and automatic clearing of a placement that becomes invalid after an item change.
+- Required both width and height when the customer chooses a known embroidery size.
+- Simplified the Item card so both provider choices share one item selector; only `Other` reveals the shared item-description field.
+- Updated successful Next/Back navigation to scroll just above the progress tabs because card heights differ.
+- Compacted the page introduction and form layout, removed repeated card-header descriptions, and increased the visibility of the footer step count.
+- Kept the quantity guidance immediately above the quantity control on card six.
+- Updated the artwork notice to state one AI concept image per user account daily and reduced the upload picker to a compact clickable box.
+- On the Preview card, the forward button reads **Generate AI preview** for generate/inspiration modes and **Review details** for exact-upload/manual-review modes.
+- Kept final submission as a frontend-only prototype and added full-request revalidation.
+
+**Verification**
+
+- Frontend TypeScript compilation passed after the changes.
+- No backend, database, upload, AI, or notification behavior was added.
+
+---
+
+### 2026-07-22 — Custom Embroidery multi-step UI prototype
+
+**Scope decision**
+
+- Implemented UI only for `/embroidery/custom-designs`.
+- Customer information is the first card and final review/submit is the last.
+- Limited the first version to one uploaded image and one future AI concept.
+- Explicitly excluded AI image editing, regeneration, variations, backend persistence, estimates, and real submission.
+
+**Work completed**
+
+- Added `CustomEmbroideryPage.tsx` with eight labeled cards: Customer, Idea, Artwork, Item, Placement, Quantity, Preview, and Submit.
+- Added clickable progress labels showing the current/completed cards.
+- Added Back/Next arrow navigation with persistent React form state.
+- Added conditional contact, item, placement, and size inputs.
+- Added one-image client-side type/size validation and temporary local preview.
+- Added AI/manual artwork-mode choices while clearly marking AI functionality as future work.
+- Added request summaries, agreements, completeness feedback, and an honest UI-only confirmation state.
+- Routed `/embroidery/custom-designs` to the custom UI instead of the ordinary database category grid.
+- Documented current behavior, pseudocode, limits, and backend boundaries in this handover.
+
+**Verification**
+
+- Frontend TypeScript compilation passed.
+- `git diff --check` passed.
+- No backend/API/schema code was added for this UI prototype.
+
+**Recommended next task**
+
+- Review the page visually and adjust step count, copy, field grouping, colours, spacing, and card layout before defining the request DTO/database/API.
+
+---
+
+### 2026-07-21 — Category nomenclature and shared catalog rendering
+
+**Decision**
+
+- `products.category` is now a lowercase, hyphen-separated machine identifier describing the product's menu/submenu location.
+- Example: Embroidery > Anime uses `embroidery-anime`.
+- Customer-facing labels remain formatted normally and do not have to match the stored identifier.
+- Best Sellers remains the exception and uses `is_featured = true`, not a category value.
+
+**Work completed**
+
+- Updated all Embroidery and Printing React collection filters to canonical identifiers.
+- Updated Kids to request `kids`.
+- Converted Wall Art, Business/Events, and the retained direct Home Decor route from skeletons to the same shared database product grid.
+- Converted Best Sellers to the shared product grid using a new `featured=true` API filter.
+- Added the backend repository/controller featured query.
+- Normalized all `backend/init.sql` category values for new database volumes.
+- Added `backend/docs/category_nomenclature_migration.sql` for reviewing/normalizing existing databases.
+- Updated the Embroidery and Printing population guides.
+- Added simple React explanations and pseudocode to this handover.
+
+**Canonical submenu values**
+
+- Embroidery: `embroidery-anime`, `embroidery-baby-clothing`, `embroidery-fathers-day`, `embroidery-mothers-day`, `embroidery-seasonal-holidays`, `embroidery-custom-designs`.
+- Printing: `printing-popular-designs`, `printing-custom`.
+
+**Verification**
+
+- Frontend TypeScript compilation passed.
+- Backend Java compilation passed.
+- `git diff --check` passed.
+
+**Existing database warning**
+
+- Updating `init.sql` does not change an existing Docker database volume. Inspect the live categories and apply the reviewed normalization SQL only where needed.
+
+---
+
+### 2026-07-21 — Printing dropdown and collection pages
+
+**Work completed**
+
+- Added a Printing dropdown immediately to the right of Embroidery.
+- Added Popular designs and Custom Printing collection routes.
+- Removed Home Decor from the visible header navigation while retaining `/home-decor` for direct-link compatibility.
+- Extracted both Embroidery and Printing menu behavior into the reusable `NavDropdown` component.
+- Added `frontend/documents/printing_catalog_guide.md` with exact database categories and SQL examples.
+
+**Database/API contract**
+
+- No schema or backend API changes.
+- At that stage the Printing pages temporarily used display-style category values. These were superseded later the same day by `printing-popular-designs` and `printing-custom`.
+- No placeholder products were inserted.
+
+**Verification**
+
+- Frontend TypeScript passed with the non-incremental project check.
+- `git diff --check` passed.
+
+**Recommended next task**
+
+- Add real Printing products with verified Cloudinary public IDs, then visually verify both dropdowns and collection pages across viewport sizes.
+
+---
+
+### 2026-07-20 — Embroidery navigation and collection pages
+
+**Work completed**
+
+- Replaced the Ramadan Decor navigation link with an Embroidery button-only dropdown trigger.
+- Added Anime, Baby clothing, Father's Day, Mother's Day, Seasonal & Holidays, and Custom Designs menu links.
+- Added one API-driven route for each Embroidery collection.
+- Added legacy redirects for `/embroidery` and `/ramadan-decor`.
+- Extracted the Kids grid/card implementation into reusable `CategoryPage`, `ProductCard`, and shared product types.
+- Kept the Kids route on the same reusable catalog implementation.
+- Added `frontend/documents/embroidery_catalog_guide.md` with category mappings, SQL examples, product guidance, Cloudinary rules, and reset warnings.
+
+**Database/API contract**
+
+- No schema or API code changed.
+- At that stage pages temporarily used display-style category values prefixed by `Embroidery - `. These were superseded on 2026-07-21 by lowercase hyphenated identifiers such as `embroidery-anime`.
+- No seed products were invented or reclassified; empty pages show an intentional empty state.
+
+**Verification**
+
+- Changed frontend TypeScript passed with `tsc -p tsconfig.app.json --noEmit --incremental false`.
+- `git diff --check` passed.
+- ESLint continues to stall without output in the current environment and was interrupted; no lint result is claimed.
+
+**Unrelated work preserved**
+
+- Existing Brand, Footer, index, Gradle-cache, and `threadnbutter` asset changes were not modified as part of this feature.
+
+**Recommended next task**
+
+- Add real Embroidery products with verified Cloudinary public IDs using the new catalog guide, then visually test dropdown positioning and each collection at mobile/tablet/desktop widths.
+
+---
 
 ### 2026-07-19 — Comprehensive Codex audit and handover creation
 

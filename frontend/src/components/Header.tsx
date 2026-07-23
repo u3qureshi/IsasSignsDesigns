@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 import Brand from "./Brand";
 import mapleLeafLogo from "../assets/brand/Maple_Leaf.svg";
 import handmadeLogo from "../assets/brand/handmade.svg";
+import { EMBROIDERY_COLLECTIONS } from "../config/embroideryCollections";
+import { PRINTING_COLLECTIONS } from "../config/printingCollections";
+import NavDropdown from "./NavDropdown";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -222,9 +225,9 @@ export default function Header() {
 
           <nav className="mx-auto flex flex-1 items-center justify-center gap-[clamp(0.75rem,1.8vw,2.75rem)] text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))]">
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/best-sellers">Best Sellers</Link>
-            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/ramadan-decor">Ramadan Decor</Link>
+            <NavDropdown label="Embroidery" menuId="embroidery-menu" items={EMBROIDERY_COLLECTIONS} />
+            <NavDropdown label="Printing" menuId="printing-menu" items={PRINTING_COLLECTIONS} />
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/wall-art">Wall Art</Link>
-            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/home-decor">Home Decor</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/kids">Kids</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/business-events">Business/Events</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/faq">FAQ</Link>

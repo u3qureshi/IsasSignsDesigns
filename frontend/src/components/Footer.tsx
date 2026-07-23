@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Info, Mail, Star, HelpCircle, LogIn, Package, MessageCircle } from "lucide-react";
-import logo from "../assets/brand/IsaSignsAndDesignsLOGO.svg";
+import logo from "../assets/brand/threadnbutterLogoIMG.png";
 
 /* ── Pinterest icon (not in lucide) ─────────────────────────────────────── */
 function PinterestIcon({ size = 28 }: { size?: number }) {
@@ -100,7 +100,6 @@ export default function Footer() {
               src={logo}
               alt="Isa's Signs & Designs"
               className="w-56 h-56 object-contain"
-              style={{ filter: "brightness(0) invert(1) drop-shadow(0 6px 24px rgba(255,255,255,0.25))" }}
             />
           </div>
 
