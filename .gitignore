@@ -1,0 +1,8 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Operating-system metadata
+.DS_Store
+

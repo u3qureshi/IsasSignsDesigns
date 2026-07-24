@@ -14,19 +14,19 @@ The customer must understand that:
 - follow-up will happen by the customer's preferred contact method;
 - tax, delivery, shipping, and rush fees are not included yet.
 
-### Current UI prototype decisions (2026-07-23)
+### Current implemented decisions (2026-07-23)
 
-The implemented React prototype intentionally narrows and reorders parts of the original rough plan below:
+The implemented React/Spring flow intentionally narrows and reorders parts of the original rough plan below:
 
 - customer information is the first card;
-- every card validates before Next can advance, and future progress labels are disabled;
+- every card validates before Next can advance; previously visited progress labels remain selectable only when all cards before the target are still valid, while unvisited future labels remain disabled;
 - successful Next and Back navigation scrolls to just above the progress tabs for the newly displayed card;
 - email format is validated and the phone field accepts digits only;
 - the artwork-handling choice is required;
-- the prototype accepts no more than one uploaded image;
+- the form accepts no more than one customer-uploaded image;
 - the upload is optional only when generating one concept from the description or requesting manual review;
 - exact-upload and upload-as-inspiration choices require an uploaded image;
-- the UI communicates a limit of one future AI concept image per user account daily and has no AI image editing;
+- the UI communicates the intended future limit of one AI concept image per user account daily and has no AI image editing; the first unauthenticated backend does not enforce the daily limit;
 - the upload control is a compact clickable file-selection box;
 - the Preview card advances with **Generate AI preview** for generate/inspiration modes or **Review details** for exact-upload/manual-review modes;
 - item provider and item type are required, and both providers share the same item-type selector;
@@ -34,7 +34,10 @@ The implemented React prototype intentionally narrows and reorders parts of the 
 - current item types include Hoodie, Crewneck, Pants, Sweatpants, Jeans, Tote bag, Towel, T-shirt, Beanie, Hat, and Other;
 - placement choices depend on the item type, preventing choices such as a chest placement on a hat;
 - known size requires both width and height;
-- final submission remains UI-only and does not save or send anything.
+- generate/inspiration modes call Cloudflare Workers AI through Spring Boot and return a signed one-hour preview;
+- submitted customer/generated images use authenticated Cloudinary storage, while PostgreSQL stores only request fields and asset metadata;
+- final submission saves a real request and returns a `TNB-EMB-YYYY-XXXXXXXX` request number;
+- customer/business email and SMS notifications remain deferred.
 
 Where the older exploratory notes below conflict with this section or the implementation, this section describes the current decision.
 

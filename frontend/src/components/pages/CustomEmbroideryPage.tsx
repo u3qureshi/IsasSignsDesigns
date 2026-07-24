@@ -17,6 +17,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import brokenImageIcon from "../../assets/brand/broken-image-icon.avif";
+import threadButterLogoOutline from "../../assets/brand/threadnbutterLogoOutlineIMG.svg";
 
 type ContactMethod = "email" | "phone";
 type AiMode = "generate" | "exact-upload" | "inspiration" | "manual-review";
@@ -56,6 +58,22 @@ interface StepDefinition {
   Icon: LucideIcon;
 }
 
+interface GeneratedPreview {
+  blob: Blob;
+  token: string;
+  expiresAt: string;
+}
+
+interface SubmissionResult {
+  requestNumber: string;
+  status: string;
+}
+
+interface ApiErrorBody {
+  message?: string;
+  details?: string[];
+}
+
 const STEPS: StepDefinition[] = [
   {
     shortLabel: "Customer",
@@ -75,7 +93,7 @@ const STEPS: StepDefinition[] = [
     shortLabel: "Artwork",
     title: "Add your artwork",
     eyebrow: "Upload or AI concept",
-    description: "Upload one reference image or choose one future AI-generated concept. AI editing is not included.",
+    description: "Upload one reference image or choose one AI-generated concept. AI editing is not included.",
     Icon: ImagePlus,
   },
   {
@@ -119,7 +137,7 @@ const AI_OPTIONS: Array<{ value: AiMode; title: string; description: string }> =
   {
     value: "generate",
     title: "Create one AI concept from my description",
-    description: "One preliminary image will be generated later. No AI editing or regeneration in this first version.",
+    description: "Create one preliminary placement image. No AI editing or regeneration in this first version.",
   },
   {
     value: "exact-upload",
@@ -128,8 +146,8 @@ const AI_OPTIONS: Array<{ value: AiMode; title: string; description: string }> =
   },
   {
     value: "inspiration",
-    title: "Use my upload as inspiration for one AI concept",
-    description: "Create one new concept inspired by the reference after the backend is connected.",
+    title: "Create one AI placement preview using my upload",
+    description: "Next, choose whether the upload must stay exact, inspire a new concept, or guide placement.",
   },
   {
     value: "manual-review",
@@ -167,6 +185,22 @@ const PLACEMENTS_BY_ITEM: Record<string, string[]> = {
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PREVIEW_DEPENDENT_FIELDS = new Set<keyof CustomEmbroideryForm>([
+  "ideaDescription",
+  "exactText",
+  "aiMode",
+  "uploadedImage",
+  "itemProvider",
+  "suppliedItem",
+  "otherItem",
+  "garmentColor",
+  "placement",
+  "otherPlacement",
+  "sizeMode",
+  "width",
+  "height",
+  "contentRightsConfirmed",
+]);
 
 const INITIAL_FORM: CustomEmbroideryForm = {
   fullName: "",
@@ -251,13 +285,46 @@ function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
+function AiPreviewSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Generating your AI preview"
+      className="ai-preview-skeleton flex min-h-[24rem] items-center justify-center overflow-hidden rounded-2xl border border-[hsl(var(--theme-sand-300)/0.65)] px-6 py-12 text-center"
+    >
+      <div className="relative z-10 flex flex-col items-center">
+        <span
+          aria-hidden="true"
+          className="ai-preview-logo block h-36 w-52 sm:h-44 sm:w-64"
+          style={{
+            WebkitMaskImage: `url("${threadButterLogoOutline}")`,
+            maskImage: `url("${threadButterLogoOutline}")`,
+          }}
+        />
+        <p className="mt-7 font-aoki text-2xl text-[hsl(var(--theme-brown-900))] sm:text-3xl">
+          Generating your AI preview!
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function CustomEmbroideryPage() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [highestVisitedStep, setHighestVisitedStep] = useState(0);
   const [form, setForm] = useState<CustomEmbroideryForm>(INITIAL_FORM);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [generatedPreview, setGeneratedPreview] = useState<GeneratedPreview | null>(null);
+  const [generatedPreviewUrl, setGeneratedPreviewUrl] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [stepErrors, setStepErrors] = useState<string[]>([]);
-  const [prototypeSubmitted, setPrototypeSubmitted] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [aiPreviewFailed, setAiPreviewFailed] = useState(false);
+  const [showPreviewFailureToast, setShowPreviewFailureToast] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
   const tabsRef = useRef<HTMLElement>(null);
   const scrollAfterStepChangeRef = useRef(false);
 
@@ -276,6 +343,17 @@ export default function CustomEmbroideryPage() {
   }, [form.uploadedImage]);
 
   useEffect(() => {
+    if (!generatedPreview) {
+      setGeneratedPreviewUrl("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(generatedPreview.blob);
+    setGeneratedPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [generatedPreview]);
+
+  useEffect(() => {
     if (!scrollAfterStepChangeRef.current) return;
 
     scrollAfterStepChangeRef.current = false;
@@ -286,17 +364,34 @@ export default function CustomEmbroideryPage() {
     return () => window.cancelAnimationFrame(frame);
   }, [currentStep]);
 
+  useEffect(() => {
+    if (!showPreviewFailureToast) return;
+
+    const timeout = window.setTimeout(() => {
+      setShowPreviewFailureToast(false);
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [showPreviewFailureToast]);
+
   function updateField<K extends keyof CustomEmbroideryForm>(
     field: K,
     value: CustomEmbroideryForm[K],
   ) {
     setForm((current) => ({ ...current, [field]: value }));
+    if (PREVIEW_DEPENDENT_FIELDS.has(field)) {
+      setGeneratedPreview(null);
+      setAiPreviewFailed(false);
+    }
     setStepErrors([]);
+    setApiError("");
   }
 
   function goToStep(index: number) {
+    const nextStep = Math.min(Math.max(index, 0), STEPS.length - 1);
     scrollAfterStepChangeRef.current = true;
-    setCurrentStep(Math.min(Math.max(index, 0), STEPS.length - 1));
+    setCurrentStep(nextStep);
+    setHighestVisitedStep((highest) => Math.max(highest, nextStep));
     setStepErrors([]);
   }
 
@@ -308,9 +403,9 @@ export default function CustomEmbroideryPage() {
       return;
     }
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setUploadError("Please choose a PNG, JPG, WEBP, or SVG image.");
+      setUploadError("Please choose a PNG, JPG, or WEBP image.");
       return;
     }
 
@@ -361,6 +456,9 @@ export default function CustomEmbroideryPage() {
       ) {
         errors.push("Upload an image for the artwork option you selected.");
       }
+      if (!form.contentRightsConfirmed) {
+        errors.push("Confirm that you have rights to the submitted content.");
+      }
     }
 
     if (stepIndex === 3) {
@@ -385,14 +483,29 @@ export default function CustomEmbroideryPage() {
     if (stepIndex === 5 && form.quantity < 1) errors.push("Enter a quantity of at least one.");
 
     if (stepIndex === 7) {
+      if (
+        (form.aiMode === "generate" || form.aiMode === "inspiration") &&
+        !generatedPreview &&
+        !aiPreviewFailed
+      ) {
+        errors.push("Generate the AI preview before submitting.");
+      }
       if (!form.estimateAccepted) errors.push("Accept the estimate acknowledgement.");
-      if (!form.contentRightsConfirmed) errors.push("Confirm that you have rights to the submitted content.");
     }
 
     return errors;
   }
 
   const missingItems = STEPS.flatMap((_, index) => getStepErrors(index));
+
+  function canVisitStep(stepIndex: number) {
+    if (stepIndex === currentStep) return true;
+    if (stepIndex > highestVisitedStep) return false;
+
+    return STEPS.slice(0, stepIndex).every(
+      (_, prerequisiteIndex) => getStepErrors(prerequisiteIndex).length === 0,
+    );
+  }
 
   function goNext() {
     const errors = getStepErrors(currentStep);
@@ -412,21 +525,172 @@ export default function CustomEmbroideryPage() {
       placement: nextPlacements.includes(current.placement) ? current.placement : "",
       otherPlacement: nextPlacements.includes(current.placement) ? current.otherPlacement : "",
     }));
+    setGeneratedPreview(null);
+    setAiPreviewFailed(false);
     setStepErrors([]);
+    setApiError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function requestPayload() {
+    return {
+      fullName: form.fullName,
+      preferredContact: form.preferredContact,
+      email: form.email,
+      phone: form.phone,
+      ideaDescription: form.ideaDescription,
+      exactText: form.exactText,
+      aiMode: form.aiMode,
+      imageIntent: form.imageIntent,
+      itemProvider: form.itemProvider,
+      itemType: form.suppliedItem,
+      otherItem: form.otherItem,
+      garmentColor: form.garmentColor,
+      placement: form.placement,
+      otherPlacement: form.otherPlacement,
+      sizeMode: form.sizeMode,
+      width: form.sizeMode === "known" && form.width ? Number(form.width) : null,
+      height: form.sizeMode === "known" && form.height ? Number(form.height) : null,
+      quantity: form.quantity,
+      estimateAccepted: form.estimateAccepted,
+      contentRightsConfirmed: form.contentRightsConfirmed,
+      aiPreviewFailed,
+    };
+  }
+
+  function addRequestPart(data: FormData) {
+    data.append(
+      "request",
+      new Blob([JSON.stringify(requestPayload())], { type: "application/json" }),
+    );
+  }
+
+  async function readApiError(response: Response) {
+    try {
+      const body = (await response.json()) as ApiErrorBody;
+      if (body.details?.length) return body.details.join(" ");
+      if (body.message) return body.message;
+    } catch {
+      // Fall through to the status-based message.
+    }
+    return `The request failed (HTTP ${response.status}).`;
+  }
+
+  function base64ToBlob(base64: string, mediaType: string) {
+    const binary = window.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return new Blob([bytes], { type: mediaType });
+  }
+
+  async function generateAiPreview() {
+    const prerequisiteErrors = STEPS.slice(0, 7).flatMap((_, index) => getStepErrors(index));
+    if (prerequisiteErrors.length > 0) {
+      setStepErrors(prerequisiteErrors);
+      return;
+    }
+
+    setApiError("");
+    setAiPreviewFailed(false);
+    setShowPreviewFailureToast(false);
+    setIsGenerating(true);
+    goToStep(7);
+    try {
+      const data = new FormData();
+      addRequestPart(data);
+      if (form.uploadedImage) data.append("customerImage", form.uploadedImage);
+
+      const response = await fetch("/api/custom-embroidery/previews", {
+        method: "POST",
+        body: data,
+      });
+      if (!response.ok) throw new Error(await readApiError(response));
+
+      const result = (await response.json()) as {
+        imageBase64: string;
+        mediaType: string;
+        previewToken: string;
+        expiresAt: string;
+      };
+      setGeneratedPreview({
+        blob: base64ToBlob(result.imageBase64, result.mediaType),
+        token: result.previewToken,
+        expiresAt: result.expiresAt,
+      });
+    } catch (error) {
+      console.error("AI preview generation failed:", error);
+      setAiPreviewFailed(true);
+      setShowPreviewFailureToast(true);
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  function handleForward() {
+    if (currentStep === 6 && (form.aiMode === "generate" || form.aiMode === "inspiration")) {
+      if (generatedPreview) {
+        goToStep(7);
+      } else if (aiPreviewFailed) {
+        goToStep(7);
+      } else {
+        void generateAiPreview();
+      }
+      return;
+    }
+    goNext();
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (currentStep < STEPS.length - 1) {
-      goNext();
+      handleForward();
       return;
     }
     if (missingItems.length > 0) {
       setStepErrors(missingItems);
       return;
     }
-    setPrototypeSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setApiError("");
+    setIsSubmitting(true);
+    try {
+      const data = new FormData();
+      addRequestPart(data);
+      if (form.uploadedImage) data.append("customerImage", form.uploadedImage);
+      if (generatedPreview) {
+        const generatedFilename =
+          generatedPreview.blob.type === "image/png" ? "ai-concept.png" : "ai-concept.jpg";
+        data.append("generatedImage", generatedPreview.blob, generatedFilename);
+        data.append("previewToken", generatedPreview.token);
+      }
+
+      const response = await fetch("/api/custom-embroidery/requests", {
+        method: "POST",
+        body: data,
+      });
+      if (!response.ok) throw new Error(await readApiError(response));
+      const result = (await response.json()) as SubmissionResult;
+      setSubmissionResult(result);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "The request could not be submitted.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function resetForm() {
+    setForm(INITIAL_FORM);
+    setCurrentStep(0);
+    setHighestVisitedStep(0);
+    setGeneratedPreview(null);
+    setAiPreviewFailed(false);
+    setShowPreviewFailureToast(false);
+    setSubmissionResult(null);
+    setUploadError("");
+    setStepErrors([]);
+    setApiError("");
+    scrollAfterStepChangeRef.current = true;
   }
 
   function renderStepContent() {
@@ -603,12 +867,12 @@ export default function CustomEmbroideryPage() {
                       Choose an image
                     </span>
                     <span className="block text-xs text-stone-400">
-                      PNG, JPG, WEBP, or SVG · maximum 10 MB
+                      PNG, JPG, or WEBP · maximum 10 MB
                     </span>
                   </span>
                   <input
                     type="file"
-                    accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+                    accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                     onChange={(event) => handleImage(event.target.files?.[0] ?? null)}
                     className="sr-only"
                   />
@@ -645,6 +909,19 @@ export default function CustomEmbroideryPage() {
                 </div>
               </fieldset>
             )}
+
+            <label className="flex cursor-pointer gap-2 rounded-xl border border-stone-200 bg-white p-3">
+              <input
+                type="checkbox"
+                checked={form.contentRightsConfirmed}
+                onChange={(event) => updateField("contentRightsConfirmed", event.target.checked)}
+                className="mt-1 h-4 w-4 rounded accent-[hsl(var(--theme-brown-700))]"
+              />
+              <span className="text-sm leading-relaxed text-stone-600">
+                I confirm that I own or have permission to use all uploaded images, names, logos, artwork,
+                and other content in this request.
+              </span>
+            </label>
           </div>
         );
 
@@ -854,14 +1131,16 @@ export default function CustomEmbroideryPage() {
         );
 
       case 6:
+      {
+        const previewUrl = generatedPreviewUrl || (aiPreviewFailed ? brokenImageIcon : imagePreviewUrl);
         return (
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="flex min-h-64 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-4">
-              {imagePreviewUrl ? (
+              {previewUrl ? (
                 <img
-                  src={imagePreviewUrl}
-                  alt="Uploaded artwork preview"
-                  className="max-h-72 w-full object-contain"
+                  src={previewUrl}
+                  alt={aiPreviewFailed ? "AI preview unavailable" : "Embroidery concept preview"}
+                  className="mb-3 max-h-72 max-w-full rounded-2xl border border-[hsl(var(--theme-sand-300)/0.75)] bg-white p-2 object-contain shadow-sm"
                 />
               ) : (
                 <div className="max-w-xs text-center">
@@ -869,7 +1148,7 @@ export default function CustomEmbroideryPage() {
                   <p className="mt-4 font-bold text-[hsl(var(--theme-brown-900))]">Concept preview area</p>
                   <p className="mt-2 text-sm leading-relaxed text-stone-400">
                     {form.aiMode === "generate" || form.aiMode === "inspiration"
-                      ? "Your single AI concept will appear here after the generation backend is connected."
+                      ? "Click Generate AI preview to create your single preliminary concept."
                       : "Upload an image to preview it here, or continue with a manual-review request."}
                   </p>
                 </div>
@@ -894,10 +1173,45 @@ export default function CustomEmbroideryPage() {
             </div>
           </div>
         );
+      }
 
       case 7:
+      {
+        const previewUrl = generatedPreviewUrl || (aiPreviewFailed ? brokenImageIcon : imagePreviewUrl);
         return (
           <div className="space-y-5">
+            {isGenerating ? (
+              <AiPreviewSkeleton />
+            ) : (
+              previewUrl && (
+                <div className="overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[hsl(var(--theme-brown-500))]">
+                    {aiPreviewFailed
+                      ? "AI preview unavailable"
+                      : generatedPreviewUrl
+                        ? "Generated AI concept"
+                        : "Uploaded artwork"}
+                  </p>
+                  <img
+                    src={previewUrl}
+                    alt={aiPreviewFailed ? "AI preview failed to generate" : "Embroidery artwork preview"}
+                    className="mx-auto mb-5 max-h-96 max-w-full rounded-2xl border border-[hsl(var(--theme-sand-300)/0.75)] bg-white p-2 object-contain shadow-sm"
+                  />
+                  {aiPreviewFailed && (
+                    <p className="mx-auto mt-4 max-w-xl text-center text-sm font-semibold leading-relaxed text-[hsl(var(--theme-brown-700))]">
+                      Please submit your request without an AI image, and we will reach out to you shortly.
+                    </p>
+                  )}
+                  {generatedPreview && (
+                    <p className="mt-3 text-center text-xs text-stone-400">
+                      Preliminary concept · preview authorization expires{" "}
+                      {new Date(generatedPreview.expiresAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )
+            )}
+
             <dl className="rounded-2xl border border-stone-200 bg-stone-50 px-5">
               <SummaryRow label="Customer" value={form.fullName} />
               <SummaryRow
@@ -930,39 +1244,29 @@ export default function CustomEmbroideryPage() {
                   details, and final price before production.
                 </span>
               </label>
-              <label className="flex cursor-pointer gap-2 rounded-xl border border-stone-200 bg-white p-3">
-                <input
-                  type="checkbox"
-                  checked={form.contentRightsConfirmed}
-                  onChange={(event) => updateField("contentRightsConfirmed", event.target.checked)}
-                  className="mt-1 h-4 w-4 rounded accent-[hsl(var(--theme-brown-700))]"
-                />
-                <span className="text-sm leading-relaxed text-stone-600">
-                  I confirm that I own or have permission to use all uploaded images, names, logos, artwork,
-                  and other content in this request.
-                </span>
-              </label>
             </div>
 
-            {missingItems.length > 0 && (
+            {!isGenerating && missingItems.length > 0 && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                <p className="font-bold">Complete these items before testing submit:</p>
+                <p className="font-bold">Complete these items before submitting:</p>
                 <p className="mt-1">{missingItems.join(", ")}.</p>
               </div>
             )}
 
             <div className="rounded-xl bg-stone-100 p-4 text-center text-xs leading-relaxed text-stone-500">
-              UI prototype only: clicking submit does not save data, send email, upload files, or call an AI service.
+              Submitting saves the complete request, image records, and notification delivery history.
+              A confirmation will be sent through your selected contact method.
             </div>
           </div>
         );
+      }
 
       default:
         return null;
     }
   }
 
-  if (prototypeSubmitted) {
+  if (submissionResult) {
     return (
       <main className="min-h-screen bg-[hsl(var(--theme-kids-bg))] px-5 py-16">
         <div className="mx-auto max-w-2xl rounded-3xl border border-[hsl(var(--theme-sand-300))] bg-white p-8 text-center shadow-sm sm:p-12">
@@ -970,21 +1274,20 @@ export default function CustomEmbroideryPage() {
             <Check className="h-8 w-8 text-[hsl(var(--theme-green-700))]" />
           </div>
           <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--theme-brown-500))]">
-            UI prototype complete
+            Request submitted
           </p>
           <h1 className="mt-3 font-aoki text-3xl text-[hsl(var(--theme-brown-900))] sm:text-4xl">
-            Your request was not sent yet
+            Thank you — we received your request
           </h1>
           <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-stone-500">
-            This confirms the frontend flow is working. Database storage, image upload, AI generation,
-            estimates, notifications, and real submission will be connected in a later backend phase.
+            Your Thread & Butter request number is{" "}
+            <strong className="text-[hsl(var(--theme-brown-900))]">{submissionResult.requestNumber}</strong>.
+            Keep this number for reference. We will contact you through the email address or phone number
+            selected in your request.
           </p>
           <button
             type="button"
-            onClick={() => {
-              setPrototypeSubmitted(false);
-              goToStep(0);
-            }}
+            onClick={resetForm}
             className="mt-8 rounded-xl bg-[hsl(var(--theme-brown-700))] px-6 py-3 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-900))]"
           >
             Return to the form
@@ -996,6 +1299,15 @@ export default function CustomEmbroideryPage() {
 
   return (
     <main className="min-h-screen bg-[hsl(var(--theme-kids-bg))] px-4 py-6 sm:px-6 sm:py-8">
+      {showPreviewFailureToast && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="ai-preview-failure-toast fixed left-1/2 top-4 z-50 w-[min(92vw,32rem)] -translate-x-1/2 rounded-xl border border-red-200 bg-white px-5 py-4 text-center text-sm font-bold text-red-800 shadow-xl"
+        >
+          Unfortunately, the AI Image failed to generate.
+        </div>
+      )}
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="font-aoki text-4xl text-[hsl(var(--theme-brown-900))] sm:text-5xl">
@@ -1014,20 +1326,25 @@ export default function CustomEmbroideryPage() {
           <ol className="mx-auto flex min-w-max justify-center gap-2 px-1">
             {STEPS.map((item, index) => {
               const isCurrent = index === currentStep;
-              const isComplete = index < currentStep;
+              const canNavigate = canVisitStep(index);
+              const tabEnabled = canNavigate && (!isGenerating || isCurrent);
+              const isComplete =
+                canNavigate && index < highestVisitedStep && getStepErrors(index).length === 0;
               return (
                 <li key={item.shortLabel}>
                   <button
                     type="button"
                     onClick={() => goToStep(index)}
-                    disabled={index > currentStep}
+                    disabled={!tabEnabled}
                     aria-current={isCurrent ? "step" : undefined}
                     className={`flex min-w-24 items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition ${
                       isCurrent
                         ? "border-[hsl(var(--theme-brown-700))] bg-[hsl(var(--theme-brown-700))] text-white"
                         : isComplete
                           ? "border-[hsl(var(--theme-sage-200))] bg-[hsl(var(--theme-sage-100)/0.35)] text-[hsl(var(--theme-green-700))]"
-                          : "cursor-not-allowed border-stone-200 bg-white text-stone-400 opacity-70"
+                          : tabEnabled
+                            ? "border-stone-200 bg-white text-[hsl(var(--theme-brown-700))] hover:border-[hsl(var(--theme-sand-300))]"
+                            : "cursor-not-allowed border-stone-200 bg-white text-stone-400 opacity-70"
                     }`}
                   >
                     {isComplete ? <Check className="h-3.5 w-3.5" /> : <span>{index + 1}</span>}
@@ -1073,13 +1390,22 @@ export default function CustomEmbroideryPage() {
                   </ul>
                 </div>
               )}
+              {apiError && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800"
+                >
+                  {apiError}
+                </div>
+              )}
             </div>
 
             <footer className="flex items-center justify-between gap-3 border-t border-stone-100 bg-stone-50 px-5 py-3 sm:px-7">
               <button
                 type="button"
                 onClick={() => goToStep(currentStep - 1)}
-                disabled={currentStep === 0}
+                disabled={currentStep === 0 || isGenerating}
                 className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-bold text-stone-600 transition hover:border-[hsl(var(--theme-brown-500))] hover:text-[hsl(var(--theme-brown-900))] disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -1094,12 +1420,17 @@ export default function CustomEmbroideryPage() {
               {currentStep < STEPS.length - 1 ? (
                 <button
                   type="button"
-                  onClick={goNext}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--theme-brown-700))] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-900))]"
+                  onClick={handleForward}
+                  disabled={isGenerating}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--theme-brown-700))] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-900))] disabled:cursor-wait disabled:opacity-60"
                 >
                   {currentStep === 6
                     ? form.aiMode === "generate" || form.aiMode === "inspiration"
-                      ? "Generate AI preview"
+                      ? generatedPreview || aiPreviewFailed
+                        ? "Review details"
+                        : isGenerating
+                          ? "Generating…"
+                          : "Generate AI preview"
                       : "Review details"
                     : "Next"}
                   <ArrowRight className="h-4 w-4" />
@@ -1107,9 +1438,14 @@ export default function CustomEmbroideryPage() {
               ) : (
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--theme-green-700))] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-green-900))]"
+                  disabled={isSubmitting || isGenerating}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--theme-green-700))] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-green-900))] disabled:cursor-wait disabled:opacity-60"
                 >
-                  Submit My Embroidery Request
+                  {isGenerating
+                    ? "Generating preview…"
+                    : isSubmitting
+                      ? "Submitting…"
+                      : "Submit My Embroidery Request"}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               )}

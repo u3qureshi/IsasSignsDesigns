@@ -153,3 +153,115 @@ body {
     --chart-5: var(--theme-sand-300);
   }
 }
+
+@keyframes ai-preview-logo-colors {
+  0%,
+  100% {
+    background-color: hsl(var(--theme-brown-900));
+  }
+  9% {
+    background-color: hsl(var(--theme-brown-footer));
+  }
+  18% {
+    background-color: hsl(var(--theme-brown-700));
+  }
+  27% {
+    background-color: hsl(var(--theme-brown-600));
+  }
+  36% {
+    background-color: hsl(var(--theme-brown-500));
+  }
+  45% {
+    background-color: hsl(var(--theme-sand-300));
+  }
+  54% {
+    background-color: hsl(var(--theme-sage-100));
+  }
+  63% {
+    background-color: hsl(var(--theme-sage-200));
+  }
+  72% {
+    background-color: hsl(var(--theme-sage-300));
+  }
+  81% {
+    background-color: hsl(var(--theme-green-brand));
+  }
+  90% {
+    background-color: hsl(var(--theme-green-700));
+  }
+  96% {
+    background-color: hsl(var(--theme-green-900));
+  }
+}
+
+@keyframes ai-preview-skeleton-shimmer {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes ai-preview-failure-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.ai-preview-failure-toast {
+  animation: ai-preview-failure-toast-in 180ms ease-out;
+}
+
+.ai-preview-skeleton {
+  position: relative;
+  background:
+    radial-gradient(circle at center, hsl(var(--theme-white)) 0%, transparent 66%),
+    hsl(var(--theme-sage-100) / 0.16);
+}
+
+.ai-preview-skeleton::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    105deg,
+    transparent 25%,
+    hsl(var(--theme-white) / 0.82) 46%,
+    hsl(var(--theme-sand-300) / 0.28) 54%,
+    transparent 75%
+  );
+  animation: ai-preview-skeleton-shimmer 2.2s ease-in-out infinite;
+}
+
+.ai-preview-logo {
+  background-color: hsl(var(--theme-brown-900));
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  animation: ai-preview-logo-colors 8s ease-in-out infinite;
+  filter: drop-shadow(0 8px 18px hsl(var(--theme-brown-700) / 0.14));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-preview-skeleton::before,
+  .ai-preview-logo {
+    animation: none;
+  }
+
+  .ai-preview-logo {
+    background-color: hsl(var(--theme-green-700));
+  }
+
+  .ai-preview-failure-toast {
+    animation: none;
+  }
+}

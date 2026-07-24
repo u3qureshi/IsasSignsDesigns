@@ -107,7 +107,8 @@ The project has moved from a UI/header prototype into a partially data-driven ca
 | Product detail | Partial/uncommitted | Source exists and type-checks, but is currently an untracked file. |
 | Product category pages | Implemented, content varies | All product menu/submenu routes reuse `CategoryPage` and `ProductCard`; their content depends on matching database rows. |
 | Product API | Implemented | Read-only list/category/featured/slug API. |
-| Database | Implemented locally | PostgreSQL 15 Compose service and initial schema/seed script exist. |
+| Custom Embroidery API | Implemented, submission provider test pending | Multipart preview/submission endpoints, validation, AI/storage clients, and persistence exist; Cloudflare preview and malformed-request runtime behavior are verified. |
+| Database | Implemented locally | PostgreSQL 15 Compose service, initial schema/seed script, and Flyway custom-request migrations exist. |
 | Swagger/OpenAPI runtime | Implemented | Runtime endpoints exist; checked-in exports are stale. |
 | Cloudinary delivery | Partial | URL helper exists; seed image values are not valid Cloudinary public IDs. |
 | Sales | Partial | DB/API/UI shapes exist, but seed script contains no non-null sales and validation is absent. |
@@ -116,7 +117,7 @@ The project has moved from a UI/header prototype into a partially data-driven ca
 | Cart | Visual only | Cart icon has hover animation but no handler/state/page. |
 | Ask a Question | Visual only | Form validates locally, then always shows success without sending data. |
 | Checkout/orders | Planned | No schema, backend, frontend, or Stripe code. |
-| Tests | Missing | Gradle reports `NO-SOURCE`; no frontend test framework is configured. |
+| Tests | Partial | Nine backend custom-flow unit tests pass; no frontend test framework is configured. |
 | Production operations | Planned | No deployment or CI configuration. |
 
 ---
@@ -586,7 +587,7 @@ There is no catch-all `*` route or dedicated 404 page. Unknown routes render the
 | `/embroidery/fathers-day` | `CategoryPage` | API-driven; category `embroidery-fathers-day` |
 | `/embroidery/mothers-day` | `CategoryPage` | API-driven; category `embroidery-mothers-day` |
 | `/embroidery/seasonal-holidays` | `CategoryPage` | API-driven; category `embroidery-seasonal-holidays` |
-| `/embroidery/custom-designs` | `CustomEmbroideryPage` | Frontend-only eight-step request UI prototype; no backend submission or AI generation yet |
+| `/embroidery/custom-designs` | `CustomEmbroideryPage` | Eight-step request wizard connected to AI preview generation, authenticated image storage, and submitted-request persistence |
 | `/ramadan-decor` | `Navigate` | Legacy URL redirects to Embroidery Seasonal & Holidays |
 | `/printing` | `Navigate` | Redirects to Popular designs for direct URL visits; the nav trigger itself does not navigate |
 | `/printing/popular-designs` | `CategoryPage` | API-driven; category `printing-popular-designs` |
@@ -806,7 +807,7 @@ When a card has multiple images, dot clicks call `preventDefault()` and `stopPro
 - Component: `frontend/src/components/pages/CustomEmbroideryPage.tsx`
 - Planning source: `frontend/documents/thread-n-butter-custom-embroidery-flow.md`
 
-The Custom Designs submenu is intentionally different from ordinary product-category pages. Instead of rendering database product cards, it opens a frontend-only request wizard for exploring the future custom embroidery experience.
+The Custom Designs submenu is intentionally different from ordinary product-category pages. Instead of rendering database product cards, it opens a request wizard backed by Spring Boot, PostgreSQL, Cloudflare Workers AI, and authenticated Cloudinary storage.
 
 Current card order:
 
@@ -816,13 +817,14 @@ Current card order:
 4. **Item** — required customer-supplied or Thread & Butter-supplied choice, item details, and required item type.
 5. **Placement** — item-aware placement selection plus known/recommended size.
 6. **Quantity** — quantity control and bulk-review notice.
-7. **Preview** — uploaded-image preview and current request summary.
-8. **Submit** — final summary, required notices, and prototype submission action.
+7. **Preview** — uploaded-image/current AI preview and request summary; generate/inspiration modes call the AI preview endpoint here.
+8. **Submit** — final summary, image preview, estimate acknowledgement, and real persistence action.
 
 Navigation/UI behavior:
 
 - labels across the top show every card and highlight the current one;
-- the current and previously completed labels can be selected, but future labels are disabled so a customer cannot skip required cards;
+- React remembers the furthest card reached; the current card and previously visited cards remain selectable only while every prerequisite card before the target is still valid;
+- unvisited future cards remain disabled, and editing an earlier card into an invalid state temporarily disables later tabs until the prerequisite is corrected;
 - successful Back and Next navigation scrolls to just above the progress tabs after React renders the new card; a sticky-header offset keeps the tabs fully visible;
 - the compact page introduction contains only **Custom Embroidery Studio** and **Tell us what you would like embroidered!**;
 - repeated descriptive text has been removed from card headers; the quantity instruction remains directly above the quantity control where it is needed;
@@ -832,7 +834,12 @@ Navigation/UI behavior:
 - conditional inputs appear based on contact method, AI choice, item provider, selected item, placement, and size mode;
 - clicking Next validates the current card and shows specific inline feedback if it is incomplete;
 - the final submit action revalidates the entire request and shows specific feedback rather than failing silently;
-- successful prototype submission clearly says that no request was actually sent.
+- generated previews and backend errors are displayed without losing the form state;
+- clicking **Generate AI preview** moves immediately to the Review card instead of leaving the customer waiting on Preview;
+- while Cloudflare is generating, only Review's final-image panel displays a shimmer skeleton with the Thread & Butter outline logo cycling through the site theme palette and the message **Generating your AI preview!**; all request details and acknowledgements remain visible below it;
+- Back, other progress tabs, and final submission are temporarily disabled while generation is active; the loader is replaced in place when the image arrives;
+- the animated loader respects `prefers-reduced-motion` by stopping both the shimmer and palette animation;
+- successful submission shows the permanent `TNB-EMB-YYYY-XXXXXXXX` request number returned by the backend.
 
 Current validation rules:
 
@@ -848,7 +855,8 @@ Current validation rules:
 - both provider choices use the same required item-type selector;
 - choosing `Other` with either provider reveals the same required **What item will be embroidered?** field;
 - quantity must be at least one;
-- both final acknowledgements are required.
+- content-rights confirmation is required on the Artwork card before any uploaded content can be sent to AI;
+- the final estimate acknowledgement is required before submission.
 
 Item and placement behavior:
 
@@ -867,26 +875,64 @@ Item and placement behavior:
 Artwork limits for this first UI:
 
 - maximum one uploaded image;
-- accepted preview types: PNG, JPG/JPEG, WEBP, and SVG;
+- accepted preview types: PNG, JPG/JPEG, and WEBP;
 - client-side maximum size: 10 MB;
-- the UI communicates a limit of one future AI-generated concept image per user account daily;
+- the UI communicates the intended future limit of one AI concept image per user account daily; this first unauthenticated backend version does not enforce that rate limit;
 - the empty upload control is a compact clickable box rather than a large drop zone;
 - no AI image editing;
 - no regeneration, variations, “make simpler,” recolouring, style changes, or other AI editing controls;
 - exact uploaded artwork can be marked as exact artwork, inspiration, or a placement reference.
 
-The browser currently creates a temporary object URL only to preview the chosen local file. It does not upload the image. The object URL is revoked when the image changes or the component unmounts.
+The browser creates temporary object URLs for both the chosen local file and the generated image blob. Each is revoked when its source changes or the component unmounts. Provider credentials remain exclusively in the backend `.env`; React receives only the generated bytes and a short-lived signed preview token.
 
-UI-only boundaries:
+Implemented backend boundaries:
 
-- no `POST` request;
-- no database table or persistence;
-- no permanent upload to Cloudinary/object storage;
-- no Cloudflare/OpenAI image-generation call;
-- no AI credentials in React;
-- no concept generation, image editing, placement composition, stitch estimate, thread-colour estimate, or price estimate;
-- no company/customer notification;
-- no real request number.
+- `POST /api/custom-embroidery/previews` accepts multipart form data with a JSON `request` part and optional `customerImage`;
+- generate/inspiration modes build an embroidery-focused prompt and call Cloudflare Workers AI using the configured FLUX model;
+- inspiration references are decoded, validated, and downscaled to at most 512×512 before being sent to Cloudflare;
+- the generated image is returned to React as base64 plus an HMAC-signed, one-hour preview token;
+- changing a prompt-dependent form field invalidates the local generated preview so stale artwork cannot be submitted with changed requirements;
+- `POST /api/custom-embroidery/requests` accepts the JSON request, optional customer image, and—when AI was used—the generated image and preview token;
+- the backend verifies that the submitted generated bytes match the signed token;
+- customer and generated images are uploaded to Cloudinary using authenticated delivery;
+- PostgreSQL stores request fields and Cloudinary metadata, never image bytes;
+- only submitted requests are stored; no draft row is created during preview generation;
+- a normalized contact HMAC is stored to support later per-account/per-contact limits without creating a separate plaintext rate-limit key;
+- email/SMS notification, login/access codes, JWT, enforced daily AI limits, stitch estimation, thread-colour estimation, and price estimation remain deferred.
+
+Database schema:
+
+- Flyway migration `V2__custom_embroidery_requests.sql` creates `app_users`, `custom_embroidery_requests`, and `custom_embroidery_request_images`;
+- `app_users` is the future account foundation and is not used for authentication yet;
+- `custom_embroidery_requests` stores contact/request/AI/audit fields and the generated request number;
+- `custom_embroidery_request_images` stores Cloudinary asset ID, public ID, version, resource/delivery type, format, dimensions, byte count, image intent, and display order;
+- migration `V3__contact_hmac_varchar.sql` aligns `contact_hmac` with the JPA entity type;
+- Flyway baselines the pre-existing database at version 1 and owns migrations from version 2 onward;
+- Hibernate remains `ddl-auto: validate`, so it checks the migrated schema rather than mutating it.
+
+Backend implementation files:
+
+- `CustomEmbroideryController` defines the two multipart endpoints;
+- `CustomEmbroideryValidationService` is the server-authoritative copy of contact, artwork, item, placement, size, quantity, and acknowledgement rules;
+- `ImageValidationService` enforces 10 MB and PNG/JPEG/WEBP, verifies decoded image content, and prepares Cloudflare references;
+- `EmbroideryPromptService` constructs the prompt from the idea, exact wording, item, colour, placement, and known/recommended size;
+- `CloudflareImageService` performs the server-side multipart FLUX request;
+- `PreviewTokenService` signs/verifies generated image hashes and creates contact HMACs;
+- `CloudinaryStorageService` performs authenticated uploads and cleanup;
+- `CustomEmbroideryPreviewService` and `CustomEmbroiderySubmissionService` orchestrate the two workflows;
+- `ApiExceptionHandler` converts expected validation/provider failures into safe JSON errors without returning secrets/provider response bodies.
+
+Local run requirements:
+
+```text
+1. PostgreSQL must be running with the existing isa_sd database.
+2. backend/.env must contain all variables shown in backend/.env.example.
+3. From backend/: ./gradlew bootRun
+4. From frontend/: npm run dev
+5. Open the Vite URL and visit /embroidery/custom-designs.
+```
+
+Vite proxies `/api` to Spring Boot on port `8081`. Spring automatically imports `backend/.env` when started from the repository root or `.env` when started inside `backend`. Never add real secret values to the handover or commit `.env`.
 
 Simple state-flow pseudocode:
 
@@ -896,6 +942,8 @@ formState stores every field for all eight cards
 
 WHEN customer changes a field:
     update that field in formState
+    IF the field affects an already generated concept:
+        discard the generated concept and preview token
 
 WHEN customer clicks Next:
     validate fields belonging to currentStep
@@ -904,8 +952,26 @@ WHEN customer clicks Next:
         show specific errors below that card
     ELSE:
         change currentStep to the next card
-    scroll to the top edge of the newly displayed form card
+    scroll just above the progress tabs
     keep the same formState
+
+WHEN customer reaches Preview:
+    IF artwork mode is generate or inspiration:
+        validate all prerequisite cards
+        POST JSON request + optional inspiration image to /api/custom-embroidery/previews
+        backend validates and builds an embroidery prompt
+        backend calls Cloudflare and signs a hash of the generated bytes
+        display returned image on Review
+    ELSE:
+        continue to Review without an AI call
+
+WHEN customer submits Review:
+    validate every card
+    POST JSON request + relevant image parts + preview token
+    backend verifies token/image match
+    backend uploads images to authenticated Cloudinary
+    backend saves request and image metadata in one transaction
+    display returned request number
 
 WHEN customer clicks Back or a completed label:
     move to that earlier card
@@ -917,25 +983,19 @@ WHEN customer tries to select a future label:
 WHEN customer selects one local image:
     validate image type and size
     create temporary browser preview
-    do not upload it
+    keep it local until preview generation or final submission
 
 WHEN customer selects an item type:
     load only that item's valid placement choices
     clear an earlier placement if it is invalid for the new item
 
-WHEN customer reaches Preview:
+WHEN customer reaches Review:
     read formState
-    show the current request summary
-    show placeholders for future estimates
-
-WHEN customer clicks Submit:
-    revalidate all cards and both agreements
-    IF validation succeeds:
-        show a UI-only confirmation
-        do not call a backend
+    show the current request summary and generated/uploaded artwork
+    show placeholders only for the still-deferred estimates
 ```
 
-Future backend work must follow the architecture in the rough-flow document: React calls Spring Boot; Spring validates and stores the request; image/AI credentials stay server-side; AI generation is asynchronous; storage uses public IDs/URLs rather than image bytes in PostgreSQL; and the business confirms final artwork and price manually.
+The implemented flow follows the rough document's core trust boundary: React calls Spring Boot; Spring validates and stores the submitted request; provider credentials stay server-side; storage uses Cloudinary IDs/metadata rather than image bytes in PostgreSQL; and the business still confirms final artwork and price manually. AI generation is currently synchronous during the preview request; move it to a queued job only if observed provider latency/reliability warrants that added complexity.
 
 ---
 
@@ -1100,14 +1160,28 @@ backend/
     ├── java/com/isasigns/backend/
     │   ├── IsasignsBackendApplication.java
     │   ├── config/OpenApiConfig.java
-    │   ├── controller/ProductController.java
-    │   ├── dto/ProductResponse.java
-    │   ├── model/Product.java
-    │   └── repository/ProductRepository.java
-    └── resources/application.yml
+    │   ├── controller/
+    │   │   ├── ApiExceptionHandler.java
+    │   │   ├── CustomEmbroideryController.java
+    │   │   └── ProductController.java
+    │   ├── dto/
+    │   │   ├── ApiErrorResponse.java
+    │   │   ├── ProductResponse.java
+    │   │   └── customembroidery/
+    │   ├── exception/
+    │   ├── model/
+    │   │   ├── CustomEmbroideryRequest.java
+    │   │   ├── CustomEmbroideryRequestImage.java
+    │   │   └── Product.java
+    │   ├── repository/
+    │   └── service/
+    ├── resources/
+    │   ├── application.yml
+    │   └── db/migration/
+    └── test/java/com/isasigns/backend/service/
 ```
 
-There is no service layer. The controller talks directly to the repository and performs entity-to-DTO and JSON transformations.
+The catalog controller still talks directly to `ProductRepository` and performs entity-to-DTO/JSON transformations. The custom embroidery write path has a dedicated validation/provider/orchestration service layer because it crosses multiple external and persistence boundaries.
 
 ### Runtime request flow
 
@@ -1116,8 +1190,10 @@ browser/frontend/curl
   -> HTTP request on port 8081
   -> embedded Tomcat
   -> Spring MVC DispatcherServlet
-  -> ProductController route/parameter binding
-  -> ProductRepository generated query
+  -> ProductController for catalog reads
+     OR CustomEmbroideryController for multipart preview/submission
+  -> custom validation/orchestration/provider services where applicable
+  -> repositories
   -> Hibernate/JPA
   -> HikariCP connection
   -> PostgreSQL products table
@@ -1599,8 +1675,8 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 1. Product detail work is uncommitted/untracked.
 2. Fresh seed image identifiers conflict with the Cloudinary helper.
 3. Production frontend build and lint currently hang in the audited environment.
-4. No automated tests.
-5. No database migrations; schema evolution depends on destructive reseeding/manual SQL.
+4. Backend custom-flow tests exist, but catalog/controller integration tests and all frontend tests are missing.
+5. Flyway now owns custom-request migrations from version 2 onward, while the original catalog schema still originates from `init.sql`/baseline version 1.
 6. OpenAPI/data docs are stale relative to current code.
 7. Tracked build/cache/log artifacts create noisy, risky commits.
 8. No mobile navigation.
@@ -1620,15 +1696,15 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 
 ### Backend hardening
 
-- no request validation dependency/DTOs for future writes;
+- custom embroidery has validation DTOs/services; other future write APIs still need equivalent validation;
 - no typed/validated sale model;
-- no consistent error DTO/global exception handler;
+- custom embroidery has a consistent error DTO/global handler; catalog error behavior is still minimal;
 - no pagination/sorting;
-- no service layer;
+- catalog reads still have no service layer; custom embroidery does;
 - direct controller-created `ObjectMapper`;
-- no explicit open-in-view setting;
-- local credentials hardcoded;
-- no profiles/environment config;
+- Open Session in View is explicitly disabled;
+- datasource credentials remain local-development values in `application.yml`; provider secrets are environment-backed;
+- provider environment config exists, but there are no full Spring deployment profiles;
 - no Actuator/health monitoring;
 - no rate limiting/security headers/authentication;
 - no production CORS/reverse-proxy decision.
@@ -1641,7 +1717,7 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 - no error boundary or route-level 404;
 - basic text loading states only;
 - accordion ARIA missing;
-- no test suite;
+- no frontend test suite;
 - no metadata/structured product data;
 - no analytics/consent plan;
 - several buttons/links are inert or lead nowhere;
@@ -1782,6 +1858,111 @@ After editing:
 
 Append new entries at the top of this section, directly below this instruction. Keep older entries.
 
+### 2026-07-23 — Cloudflare quota handling and preview-model optimization
+
+**Incident**
+
+- A browser preview request returned local HTTP 502 because Cloudflare returned HTTP 429.
+- A safe direct diagnostic request confirmed the underlying Cloudflare error: the account had consumed its daily free allocation of 10,000 neurons.
+- The earlier backend translated every upstream provider failure into 502 and discarded Cloudflare's structured error code/message, making a quota issue look like a generic integration failure.
+
+**Changes**
+
+- Switched the local/default image model from `@cf/black-forest-labs/flux-2-dev` to `@cf/black-forest-labs/flux-2-klein-4b`.
+- Klein 4B supports the same multipart reference-image pattern, is designed for fast previews, and uses a fixed four-step inference process, so the backend omits the `steps` part for Klein models.
+- Retained 1024×1024 output and 512×512 maximum references while reducing expected neuron consumption dramatically compared with FLUX.2 Dev at 25 steps.
+- Added safe parsing of Cloudflare error metadata without logging credentials or exposing raw provider identifiers.
+- Recognizes documented/observed daily-allocation codes and messages separately from temporary out-of-capacity errors.
+- Daily-allocation failures now return HTTP 429, a `Retry-After` header calculated to the next 00:00 UTC reset, and an actionable customer-facing message.
+- Temporary provider capacity/rate limits return HTTP 429 with a one-minute retry recommendation.
+- Other provider failures remain HTTP 502.
+- Updated the ignored local `.env`, committed `.env.example`, and application default to Klein 4B.
+
+**Operational consequence**
+
+- Changing models cannot restore an allowance already consumed for the current UTC day. Wait for the next 00:00 UTC reset or enable Cloudflare Workers Paid.
+- The free allowance is account-wide. Production traffic should use Workers Paid plus the planned application-level per-account daily limit.
+
+**Verification**
+
+- Added exception-handler coverage confirming HTTP 429 and `Retry-After`.
+- Backend test suite now contains 11 passing tests.
+
+---
+
+### 2026-07-23 — AI preview lazy-loading experience
+
+**Work completed**
+
+- Changed generate/inspiration navigation so clicking **Generate AI preview** immediately opens the final Review card while the provider request continues.
+- Added a dedicated Review-card skeleton using `threadnbutterLogoOutlineIMG.svg` as a CSS mask.
+- Animated the outline logo through the complete brown, sand, sage, and green website theme palette.
+- Added a soft skeleton shimmer and the message **Generating your AI preview!** beneath the logo.
+- Kept the complete Review summary and acknowledgement UI visible during generation; only the future image panel is replaced by the skeleton.
+- Prevented Back, progress-tab changes, and submission while generation is active.
+- Replaced the loader in place with the returned AI concept, avoiding a second navigation/scroll transition.
+- Added reduced-motion behavior for customers whose operating system requests less animation.
+- Reworked the AI prompt from an isolated embroidery-artwork request into a simplified, zoomed-out product placement mockup showing the complete item and requested location.
+- Removed requests for thread-level realism and explicitly discouraged visible stitch simulation, extreme fabric texture, tight artwork crops, people, props, and scenery.
+- Made `imageIntent` server-validated and prompt-aware: exact artwork receives strong preservation instructions, inspiration permits a new concept, and placement references guide position/scale.
+
+**Exact-logo limitation**
+
+- The stronger exact-artwork prompt materially reduces unintended redesign, but a generative image model cannot guarantee pixel-perfect logo reproduction, especially for lettering and small marks.
+- For guaranteed exact logos, the recommended later implementation is deterministic compositing: generate or select a blank item mockup, then overlay the original uploaded artwork bytes at placement-specific coordinates without asking the AI to redraw the logo.
+
+**Verification**
+
+- Frontend TypeScript project compilation passed.
+- `git diff --check` passed.
+
+---
+
+### 2026-07-23 — Custom Embroidery backend and provider integration
+
+**Implementation completed**
+
+- Added Flyway and migrations for the future user foundation, submitted custom-embroidery requests, and request image metadata.
+- Added server-side validation mirroring the wizard rules, including contact formats, required artwork modes/uploads, item-aware placements, dimensions, quantity, content rights, and estimate acknowledgement.
+- Added decoded-image validation for PNG, JPEG, and WEBP with a 10 MB limit; SVG remains deliberately unsupported.
+- Added an embroidery-specific Cloudflare prompt builder using the full request context and exact requested wording.
+- Added Cloudflare Workers AI FLUX preview generation, including a resized 512×512 maximum inspiration image when applicable.
+- Added one-hour HMAC preview tokens binding the generated image bytes to the server response, preventing a different generated file from being submitted under the same token.
+- Added authenticated Cloudinary uploads and PostgreSQL asset metadata persistence for customer artwork and generated concepts.
+- Added cleanup of already uploaded Cloudinary assets when submission processing throws before completion.
+- Added Toronto-zone request-number years and HMAC hashing of normalized email/phone for future rate limiting.
+- Added safe API error handling and disabled JPA Open Session in View.
+- Added `.env` loading, an ignored local secret file pattern, and a committed `.env.example` containing placeholders only.
+- Connected React to both multipart endpoints, invalidated stale previews when design-affecting fields change, displayed the generated concept on the final card, and replaced the prototype confirmation with a real request-number confirmation.
+- Moved content-rights confirmation to the Artwork card so it is completed before an inspiration image is transmitted to AI.
+
+**API contracts**
+
+- `POST /api/custom-embroidery/previews`: multipart `request` JSON plus optional `customerImage`; returns image base64, media type, preview token, and expiry.
+- `POST /api/custom-embroidery/requests`: multipart `request` JSON, optional `customerImage`, and AI-only `generatedImage` plus `previewToken`; returns request ID, request number, status, and creation time.
+
+**Verification**
+
+- Flyway successfully baselined the existing schema at version 1 and applied migrations 2 and 3 to the local PostgreSQL database.
+- Hibernate schema validation passed.
+- Spring Boot started successfully on an isolated random port with all configured environment variables detected.
+- A real generate-mode request through `POST /api/custom-embroidery/previews` successfully returned a JPEG concept and signed preview token from Cloudflare; the disposable preview was not submitted, uploaded to Cloudinary, or persisted.
+- Added unit coverage for common validation, required inspiration parts, item/placement compatibility, null/malformed input, prompt content, token verification/tampering, and stable contact HMACs.
+- `./gradlew test` passed after adding the JUnit Platform launcher required by Gradle 9.
+- Frontend TypeScript project compilation passed with `npx tsc -b --pretty false`.
+- A full Vite production build reached the bundling/transform phase but did not terminate in a reasonable local verification window; it was stopped manually. This does not change the successful TypeScript result and should be rechecked separately.
+- The permanent Cloudinary upload plus database submission path was intentionally not smoke-tested with the disposable provider concept to avoid creating fake customer assets/rows; exercise that path through the browser with a real test request when desired.
+
+**Still deferred**
+
+- Authentication, access codes, JWT, and linking requests to `app_users`.
+- Enforced one-per-account daily AI generation limits.
+- Email/SMS confirmations and internal business notifications.
+- Signed customer-facing Cloudinary delivery URLs/read endpoints.
+- Stitch count, thread colours, production feasibility, pricing, tax, inventory, payment, and checkout.
+
+---
+
 ### 2026-07-23 — Custom Embroidery validation and item-aware placement
 
 **Decisions**
@@ -1790,6 +1971,13 @@ Append new entries at the top of this section, directly below this instruction. 
 - Customers must complete each card before advancing; future progress labels can no longer bypass validation.
 - Artwork upload requirements now depend on the selected artwork-handling option.
 - Item selection is mandatory and controls which embroidery placements are available.
+- The future account design will use a customer's email or phone number, an access code, and JWT-based authentication, backed by a user table; authentication is not part of the first backend integration.
+- AI generation will not be rate-limited in the first integration, but normalized contact identifiers can be HMAC-hashed now to support later limits without storing a separate plaintext rate-limit key.
+- The backend should persist submitted requests only. Pre-submission AI previews should use expiring, server-signed preview metadata and temporary authenticated image assets rather than database draft requests.
+- Application time calculations use `America/Toronto`.
+- Initial uploads allow PNG, JPEG, and WEBP up to 10 MB; SVG is excluded until a safe sanitization/rasterization path exists.
+- Spring Boot will perform authenticated Cloudinary uploads, PostgreSQL will store asset metadata rather than image bytes, and customer artwork will use authenticated delivery with signed URLs.
+- Automated email/SMS delivery is deferred until after request capture and AI preview generation work end to end.
 
 **Work completed**
 
@@ -1809,6 +1997,7 @@ Append new entries at the top of this section, directly below this instruction. 
 - Kept the quantity guidance immediately above the quantity control on card six.
 - Updated the artwork notice to state one AI concept image per user account daily and reduced the upload picker to a compact clickable box.
 - On the Preview card, the forward button reads **Generate AI preview** for generate/inspiration modes and **Review details** for exact-upload/manual-review modes.
+- Added prerequisite-aware tab navigation: visited cards remain directly selectable, while unvisited cards and cards blocked by an invalid prerequisite stay disabled.
 - Kept final submission as a frontend-only prototype and added full-request revalidation.
 
 **Verification**
@@ -2040,6 +2229,50 @@ Copy this block for each session:
 
 - 
 ```
+
+---
+
+### 2026-07-23 — Custom embroidery notification delivery and complete persistence
+
+**Goal**
+
+- Complete the Thread & Butter request flow by notifying the customer through their selected
+  contact method, notifying the administrator by both email and SMS, and persisting the complete
+  request plus the delivery audit trail.
+
+**Work completed**
+
+- Added SMTP email delivery through Spring Mail.
+- Added SMS delivery through Twilio's Messages API.
+- Customer confirmation routing follows `preferred_contact_method`: email sends email; phone sends
+  SMS.
+- The configured Thread & Butter administrator receives a detailed email and a concise SMS for
+  every submitted request.
+- Notification failures never delete or roll back a successfully committed customer request.
+- Every delivery is recorded as `PENDING`, `SENT`, `FAILED`, or `SKIPPED`.
+- The generated-image and broken-image fallback previews are rounded, bordered, padded, and given
+  spacing below the image.
+
+**Database/migration changes**
+
+- Added migration `V4__embroidery_notifications_and_complete_details.sql`.
+- Added `customer_image_intent` and `ai_preview_failed` to
+  `custom_embroidery_requests`.
+- Added `custom_embroidery_notifications`, including audience, channel, recipient, subject, body,
+  provider, provider message ID, status, failure/skip reason, and timestamps.
+- Both customer email and phone values are now saved when provided; the preferred method continues
+  to control which customer notification is sent.
+
+**Configuration**
+
+- Email uses provider-neutral SMTP environment variables.
+- SMS uses `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER`.
+- Administrator recipients use `THREAD_AND_BUTTER_ADMIN_EMAIL` and
+  `THREAD_AND_BUTTER_ADMIN_PHONE`.
+- Delivery channels default to disabled until `EMAIL_NOTIFICATIONS_ENABLED` and
+  `SMS_NOTIFICATIONS_ENABLED` are explicitly enabled.
+- Full setup instructions and an audit SQL query are in
+  `backend/docs/CUSTOM_EMBROIDERY_NOTIFICATIONS.md`.
 
 ---
 
