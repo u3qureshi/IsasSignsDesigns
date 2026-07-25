@@ -7,6 +7,7 @@ import handmadeLogo from "../assets/brand/handmade.svg";
 import { EMBROIDERY_COLLECTIONS } from "../config/embroideryCollections";
 import { PRINTING_COLLECTIONS } from "../config/printingCollections";
 import NavDropdown from "./NavDropdown";
+import UserAccountMenu from "./auth/UserAccountMenu";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -143,6 +144,9 @@ export default function Header() {
 
       <header>
         <div ref={topRowRef} className="relative bg-white">
+          <div className="absolute right-3 top-3 z-[60]">
+            <UserAccountMenu />
+          </div>
 
           <div className="mx-auto flex max-w-6xl items-start px-3 pt-[5px] pb-2">
             <div className="w-[clamp(0rem,18vw,18rem)] shrink-0 overflow-hidden pt-[clamp(0rem,1.8vw,2.5rem)] pl-[clamp(3rem,4.7vw,4.5rem)] max-[770px]:w-0 max-[770px]:overflow-hidden">
@@ -233,7 +237,7 @@ export default function Header() {
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/faq">FAQ</Link>
           </nav>
 
-          <div className="flex w-24 shrink-0 justify-end">
+          <div className="flex w-20 shrink-0 items-center justify-end">
             <button
               className="group relative rounded-full p-2.5 text-[hsl(var(--theme-isa-green))]"
               type="button"

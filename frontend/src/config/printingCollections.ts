@@ -5,8 +5,9 @@ export const PRINTING_COLLECTIONS = [
     category: "printing-popular-designs",
   },
   {
-    label: "Custom",
+    label: "Custom Design Studio",
     path: "/printing/custom",
     category: "printing-custom",
+    isNew: true,
   },
 ];

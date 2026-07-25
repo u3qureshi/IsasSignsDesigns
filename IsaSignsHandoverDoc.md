@@ -807,11 +807,12 @@ When a card has multiple images, dot clicks call `preventDefault()` and `stopPro
 - Component: `frontend/src/components/pages/CustomEmbroideryPage.tsx`
 - Planning source: `frontend/documents/thread-n-butter-custom-embroidery-flow.md`
 
-The Custom Designs submenu is intentionally different from ordinary product-category pages. Instead of rendering database product cards, it opens a request wizard backed by Spring Boot, PostgreSQL, Cloudflare Workers AI, and authenticated Cloudinary storage.
+The **Custom Design Studio** submenu is intentionally different from ordinary product-category pages. Instead of rendering database product cards, it opens a request wizard backed by Spring Boot, PostgreSQL, Cloudflare Workers AI, and authenticated Cloudinary storage.
 
 Current card order:
 
-1. **Customer** — full name, preferred contact method, and the matching email or phone field.
+1. **Customer** — full name, required email, optional numbers-only phone, and optional
+   text-message consent.
 2. **Idea** — concept description and optional exact wording.
 3. **Artwork** — one required artwork-handling choice and a conditional local image upload.
 4. **Item** — required customer-supplied or Thread & Butter-supplied choice, item details, and required item type.
@@ -831,7 +832,7 @@ Navigation/UI behavior:
 - reduced page, progress-tab, card-header, field, choice-card, upload, preview, and footer spacing keeps more of the active form visible without scrolling;
 - the footer step count is a larger, fully opaque dark brown and remains visible on small screens as `1/8`, `2/8`, and so on;
 - React component state preserves entered values while moving between cards;
-- conditional inputs appear based on contact method, AI choice, item provider, selected item, placement, and size mode;
+- conditional inputs appear based on AI choice, item provider, selected item, placement, and size mode;
 - clicking Next validates the current card and shows specific inline feedback if it is incomplete;
 - the final submit action revalidates the entire request and shows specific feedback rather than failing silently;
 - generated previews and backend errors are displayed without losing the form state;
@@ -844,9 +845,12 @@ Navigation/UI behavior:
 Current validation rules:
 
 - full name is required;
-- the selected contact method is required;
-- email uses both an HTML email input and an explicit email-format check;
-- phone input strips every non-digit character, allows at most 15 digits, and requires 10–15 digits;
+- email is the required contact method and uses both an HTML email input and an explicit
+  email-format check;
+- phone is optional, strips every non-digit character, allows at most 15 digits, and requires
+  10–15 digits when present;
+- text-message consent is optional, appears below the phone field, and cannot be selected without
+  a phone number;
 - the embroidery idea description is required;
 - exactly one artwork-handling option must be selected;
 - an upload is optional only for **Create one AI concept from my description** and **No generated image — review my request manually**;
@@ -855,7 +859,6 @@ Current validation rules:
 - both provider choices use the same required item-type selector;
 - choosing `Other` with either provider reveals the same required **What item will be embroidered?** field;
 - quantity must be at least one;
-- content-rights confirmation is required on the Artwork card before any uploaded content can be sent to AI;
 - the final estimate acknowledgement is required before submission.
 
 Item and placement behavior:
@@ -1440,9 +1443,9 @@ Canonical mapping:
 | Embroidery submenu | Father's Day | `embroidery-fathers-day` |
 | Embroidery submenu | Mother's Day | `embroidery-mothers-day` |
 | Embroidery submenu | Seasonal & Holidays | `embroidery-seasonal-holidays` |
-| Embroidery submenu | Custom Designs | `embroidery-custom-designs` |
+| Embroidery submenu | Custom Design Studio | `embroidery-custom-designs` |
 | Printing submenu | Popular designs | `printing-popular-designs` |
-| Printing submenu | Custom | `printing-custom` |
+| Printing submenu | Custom Design Studio | `printing-custom` |
 
 Best Sellers is deliberately not a category. Set `is_featured = true` on any product to show it there while preserving its real category.
 
@@ -2301,18 +2304,40 @@ submission even if Gmail is temporarily unavailable or misconfigured.
 
 **Frontend behavior**
 
-- The customer-information card now requests a required email address only.
-- The email-versus-phone selector and phone input are hidden for this phase.
+- The customer-information card requests a required email address.
+- A numbers-only phone input appears beneath email and is optional. It accepts at most 15 digits.
+- An optional checkbox explicitly asks for consent to receive text messages about the request and
+  notes that message and data rates may apply.
+- The red bold text `(Consent is optional)` appears immediately beneath the entire consent
+  checkbox box with a one-pixel gap. The consent box and note are wrapped together so the parent
+  card's `space-y-4` utility cannot insert a large gap between them.
+- Selecting text-message consent without entering a phone number blocks progression.
+- A provided phone number must contain 10 to 15 digits.
+- The old email-versus-phone selector remains removed; email is still the required delivery
+  channel.
 - Client-side email format validation still blocks progression when the address is missing or
   malformed.
-- The review card identifies the customer's contact value as an email.
+- The review card displays the email, optional phone number, and text-message consent decision.
+- The former uploaded-content ownership/permission confirmation was removed from the Artwork card,
+  and the backend no longer requires that acknowledgement.
+- The technical sentence describing database and notification-history persistence was removed from
+  the final Submit card.
 - The success screen tells the customer to retain the request number, check for the confirmation
   email, and expect Thread & Butter to reach out shortly.
+- The Embroidery and Printing dropdowns both use the visible label **Custom Design Studio** for
+  their custom entry. Each custom link is red and carries a small red `NEW` badge positioned above
+  and to the right with a slight rotation and hover movement.
 
 **Backend behavior**
 
 - The API only accepts `preferredContact: "email"` for new custom embroidery submissions.
 - A valid customer email is always required server-side, even if a caller bypasses the React form.
+- The backend accepts a nullable phone number, normalizes it to digits, validates 10 to 15 digits
+  when present, and rejects consent without a phone number.
+- Migration `V5__custom_embroidery_sms_consent.sql` adds the non-null `sms_consent` column with a
+  default of `false`; existing rows therefore migrate safely.
+- The optional phone number and consent decision are included in both the customer confirmation
+  and detailed administrator email.
 - After commit, `CustomEmbroideryNotificationService` always attempts:
   - one customer email using the customer-specific subject and confirmation body;
   - one administrator email containing every saved request field and saved-image metadata.
@@ -2327,10 +2352,38 @@ submission even if Gmail is temporarily unavailable or misconfigured.
   `THREAD_AND_BUTTER_ADMIN_EMAIL` are populated.
 - For Gmail SMTP, use `smtp.gmail.com`, port `587`, STARTTLS, the Gmail address as both username and
   sender, and a 16-character Google App Password without spaces.
+- A Google OAuth client ID/secret is not used by the current SMTP implementation. The credential
+  required by `SMTP_PASSWORD` is a Google App Password created after enabling two-step
+  verification. Any accidentally exposed OAuth client secret should be deleted/rotated.
 - Keep `SMS_NOTIFICATIONS_ENABLED=false`. No Twilio account or credentials are needed for this
   email-only phase.
+- Real carrier SMS has no permanently free production option. At the project's current low volume,
+  switching from Twilio to another carrier API would save very little, so the decision was to
+  defer SMS and use working SMTP email for both customer and administrator delivery.
 - Detailed setup and notification-audit SQL remain in
   `backend/docs/CUSTOM_EMBROIDERY_NOTIFICATIONS.md`.
+
+**Confirmed local result**
+
+- The user configured Gmail SMTP successfully and confirmed that real email delivery works.
+- Final submission saves the request and image metadata first.
+- After commit, the customer receives a request-specific success confirmation.
+- Thread & Butter receives a separate detailed internal email.
+- Notification delivery outcomes remain auditable in `custom_embroidery_notifications`.
+
+**Local runtime incident and resolution**
+
+- `localhost:5173` stopped loading even though a Vite process held the port.
+- PostgreSQL was healthy, and the Spring API continued returning HTTP `200` on port `8081`.
+- Vite accepted TCP connections but returned no response body while attempting TypeScript/Babel
+  module transformation.
+- Restarting Vite alone and switching from Node `24.1.0` to the installed Node `24.13.1` did not
+  resolve the transformation hang.
+- A clean `npm ci --no-audit --no-fund` rebuilt the frontend dependency tree.
+- Vite then served the homepage, custom embroidery route, entry module, and
+  `CustomEmbroideryPage.tsx` successfully with HTTP `200`.
+- Continue using the working Node installation under
+  `~/.nvm/versions/node/v24.13.1/bin` for this local environment.
 
 **Verification**
 
@@ -2338,6 +2391,181 @@ submission even if Gmail is temporarily unavailable or misconfigured.
 - Frontend TypeScript checking passed with
   `npx tsc --noEmit -p tsconfig.app.json --pretty false`.
 - The frontend production bundle passed with `npx vite build`.
+- Flyway validated five migrations and successfully advanced the local PostgreSQL schema from
+  version `4` to version `5`.
+- Database inspection confirmed `custom_embroidery_requests.sms_consent` is a non-null boolean and
+  Flyway recorded migration `5:custom embroidery sms consent:true`.
+- Both the frontend custom page and backend product API returned HTTP `200` after the final
+  restarts.
+
+---
+
+### 2026-07-25 — Passwordless authentication architecture planned, not implemented
+
+**Requested direction**
+
+- Customers will authenticate with an email address and emailed one-time code.
+- No password will be created or stored.
+- The browser session should use JWT authentication and secure cookies.
+- Sign-up will use required email and first name, with optional last name and phone.
+- The header will gain a user icon and signed-out/signed-in dropdown states.
+- Account Settings and ownership-based authorization will follow.
+
+**Important status**
+
+- This is a design decision and implementation plan only.
+- No Spring Security dependency, JWT filter, cookies, email-code endpoints, account UI, or
+  authorization rules were added on 2026-07-25.
+- The full design was intentionally separated from this general handover into:
+  `frontend/documents/thread-and-butter-authentication-plan.md`.
+
+**Recommended account model**
+
+- Required customer values: email and first name.
+- Optional customer values: last name, phone, and independent text-message consent.
+- Email is the only login identifier.
+- Phone remains contact information and is not used to authenticate.
+- System fields include UUID, normalized email, account status, verification timestamps, roles,
+  consent timestamp/version, login timestamps, and lifecycle timestamps.
+- Avoid collecting date of birth, addresses, security questions, or other personal data until a
+  business feature requires them.
+
+**Recommended passwordless flow**
+
+1. Customer requests a sign-up or sign-in code for an email address.
+2. The API gives the same generic response whether or not an account exists.
+3. The backend creates a cryptographically random numeric code.
+4. Only a dedicated HMAC of the code is stored.
+5. The code is emailed through the authentication email service.
+6. The customer enters the code.
+7. Verification atomically checks expiry/attempt limits and consumes the code once.
+8. A verified new account is activated or an existing active account is authenticated.
+9. The backend issues secure cookies and React reloads the safe `/api/auth/me` profile.
+
+Recommended initial code controls are eight digits, ten-minute expiry, five guesses, a 60-second
+resend cooldown, single use, newest-code-wins invalidation, and rate limits by both normalized
+email and IP address. Authentication secrets must never be logged.
+
+**Recommended cookie/token design**
+
+- Use a short-lived signed JWT access token, approximately ten minutes.
+- Use a high-entropy opaque refresh token rather than a long-lived refresh JWT.
+- Store only the refresh-token hash in PostgreSQL.
+- Rotate refresh tokens on every successful refresh and revoke a token family if an old rotated
+  value is reused.
+- Keep both credentials in `HttpOnly` cookies; never use `localStorage` or `sessionStorage`.
+- Production cookies use `Secure`, `SameSite=Lax`, `Path=/`, no `Domain`, and preferably
+  `__Host-` names.
+- Keep Spring CSRF protection enabled. React must send a CSRF header for state-changing requests
+  because browsers attach authentication cookies automatically.
+- JWT validation must restrict the signing algorithm and verify signature, issuer, audience,
+  expiry, and required claims.
+- JWT claims should contain identifiers/authorization information only, not customer email, name,
+  phone, or consent data.
+
+**Planned database work**
+
+- Migrate `app_users` from `full_name` and either-contact identity to required email,
+  `first_name`, optional `last_name`, optional phone, SMS-consent metadata, lifecycle state, and
+  verification/login timestamps.
+- Add `user_roles` for controlled `CUSTOMER` and `ADMIN` roles.
+- Add `auth_email_codes` for HMACed, expiring, single-use challenges and attempt counts.
+- Add `auth_sessions` for rotating refresh-token hashes, token families, expiry, and revocation.
+- Add `auth_audit_events` for safe authentication/security events without raw secrets.
+- Use the existing nullable `custom_embroidery_requests.user_id` to link requests submitted by a
+  signed-in customer.
+- Never accept a client-supplied `user_id` for ownership; derive it from the authenticated
+  principal.
+
+**Planned API**
+
+```text
+POST /api/auth/signup/code
+POST /api/auth/signup/verify
+POST /api/auth/login/code
+POST /api/auth/login/verify
+POST /api/auth/refresh
+POST /api/auth/logout
+GET  /api/auth/csrf
+GET  /api/auth/me
+
+GET    /api/account
+PATCH  /api/account/profile
+POST   /api/account/email/code
+POST   /api/account/email/verify
+GET    /api/account/sessions
+DELETE /api/account/sessions/{sessionId}
+POST   /api/account/sessions/revoke-all
+DELETE /api/account
+GET    /api/account/embroidery-requests
+```
+
+**Planned React/UI work**
+
+- Add a user icon immediately left of the shopping cart.
+- Signed-out dropdown: **Sign in** and **Create account**.
+- Signed-in dropdown: customer identity, **Account settings**, **My embroidery requests**,
+  eventual **My orders**, and **Sign out**.
+- Administrator accounts later receive an explicit **Admin dashboard** link.
+- Add an authentication provider that calls `/api/auth/me` at application start and never reads
+  the JWT directly.
+- Add accessible email/code forms, keyboard navigation, Escape/focus restoration, click-outside
+  behavior, focus states, loading states, and mobile layouts.
+- Account Settings will support profile changes, optional phone/consent, verified email changes,
+  session listing/revocation, sign out everywhere, and account deactivation/deletion.
+- Sensitive actions will require a fresh email code.
+
+**Recommended implementation order**
+
+1. Upgrade Spring Boot `3.3.5` through a supported 3.x version and regression-test existing flows.
+2. Add Spring Security and explicit public/customer/admin route rules.
+3. Add authentication Flyway migrations and JPA models.
+4. Implement code creation, delivery, rate limiting, verification, and audit events.
+5. Implement JWT access validation and rotating opaque refresh sessions.
+6. Add secure cookies, CSRF integration, refresh, logout, and revoke-all.
+7. Build the React authentication provider, dialog, code form, and header user menu.
+8. Build Account Settings and session management.
+9. Link authenticated embroidery requests and enforce record ownership.
+10. Move authentication email from Gmail to a transactional provider before customer launch,
+    configure SPF/DKIM/DMARC, enable HTTPS, and complete security testing/review.
+
+**Recommended product defaults awaiting implementation**
+
+- Keep guest embroidery submissions available.
+- Use email only for login.
+- Require first name but not last name.
+- Keep phone and SMS consent optional and unbundled from account creation.
+- Remember users with a rotating 30-day refresh session.
+- Start with `CUSTOMER` and manually assigned `ADMIN` roles.
+- Prefer frontend and API on the same site.
+- Deactivate and revoke sessions first on deletion; define legal retention before permanent
+  erasure.
+
+**Authentication UI prototype implemented on 2026-07-25**
+
+- The global header now includes a bordered maroon account icon in the top-right branding row,
+  directly above the cart. Hovering changes the icon to the site's Dijon/sand theme colour without
+  changing its transparent background.
+- Clicking the icon opens an account dropdown. Its signed-out state contains **Log in** and **Sign
+  up**.
+- Both actions open a centered React portal dialog that animates outward from the account icon's
+  exact viewport position. Clicking outside the card, pressing Escape, or clicking its X closes it.
+- Login currently collects and validates an email address before showing an eight-digit code form.
+- Sign-up collects required first name and email, optional last name, a digits-only optional phone
+  number, and independent optional SMS consent.
+- The code screen is deliberately a UI-only prototype: any eight digits activate a temporary
+  signed-in state for the current page session. It does not send email, call an authentication
+  endpoint, persist a user, or issue JWT/cookies.
+- The temporary signed-in dropdown contains customer identity, **Account settings**, **My
+  embroidery requests**, **My orders**, and **Sign out**. Requests and orders are disabled and
+  labelled **Soon** until their authenticated pages are built.
+- Account settings currently edits memory-only React state and clearly says persistence will be
+  connected during backend authentication.
+- Main implementation files are
+  `frontend/src/components/auth/UserAccountMenu.tsx`,
+  `frontend/src/components/auth/AuthDialog.tsx`, the `Header.tsx` integration, and the dialog
+  animation rules in `frontend/src/index.css`.
+- Strict TypeScript checking and the Vite production build passed after this UI implementation.
 
 ---
 
@@ -2349,6 +2577,8 @@ This handover was built from the following repository sources:
 - `IsasSignsDesigns_Copilot_Chat_Project_Handoff.txt` — consolidated prior chat/project handoff;
 - `backend/docs/BACKEND_OVERVIEW.md` — detailed backend overview, last updated 2026-02-23;
 - `frontend/documents/products_table_data_dictionary.md` — original products-table dictionary;
+- `frontend/documents/thread-and-butter-authentication-plan.md` — production passwordless
+  authentication, cookie/JWT, authorization, account UI, security, testing, and rollout plan;
 - `backend/docs/openapi.json` and `backend/docs/openapi.yaml` — stale generated API snapshots;
 - `backend/docs/products_202602231455.json` — dated 15-product database export;
 - all audited source/configuration files under `frontend` and `backend`;

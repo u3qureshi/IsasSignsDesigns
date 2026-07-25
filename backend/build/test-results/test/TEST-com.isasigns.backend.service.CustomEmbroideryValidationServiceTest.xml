@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-07-24T02:19:04.112Z" hostname="Usmans-Mac-mini.local" time="0.008">
+<testsuite name="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-07-25T05:57:22.628Z" hostname="Usmans-Mac-mini.local" time="0.007">
   <properties/>
-  <testcase name="acceptsCompleteInspirationSubmissionParts()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.001"/>
-  <testcase name="reportsMissingFieldsForEmptyPayloadWithoutThrowingNullPointerException()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.003"/>
+  <testcase name="acceptsCompleteInspirationSubmissionParts()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.002"/>
+  <testcase name="reportsMissingFieldsForEmptyPayloadWithoutThrowingNullPointerException()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.002"/>
   <testcase name="rejectsPlacementThatDoesNotBelongToSelectedItem()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
-  <testcase name="acceptsCompleteGeneratedPreviewRequest()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
+  <testcase name="requiresEmailWhileNotificationsAreEmailOnly()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
+  <testcase name="acceptsOptionalPhoneWithSmsConsent()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
+  <testcase name="rejectsSmsConsentWithoutPhoneNumber()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
+  <testcase name="acceptsCompleteGeneratedPreviewRequest()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.001"/>
   <testcase name="acceptsAiRequestWithoutGeneratedImageAfterPreviewFailure()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
   <testcase name="requiresReferenceImageForInspirationPreview()" classname="com.isasigns.backend.service.CustomEmbroideryValidationServiceTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>

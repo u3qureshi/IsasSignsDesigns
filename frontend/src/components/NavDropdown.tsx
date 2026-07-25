@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 interface NavDropdownItem {
   label: string;
   path: string;
+  isNew?: boolean;
 }
 
 interface NavDropdownProps {
@@ -62,9 +63,24 @@ export default function NavDropdown({ label, menuId, items }: NavDropdownProps) 
                 to={item.path}
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="block px-5 py-2.5 text-sm font-semibold text-[hsl(var(--theme-brown-900))] transition-colors hover:bg-[hsl(var(--theme-sand-300)/0.35)] focus:bg-[hsl(var(--theme-sand-300)/0.35)] focus:outline-none"
+                className={[
+                  "group block px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-[hsl(var(--theme-sand-300)/0.35)] focus:bg-[hsl(var(--theme-sand-300)/0.35)] focus:outline-none",
+                  item.isNew
+                    ? "text-red-600 hover:text-red-700"
+                    : "text-[hsl(var(--theme-brown-900))]",
+                ].join(" ")}
               >
-                {item.label}
+                <span className="relative inline-block">
+                  {item.label}
+                  {item.isNew && (
+                    <span
+                      aria-label="New"
+                      className="absolute -right-8 -top-2.5 rotate-12 rounded-full bg-red-600 px-1.5 py-0.5 text-[0.5rem] font-black uppercase leading-none tracking-wide text-white shadow-sm transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:rotate-[16deg]"
+                    >
+                      NEW
+                    </span>
+                  )}
+                </span>
               </Link>
             ))}
           </div>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.isasigns.backend.service.PreviewTokenServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-24T02:19:04.123Z" hostname="Usmans-Mac-mini.local" time="0.021">
+  <properties/>
+  <testcase name="createsStableContactHmacWithoutReturningContact()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.018"/>
+  <testcase name="verifiesTheImageUsedToIssueToken()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.001"/>
+  <testcase name="rejectsDifferentGeneratedImage()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

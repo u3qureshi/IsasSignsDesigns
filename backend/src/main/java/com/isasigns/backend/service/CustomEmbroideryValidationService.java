@@ -81,9 +81,6 @@ public class CustomEmbroideryValidationService {
         if (!Boolean.TRUE.equals(payload.estimateAccepted())) {
             errors.add("The estimate acknowledgement is required.");
         }
-        if (!Boolean.TRUE.equals(payload.contentRightsConfirmed())) {
-            errors.add("The content-rights confirmation is required.");
-        }
         throwIfErrors(errors);
     }
 
@@ -104,6 +101,13 @@ public class CustomEmbroideryValidationService {
         }
         if (isBlank(payload.email()) || !EMAIL_PATTERN.matcher(payload.email().trim()).matches()) {
             errors.add("A valid email address is required.");
+        }
+        String phone = digits(payload.phone());
+        if (!phone.isEmpty() && (phone.length() < 10 || phone.length() > 15)) {
+            errors.add("Phone number must contain 10 to 15 digits when provided.");
+        }
+        if (Boolean.TRUE.equals(payload.smsConsent()) && phone.isEmpty()) {
+            errors.add("A phone number is required when text-message consent is selected.");
         }
 
         if (isBlank(payload.ideaDescription())) {

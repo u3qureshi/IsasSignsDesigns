@@ -2,6 +2,7 @@ export interface EmbroideryCollection {
   label: string;
   path: string;
   category: string;
+  isNew?: boolean;
 }
 
 export const EMBROIDERY_COLLECTIONS: EmbroideryCollection[] = [
@@ -31,8 +32,9 @@ export const EMBROIDERY_COLLECTIONS: EmbroideryCollection[] = [
     category: "embroidery-seasonal-holidays",
   },
   {
-    label: "Custom Designs",
+    label: "Custom Design Studio",
     path: "/embroidery/custom-designs",
     category: "embroidery-custom-designs",
+    isNew: true,
   },
 ];

@@ -8,6 +8,7 @@ import {
   Lightbulb,
   Mail,
   MapPin,
+  Phone,
   Shirt,
   Sparkles,
   Upload,
@@ -29,6 +30,7 @@ interface CustomEmbroideryForm {
   preferredContact: "email";
   email: string;
   phone: string;
+  smsConsent: boolean;
   ideaDescription: string;
   exactText: string;
   aiMode: AiMode | "";
@@ -197,7 +199,6 @@ const PREVIEW_DEPENDENT_FIELDS = new Set<keyof CustomEmbroideryForm>([
   "sizeMode",
   "width",
   "height",
-  "contentRightsConfirmed",
 ]);
 
 const INITIAL_FORM: CustomEmbroideryForm = {
@@ -205,6 +206,7 @@ const INITIAL_FORM: CustomEmbroideryForm = {
   preferredContact: "email",
   email: "",
   phone: "",
+  smsConsent: false,
   ideaDescription: "",
   exactText: "",
   aiMode: "",
@@ -433,6 +435,12 @@ export default function CustomEmbroideryPage() {
       if (!form.fullName.trim()) errors.push("Enter your full name.");
       if (!form.email.trim()) errors.push("Enter your email address.");
       else if (!EMAIL_PATTERN.test(form.email.trim())) errors.push("Enter a valid email address.");
+      if (form.phone && (form.phone.length < 10 || form.phone.length > 15)) {
+        errors.push("Enter a phone number containing 10 to 15 digits.");
+      }
+      if (form.smsConsent && !form.phone) {
+        errors.push("Enter a phone number before consenting to text messages.");
+      }
     }
 
     if (stepIndex === 1 && !form.ideaDescription.trim()) {
@@ -446,9 +454,6 @@ export default function CustomEmbroideryPage() {
         !form.uploadedImage
       ) {
         errors.push("Upload an image for the artwork option you selected.");
-      }
-      if (!form.contentRightsConfirmed) {
-        errors.push("Confirm that you have rights to the submitted content.");
       }
     }
 
@@ -528,6 +533,7 @@ export default function CustomEmbroideryPage() {
       preferredContact: form.preferredContact,
       email: form.email,
       phone: form.phone,
+      smsConsent: form.smsConsent,
       ideaDescription: form.ideaDescription,
       exactText: form.exactText,
       aiMode: form.aiMode,
@@ -719,6 +725,44 @@ export default function CustomEmbroideryPage() {
                 We will email your submission confirmation here and reach out with the next steps.
               </p>
             </label>
+
+            <label className="block">
+              <FieldLabel optional>Phone number</FieldLabel>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(event) =>
+                    updateField("phone", event.target.value.replace(/\D/g, "").slice(0, 15))
+                  }
+                  placeholder="4165550123"
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]{10,15}"
+                  maxLength={15}
+                  className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[hsl(var(--theme-brown-500))] focus:ring-2 focus:ring-[hsl(var(--theme-sand-300)/0.35)]"
+                />
+              </div>
+            </label>
+
+            <div>
+              <label className="flex cursor-pointer gap-3 rounded-xl border border-stone-200 bg-white p-3">
+                <input
+                  type="checkbox"
+                  checked={form.smsConsent}
+                  onChange={(event) => updateField("smsConsent", event.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-stone-300 accent-[hsl(var(--theme-brown-700))]"
+                />
+                <span className="mb-0 text-xs leading-relaxed text-[hsl(var(--theme-brown-700))]">
+                  I consent to receiving text messages from Thread & Butter about this request.
+                  Message and data rates may apply.
+                </span>
+              </label>
+              <p className="mt-px text-xs font-bold leading-tight text-red-600">
+                (Consent is optional)
+              </p>
+            </div>
           </div>
         );
 
@@ -862,18 +906,6 @@ export default function CustomEmbroideryPage() {
               </fieldset>
             )}
 
-            <label className="flex cursor-pointer gap-2 rounded-xl border border-stone-200 bg-white p-3">
-              <input
-                type="checkbox"
-                checked={form.contentRightsConfirmed}
-                onChange={(event) => updateField("contentRightsConfirmed", event.target.checked)}
-                className="mt-1 h-4 w-4 rounded accent-[hsl(var(--theme-brown-700))]"
-              />
-              <span className="text-sm leading-relaxed text-stone-600">
-                I confirm that I own or have permission to use all uploaded images, names, logos, artwork,
-                and other content in this request.
-              </span>
-            </label>
           </div>
         );
 
@@ -1170,6 +1202,11 @@ export default function CustomEmbroideryPage() {
                 label="Contact"
                 value={`Email: ${contactValue || "Not provided"}`}
               />
+              <SummaryRow label="Phone" value={form.phone || "Not provided"} />
+              <SummaryRow
+                label="Text-message consent"
+                value={form.smsConsent ? "Yes" : "No"}
+              />
               <SummaryRow label="Idea" value={form.ideaDescription} />
               <SummaryRow label="Exact text" value={form.exactText} />
               <SummaryRow label="Artwork choice" value={selectedAiLabel} />
@@ -1205,10 +1242,6 @@ export default function CustomEmbroideryPage() {
               </div>
             )}
 
-            <div className="rounded-xl bg-stone-100 p-4 text-center text-xs leading-relaxed text-stone-500">
-              Submitting saves the complete request, image records, and notification delivery history.
-              A confirmation will be sent through your selected contact method.
-            </div>
           </div>
         );
       }

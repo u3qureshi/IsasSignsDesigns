@@ -14,7 +14,7 @@ class EmbroideryPromptServiceTest {
     @Test
     void includesExactWordsItemPlacementDimensionsAndInspirationInstruction() {
         CustomEmbroideryPayload payload = new CustomEmbroideryPayload(
-                "Taylor Customer", "email", "taylor@example.com", "",
+                "Taylor Customer", "email", "taylor@example.com", "", false,
                 "A bold fishing design", "BEST DAD", "inspiration", "inspiration",
                 "customer", "Other", "work apron", "navy", "Other", "upper bib",
                 "known", new BigDecimal("5.5"), new BigDecimal("3.25"), 3, true, true, false);
@@ -36,7 +36,7 @@ class EmbroideryPromptServiceTest {
     @Test
     void tellsModelToPreserveExactCustomerArtworkOnTheGarment() {
         CustomEmbroideryPayload payload = new CustomEmbroideryPayload(
-                "Taylor Customer", "email", "taylor@example.com", "",
+                "Taylor Customer", "email", "taylor@example.com", "", false,
                 "Place my supplied logo on the hoodie", "", "inspiration", "exact",
                 "customer", "Hoodie", "", "black", "Right chest", "",
                 "recommend", null, null, 1, true, true, false);

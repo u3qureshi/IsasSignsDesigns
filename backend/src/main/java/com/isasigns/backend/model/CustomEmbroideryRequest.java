@@ -32,6 +32,9 @@ public class CustomEmbroideryRequest {
     @Column(name = "customer_phone")
     private String customerPhone;
 
+    @Column(name = "sms_consent", nullable = false)
+    private boolean smsConsent;
+
     @Column(name = "contact_identity_hmac", nullable = false, length = 64)
     private String contactIdentityHmac;
 
@@ -116,6 +119,7 @@ public class CustomEmbroideryRequest {
             String preferredContactMethod,
             String customerEmail,
             String customerPhone,
+            boolean smsConsent,
             String contactIdentityHmac,
             String ideaDescription,
             String exactText,
@@ -143,6 +147,7 @@ public class CustomEmbroideryRequest {
         this.preferredContactMethod = preferredContactMethod;
         this.customerEmail = customerEmail;
         this.customerPhone = customerPhone;
+        this.smsConsent = smsConsent;
         this.contactIdentityHmac = contactIdentityHmac;
         this.ideaDescription = ideaDescription;
         this.exactText = exactText;
@@ -210,6 +215,10 @@ public class CustomEmbroideryRequest {
 
     public String getCustomerPhone() {
         return customerPhone;
+    }
+
+    public boolean isSmsConsent() {
+        return smsConsent;
     }
 
     public String getIdeaDescription() {

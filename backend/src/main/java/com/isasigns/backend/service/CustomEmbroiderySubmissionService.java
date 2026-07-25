@@ -96,6 +96,7 @@ public class CustomEmbroiderySubmissionService {
                     blankToNull(payload.phone()) == null
                             ? null
                             : CustomEmbroideryValidationService.digits(payload.phone()),
+                    Boolean.TRUE.equals(payload.smsConsent()),
                     previewTokenService.hmacContact(normalizedContact),
                     payload.ideaDescription().trim(),
                     blankToNull(payload.exactText()),

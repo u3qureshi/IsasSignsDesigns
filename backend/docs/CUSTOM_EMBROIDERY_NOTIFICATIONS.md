@@ -13,8 +13,10 @@ Notification delivery does not undo a successfully saved customer request. A del
 as `SENT`, `FAILED`, or `SKIPPED`, including a provider ID or failure/skip explanation where
 available.
 
-The form and submission API are intentionally email-only for the current phase. SMS/Twilio code is
-retained for possible future use but is not invoked by a custom embroidery submission.
+Email remains the required contact and notification channel for the current phase. The form also
+collects an optional phone number and an explicit optional text-message consent decision. Those
+values are saved and included in the emails, but SMS/Twilio code is not invoked by a custom
+embroidery submission.
 
 ## Email setup
 
@@ -85,3 +87,11 @@ Migration `V4__embroidery_notifications_and_complete_details.sql` adds:
 
 Existing request and image tables continue storing customer information, every form choice,
 acknowledgements, AI metadata, upload metadata, and Cloudinary asset identifiers.
+
+Migration `V5__custom_embroidery_sms_consent.sql` adds:
+
+- `sms_consent`, a non-null boolean defaulting to `false`, to
+  `custom_embroidery_requests`.
+
+`customer_phone` remains nullable. When provided, the backend requires 10 to 15 digits. Consent
+cannot be selected without a phone number. No text is sent in this phase, regardless of consent.

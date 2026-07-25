@@ -7,6 +7,7 @@ public record CustomEmbroideryPayload(
         String preferredContact,
         String email,
         String phone,
+        Boolean smsConsent,
         String ideaDescription,
         String exactText,
         String aiMode,

@@ -251,6 +251,69 @@ body {
   filter: drop-shadow(0 8px 18px hsl(var(--theme-brown-700) / 0.14));
 }
 
+@keyframes auth-dialog-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes auth-dialog-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes auth-dialog-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.08);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes auth-dialog-panel-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.08);
+  }
+}
+
+.auth-dialog-backdrop {
+  animation: auth-dialog-backdrop-in 180ms ease-out both;
+}
+
+.auth-dialog-backdrop--closing {
+  animation: auth-dialog-backdrop-out 200ms ease-in both;
+}
+
+.auth-dialog-panel {
+  --auth-origin-x: 100%;
+  --auth-origin-y: 0%;
+  opacity: 0;
+  transform-origin: var(--auth-origin-x) var(--auth-origin-y);
+}
+
+.auth-dialog-panel--ready {
+  animation: auth-dialog-panel-in 340ms cubic-bezier(0.2, 0.88, 0.28, 1.08) both;
+}
+
+.auth-dialog-panel--closing {
+  animation: auth-dialog-panel-out 210ms cubic-bezier(0.55, 0, 0.8, 0.2) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ai-preview-skeleton::before,
   .ai-preview-logo {
@@ -263,5 +326,12 @@ body {
 
   .ai-preview-failure-toast {
     animation: none;
+  }
+
+  .auth-dialog-backdrop,
+  .auth-dialog-backdrop--closing,
+  .auth-dialog-panel--ready,
+  .auth-dialog-panel--closing {
+    animation-duration: 1ms;
   }
 }

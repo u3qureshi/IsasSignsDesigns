@@ -32,6 +32,8 @@ public class CustomEmbroideryNotificationMessageFactory {
                 Your submission was successful. We will review it and reach out shortly.
 
                 Request number: %s
+                Phone: %s
+                Text-message consent: %s
                 Idea: %s
                 Exact text: %s
                 Artwork choice: %s
@@ -53,6 +55,8 @@ public class CustomEmbroideryNotificationMessageFactory {
                 """.formatted(
                 request.getCustomerName(),
                 requestNumber,
+                displayValue(request.getCustomerPhone()),
+                yesNo(request.isSmsConsent()),
                 displayValue(request.getIdeaDescription()),
                 displayValue(request.getExactText()),
                 displayValue(request.getAiMode()),
@@ -83,6 +87,7 @@ public class CustomEmbroideryNotificationMessageFactory {
                 Preferred contact method: %s
                 Email: %s
                 Phone: %s
+                Text-message consent: %s
 
                 DESIGN
                 Idea description: %s
@@ -109,7 +114,6 @@ public class CustomEmbroideryNotificationMessageFactory {
 
                 ACKNOWLEDGEMENTS
                 Preliminary-estimate acknowledgement: %s
-                Content-rights confirmation: %s
 
                 SAVED IMAGES
                 %s
@@ -121,6 +125,7 @@ public class CustomEmbroideryNotificationMessageFactory {
                 request.getPreferredContactMethod(),
                 displayValue(request.getCustomerEmail()),
                 displayValue(request.getCustomerPhone()),
+                yesNo(request.isSmsConsent()),
                 displayValue(request.getIdeaDescription()),
                 displayValue(request.getExactText()),
                 displayValue(request.getAiMode()),
@@ -141,7 +146,6 @@ public class CustomEmbroideryNotificationMessageFactory {
                 displayMeasurement(request.getRequestedHeightInches()),
                 request.getQuantity(),
                 yesNo(request.isCustomerAcknowledgedEstimate()),
-                yesNo(request.isCustomerConfirmedContentRights()),
                 displayImages(images));
         String adminSms = "New Thread & Butter request %s: %s, %d × %s, %s. Preferred contact: %s."
                 .formatted(

@@ -23,6 +23,7 @@ class CustomEmbroideryNotificationMessageFactoryTest {
                 "email",
                 "taylor@example.com",
                 "4165551234",
+                true,
                 "contact-hmac",
                 "A clean wildflower outline",
                 "GROW",
@@ -67,6 +68,7 @@ class CustomEmbroideryNotificationMessageFactoryTest {
                 .contains("Taylor Customer")
                 .contains("taylor@example.com")
                 .contains("4165551234")
+                .contains("Text-message consent: Yes")
                 .contains("A clean wildflower outline")
                 .contains("GROW")
                 .contains("inspiration")

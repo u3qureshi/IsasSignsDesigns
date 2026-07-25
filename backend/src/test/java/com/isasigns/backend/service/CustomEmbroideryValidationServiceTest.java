@@ -23,7 +23,7 @@ class CustomEmbroideryValidationServiceTest {
     @Test
     void reportsMissingFieldsForEmptyPayloadWithoutThrowingNullPointerException() {
         CustomEmbroideryPayload empty = new CustomEmbroideryPayload(
-                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null);
 
         assertThatThrownBy(() -> service.validateForPreview(empty, null))
@@ -45,7 +45,7 @@ class CustomEmbroideryValidationServiceTest {
     @Test
     void rejectsPlacementThatDoesNotBelongToSelectedItem() {
         CustomEmbroideryPayload payload = new CustomEmbroideryPayload(
-                "Taylor Customer", "email", "taylor@example.com", "", "Small flower", "",
+                "Taylor Customer", "email", "taylor@example.com", "", false, "Small flower", "",
                 "manual-review", "exact", "customer", "Hat", "", "black", "Left chest", "",
                 "recommend", null, null, 1, true, true, false);
 
@@ -73,6 +73,7 @@ class CustomEmbroideryValidationServiceTest {
         CustomEmbroideryPayload payload = validPayload("generate");
         payload = new CustomEmbroideryPayload(
                 payload.fullName(), payload.preferredContact(), payload.email(), payload.phone(),
+                payload.smsConsent(),
                 payload.ideaDescription(), payload.exactText(), payload.aiMode(), payload.imageIntent(),
                 payload.itemProvider(), payload.itemType(), payload.otherItem(), payload.garmentColor(),
                 payload.placement(), payload.otherPlacement(), payload.sizeMode(), payload.width(),
@@ -88,7 +89,7 @@ class CustomEmbroideryValidationServiceTest {
     void requiresEmailWhileNotificationsAreEmailOnly() {
         CustomEmbroideryPayload payload = validPayload("manual-review");
         payload = new CustomEmbroideryPayload(
-                payload.fullName(), "phone", "", "4165551234",
+                payload.fullName(), "phone", "", "4165551234", false,
                 payload.ideaDescription(), payload.exactText(), payload.aiMode(), payload.imageIntent(),
                 payload.itemProvider(), payload.itemType(), payload.otherItem(), payload.garmentColor(),
                 payload.placement(), payload.otherPlacement(), payload.sizeMode(), payload.width(),
@@ -103,12 +104,48 @@ class CustomEmbroideryValidationServiceTest {
                 .contains("Email is the only supported contact method", "valid email address");
     }
 
+    @Test
+    void rejectsSmsConsentWithoutPhoneNumber() {
+        CustomEmbroideryPayload payload = validPayload("manual-review");
+        payload = new CustomEmbroideryPayload(
+                payload.fullName(), payload.preferredContact(), payload.email(), "", true,
+                payload.ideaDescription(), payload.exactText(), payload.aiMode(), payload.imageIntent(),
+                payload.itemProvider(), payload.itemType(), payload.otherItem(), payload.garmentColor(),
+                payload.placement(), payload.otherPlacement(), payload.sizeMode(), payload.width(),
+                payload.height(), payload.quantity(), payload.estimateAccepted(),
+                payload.contentRightsConfirmed(), payload.aiPreviewFailed());
+
+        CustomEmbroideryPayload consentWithoutPhone = payload;
+        assertThatThrownBy(() -> service.validateForSubmit(consentWithoutPhone, null, null, null))
+                .isInstanceOf(RequestValidationException.class)
+                .extracting(exception -> ((RequestValidationException) exception).getDetails())
+                .asString()
+                .contains("phone number is required when text-message consent is selected");
+    }
+
+    @Test
+    void acceptsOptionalPhoneWithSmsConsent() {
+        CustomEmbroideryPayload payload = validPayload("manual-review");
+        payload = new CustomEmbroideryPayload(
+                payload.fullName(), payload.preferredContact(), payload.email(), "4165551234", true,
+                payload.ideaDescription(), payload.exactText(), payload.aiMode(), payload.imageIntent(),
+                payload.itemProvider(), payload.itemType(), payload.otherItem(), payload.garmentColor(),
+                payload.placement(), payload.otherPlacement(), payload.sizeMode(), payload.width(),
+                payload.height(), payload.quantity(), payload.estimateAccepted(),
+                payload.contentRightsConfirmed(), payload.aiPreviewFailed());
+
+        CustomEmbroideryPayload phoneAndConsent = payload;
+        assertThatCode(() -> service.validateForSubmit(phoneAndConsent, null, null, null))
+                .doesNotThrowAnyException();
+    }
+
     private CustomEmbroideryPayload validPayload(String aiMode) {
         return new CustomEmbroideryPayload(
                 "Taylor Customer",
                 "email",
                 "taylor@example.com",
                 "",
+                false,
                 "A clean wildflower outline in cream and green",
                 "",
                 aiMode,
