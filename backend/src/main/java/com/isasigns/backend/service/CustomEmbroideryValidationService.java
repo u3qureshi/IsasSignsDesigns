@@ -99,17 +99,11 @@ public class CustomEmbroideryValidationService {
             errors.add("Full name must be 150 characters or fewer.");
         }
 
-        if ("email".equals(payload.preferredContact())) {
-            if (isBlank(payload.email()) || !EMAIL_PATTERN.matcher(payload.email().trim()).matches()) {
-                errors.add("A valid email address is required.");
-            }
-        } else if ("phone".equals(payload.preferredContact())) {
-            String phone = digits(payload.phone());
-            if (phone.length() < 10 || phone.length() > 15) {
-                errors.add("A phone number containing 10 to 15 digits is required.");
-            }
-        } else {
-            errors.add("Preferred contact must be email or phone.");
+        if (!"email".equals(payload.preferredContact())) {
+            errors.add("Email is the only supported contact method right now.");
+        }
+        if (isBlank(payload.email()) || !EMAIL_PATTERN.matcher(payload.email().trim()).matches()) {
+            errors.add("A valid email address is required.");
         }
 
         if (isBlank(payload.ideaDescription())) {

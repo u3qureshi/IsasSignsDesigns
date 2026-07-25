@@ -72,9 +72,7 @@ public class CustomEmbroiderySubmissionService {
         }
 
         String requestNumber = createRequestNumber();
-        String normalizedContact = "email".equals(payload.preferredContact())
-                ? payload.email().trim().toLowerCase(Locale.ROOT)
-                : CustomEmbroideryValidationService.digits(payload.phone());
+        String normalizedContact = payload.email().trim().toLowerCase(Locale.ROOT);
         String prompt = aiUsed ? promptService.build(payload) : null;
 
         var uploadedAssets = new ArrayList<UploadedAsset>();

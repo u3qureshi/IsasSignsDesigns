@@ -29,6 +29,7 @@ public class CustomEmbroideryNotificationMessageFactory {
                 Hi %s,
 
                 Thank you for submitting your custom embroidery request to Thread & Butter.
+                Your submission was successful. We will review it and reach out shortly.
 
                 Request number: %s
                 Idea: %s

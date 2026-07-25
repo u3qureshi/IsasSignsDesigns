@@ -8,7 +8,6 @@ import {
   Lightbulb,
   Mail,
   MapPin,
-  Phone,
   Shirt,
   Sparkles,
   Upload,
@@ -20,7 +19,6 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import brokenImageIcon from "../../assets/brand/broken-image-icon.avif";
 import threadButterLogoOutline from "../../assets/brand/threadnbutterLogoOutlineIMG.svg";
 
-type ContactMethod = "email" | "phone";
 type AiMode = "generate" | "exact-upload" | "inspiration" | "manual-review";
 type ImageIntent = "exact" | "inspiration" | "placement";
 type ItemProvider = "customer" | "thread-n-butter";
@@ -28,7 +26,7 @@ type SizeMode = "known" | "recommend";
 
 interface CustomEmbroideryForm {
   fullName: string;
-  preferredContact: ContactMethod;
+  preferredContact: "email";
   email: string;
   phone: string;
   ideaDescription: string;
@@ -417,7 +415,7 @@ export default function CustomEmbroideryPage() {
     updateField("uploadedImage", file);
   }
 
-  const contactValue = form.preferredContact === "email" ? form.email : form.phone;
+  const contactValue = form.email;
   const selectedItem = form.suppliedItem === "Other" ? form.otherItem : form.suppliedItem;
   const selectedPlacement = form.placement === "Other" ? form.otherPlacement : form.placement;
   const requestedSize =
@@ -433,15 +431,8 @@ export default function CustomEmbroideryPage() {
 
     if (stepIndex === 0) {
       if (!form.fullName.trim()) errors.push("Enter your full name.");
-      if (form.preferredContact === "email") {
-        if (!form.email.trim()) errors.push("Enter your email address.");
-        else if (!EMAIL_PATTERN.test(form.email.trim())) errors.push("Enter a valid email address.");
-      } else {
-        if (!form.phone) errors.push("Enter your phone number.");
-        else if (form.phone.length < 10 || form.phone.length > 15) {
-          errors.push("Enter a phone number containing 10 to 15 digits.");
-        }
-      }
+      if (!form.email.trim()) errors.push("Enter your email address.");
+      else if (!EMAIL_PATTERN.test(form.email.trim())) errors.push("Enter a valid email address.");
     }
 
     if (stepIndex === 1 && !form.ideaDescription.trim()) {
@@ -710,63 +701,24 @@ export default function CustomEmbroideryPage() {
               />
             </label>
 
-            <fieldset>
-              <FieldLabel>How should we contact you?</FieldLabel>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <ChoiceCard
-                  name="preferred-contact"
-                  value="email"
-                  checked={form.preferredContact === "email"}
-                  onChange={() => updateField("preferredContact", "email")}
-                  title="Email"
-                  description="We will reply to the email address below."
-                />
-                <ChoiceCard
-                  name="preferred-contact"
-                  value="phone"
-                  checked={form.preferredContact === "phone"}
-                  onChange={() => updateField("preferredContact", "phone")}
-                  title="Phone"
-                  description="We will call or text the number below."
+            <label className="block">
+              <FieldLabel>Email address</FieldLabel>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  inputMode="email"
+                  className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[hsl(var(--theme-brown-500))] focus:ring-2 focus:ring-[hsl(var(--theme-sand-300)/0.35)]"
                 />
               </div>
-            </fieldset>
-
-            {form.preferredContact === "email" ? (
-              <label className="block">
-                <FieldLabel>Email address</FieldLabel>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(event) => updateField("email", event.target.value)}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    inputMode="email"
-                    className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[hsl(var(--theme-brown-500))] focus:ring-2 focus:ring-[hsl(var(--theme-sand-300)/0.35)]"
-                  />
-                </div>
-              </label>
-            ) : (
-              <label className="block">
-                <FieldLabel>Phone number</FieldLabel>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(event) => updateField("phone", event.target.value.replace(/\D/g, "").slice(0, 15))}
-                    placeholder="14165550123"
-                    autoComplete="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]{10,15}"
-                    maxLength={15}
-                    className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[hsl(var(--theme-brown-500))] focus:ring-2 focus:ring-[hsl(var(--theme-sand-300)/0.35)]"
-                  />
-                </div>
-              </label>
-            )}
+              <p className="mt-2 text-xs font-medium text-[hsl(var(--theme-brown-700))]">
+                We will email your submission confirmation here and reach out with the next steps.
+              </p>
+            </label>
           </div>
         );
 
@@ -1216,7 +1168,7 @@ export default function CustomEmbroideryPage() {
               <SummaryRow label="Customer" value={form.fullName} />
               <SummaryRow
                 label="Contact"
-                value={`${form.preferredContact === "email" ? "Email" : "Phone"}: ${contactValue || "Not provided"}`}
+                value={`Email: ${contactValue || "Not provided"}`}
               />
               <SummaryRow label="Idea" value={form.ideaDescription} />
               <SummaryRow label="Exact text" value={form.exactText} />
@@ -1282,8 +1234,8 @@ export default function CustomEmbroideryPage() {
           <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-stone-500">
             Your Thread & Butter request number is{" "}
             <strong className="text-[hsl(var(--theme-brown-900))]">{submissionResult.requestNumber}</strong>.
-            Keep this number for reference. We will contact you through the email address or phone number
-            selected in your request.
+            Keep this number for reference. A confirmation has been sent to your email address, and
+            we will reach out shortly.
           </p>
           <button
             type="button"

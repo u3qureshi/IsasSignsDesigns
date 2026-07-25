@@ -76,20 +76,12 @@ public class CustomEmbroideryNotificationService {
             var images = imageRepository.findAllByRequestIdOrderByDisplayOrderAsc(event.requestId());
             var messages = messageFactory.create(request, images);
 
-            if ("email".equals(request.getPreferredContactMethod())) {
-                sendEmail(
-                        request.getId(),
-                        "CUSTOMER",
-                        request.getCustomerEmail(),
-                        messages.customerEmailSubject(),
-                        messages.customerEmailBody());
-            } else {
-                sendSms(
-                        request.getId(),
-                        "CUSTOMER",
-                        request.getCustomerPhone(),
-                        messages.customerSmsBody());
-            }
+            sendEmail(
+                    request.getId(),
+                    "CUSTOMER",
+                    request.getCustomerEmail(),
+                    messages.customerEmailSubject(),
+                    messages.customerEmailBody());
 
             sendEmail(
                     request.getId(),
@@ -97,11 +89,6 @@ public class CustomEmbroideryNotificationService {
                     adminEmail,
                     messages.adminEmailSubject(),
                     messages.adminEmailBody());
-            sendSms(
-                    request.getId(),
-                    "ADMIN",
-                    adminPhone,
-                    messages.adminSmsBody());
         } catch (RuntimeException exception) {
             LOGGER.error("Unexpected embroidery notification failure for request {}.", event.requestId(), exception);
         }

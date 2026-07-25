@@ -2276,6 +2276,71 @@ Copy this block for each session:
 
 ---
 
+### 2026-07-25 — Custom embroidery submissions changed to email-only
+
+**Goal**
+
+- Make the current submission workflow save the complete request and then send two distinct
+  emails: a customer success confirmation and a detailed Thread & Butter internal notification.
+- Defer customer and administrator SMS delivery until a later phase.
+
+**Submission and persistence order**
+
+1. The backend validates the complete request and any images.
+2. Valid images are uploaded to Cloudinary.
+3. The request is inserted into `custom_embroidery_requests`.
+4. Image metadata is inserted into `custom_embroidery_request_images`.
+5. The database transaction commits.
+6. Only after the successful commit, the notification listener loads the saved request and sends
+   the customer and administrator emails.
+7. Each attempted email is stored in `custom_embroidery_notifications` as `SENT`, `FAILED`, or
+   `SKIPPED`.
+
+An SMTP failure cannot roll back or delete the committed request. This preserves the customer's
+submission even if Gmail is temporarily unavailable or misconfigured.
+
+**Frontend behavior**
+
+- The customer-information card now requests a required email address only.
+- The email-versus-phone selector and phone input are hidden for this phase.
+- Client-side email format validation still blocks progression when the address is missing or
+  malformed.
+- The review card identifies the customer's contact value as an email.
+- The success screen tells the customer to retain the request number, check for the confirmation
+  email, and expect Thread & Butter to reach out shortly.
+
+**Backend behavior**
+
+- The API only accepts `preferredContact: "email"` for new custom embroidery submissions.
+- A valid customer email is always required server-side, even if a caller bypasses the React form.
+- After commit, `CustomEmbroideryNotificationService` always attempts:
+  - one customer email using the customer-specific subject and confirmation body;
+  - one administrator email containing every saved request field and saved-image metadata.
+- No SMS method is invoked by the submission event. The existing Twilio implementation is retained
+  for possible later activation.
+- The customer message explicitly states that the submission succeeded and Thread & Butter will
+  review it and reach out shortly.
+
+**Current configuration**
+
+- Set `EMAIL_NOTIFICATIONS_ENABLED=true` only after all SMTP values and
+  `THREAD_AND_BUTTER_ADMIN_EMAIL` are populated.
+- For Gmail SMTP, use `smtp.gmail.com`, port `587`, STARTTLS, the Gmail address as both username and
+  sender, and a 16-character Google App Password without spaces.
+- Keep `SMS_NOTIFICATIONS_ENABLED=false`. No Twilio account or credentials are needed for this
+  email-only phase.
+- Detailed setup and notification-audit SQL remain in
+  `backend/docs/CUSTOM_EMBROIDERY_NOTIFICATIONS.md`.
+
+**Verification**
+
+- Backend unit tests passed with `./gradlew test`.
+- Frontend TypeScript checking passed with
+  `npx tsc --noEmit -p tsconfig.app.json --pretty false`.
+- The frontend production bundle passed with `npx vite build`.
+
+---
+
 ## 30. Source material used
 
 This handover was built from the following repository sources:

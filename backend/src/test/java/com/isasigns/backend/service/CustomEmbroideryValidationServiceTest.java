@@ -84,6 +84,25 @@ class CustomEmbroideryValidationServiceTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    void requiresEmailWhileNotificationsAreEmailOnly() {
+        CustomEmbroideryPayload payload = validPayload("manual-review");
+        payload = new CustomEmbroideryPayload(
+                payload.fullName(), "phone", "", "4165551234",
+                payload.ideaDescription(), payload.exactText(), payload.aiMode(), payload.imageIntent(),
+                payload.itemProvider(), payload.itemType(), payload.otherItem(), payload.garmentColor(),
+                payload.placement(), payload.otherPlacement(), payload.sizeMode(), payload.width(),
+                payload.height(), payload.quantity(), payload.estimateAccepted(),
+                payload.contentRightsConfirmed(), payload.aiPreviewFailed());
+
+        CustomEmbroideryPayload phonePayload = payload;
+        assertThatThrownBy(() -> service.validateForSubmit(phonePayload, null, null, null))
+                .isInstanceOf(RequestValidationException.class)
+                .extracting(exception -> ((RequestValidationException) exception).getDetails())
+                .asString()
+                .contains("Email is the only supported contact method", "valid email address");
+    }
+
     private CustomEmbroideryPayload validPayload(String aiMode) {
         return new CustomEmbroideryPayload(
                 "Taylor Customer",

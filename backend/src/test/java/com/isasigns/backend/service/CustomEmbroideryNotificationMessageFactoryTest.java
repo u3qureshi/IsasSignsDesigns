@@ -82,6 +82,8 @@ class CustomEmbroideryNotificationMessageFactoryTest {
                 .contains("800 × 600")
                 .contains("thread-and-butter/request/logo");
         assertThat(messages.customerEmailBody())
+                .contains("Your submission was successful")
+                .contains("reach out shortly")
                 .contains("TNB-EMB-2026-TEST1234")
                 .contains("A clean wildflower outline")
                 .contains("work apron")

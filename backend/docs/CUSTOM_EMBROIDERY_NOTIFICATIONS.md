@@ -2,18 +2,19 @@
 
 After a custom embroidery request commits successfully, the backend now:
 
-1. Sends the customer one confirmation through the contact method selected in the form:
-   - `email` sends a detailed confirmation email.
-   - `phone` sends a concise SMS confirmation.
-2. Sends the Thread & Butter administrator:
-   - one detailed email containing all saved request fields and saved-image metadata;
-   - one concise SMS announcing the request.
+1. Sends the customer a confirmation email stating that the submission succeeded and Thread &
+   Butter will reach out shortly.
+2. Sends the Thread & Butter administrator one detailed email containing all saved request fields
+   and saved-image metadata.
 3. Saves every planned delivery and its outcome in
    `custom_embroidery_notifications`.
 
 Notification delivery does not undo a successfully saved customer request. A delivery is recorded
 as `SENT`, `FAILED`, or `SKIPPED`, including a provider ID or failure/skip explanation where
 available.
+
+The form and submission API are intentionally email-only for the current phase. SMS/Twilio code is
+retained for possible future use but is not invoked by a custom embroidery submission.
 
 ## Email setup
 
@@ -35,30 +36,28 @@ EMAIL_NOTIFICATIONS_ENABLED=true
 If you use Gmail, use a Google App Password rather than your normal account password. Your Google
 account must have two-step verification enabled before an App Password can be created.
 
-## SMS setup
-
-SMS uses Twilio's Messages API. Create a Twilio account, obtain an SMS-capable Twilio number, and
-add these values to `backend/.env`:
+For Gmail, use:
 
 ```dotenv
-THREAD_AND_BUTTER_ADMIN_PHONE=+14165551234
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_FROM_NUMBER=+14165551234
-SMS_NOTIFICATIONS_ENABLED=true
+EMAIL_FROM_ADDRESS=your-email@gmail.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-16-character-google-app-password-without-spaces
+SMTP_AUTH=true
+SMTP_STARTTLS_ENABLED=true
+EMAIL_NOTIFICATIONS_ENABLED=true
 ```
-
-Phone values should use E.164 format (`+1` followed by the ten-digit Canadian/US number). During a
-Twilio trial, destination numbers generally need to be verified in Twilio before they can receive
-messages.
 
 ## Safe activation order
 
 1. Fill the email variables while `EMAIL_NOTIFICATIONS_ENABLED=false`.
-2. Fill the Twilio variables while `SMS_NOTIFICATIONS_ENABLED=false`.
+2. Keep `SMS_NOTIFICATIONS_ENABLED=false`; Twilio credentials are not needed.
 3. Restart Spring Boot and confirm it starts normally.
-4. Turn on one channel at a time and submit a test request.
-5. Inspect the latest notification records:
+4. Set `EMAIL_NOTIFICATIONS_ENABLED=true`, restart, and submit a request with an email address you
+   can inspect.
+5. Confirm that the customer and administrator emails arrive.
+6. Inspect the latest notification records:
 
 ```sql
 SELECT
