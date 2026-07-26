@@ -43,6 +43,23 @@ class CustomEmbroideryValidationServiceTest {
     }
 
     @Test
+    void acceptsInspirationPreviewWithoutContentRightsField() {
+        MockMultipartFile customer = new MockMultipartFile(
+                "customerImage", "reference.png", "image/png", new byte[] { 1 });
+        CustomEmbroideryPayload original = validPayload("inspiration");
+        CustomEmbroideryPayload withoutContentRights = new CustomEmbroideryPayload(
+                original.fullName(), original.preferredContact(), original.email(), original.phone(),
+                original.smsConsent(), original.ideaDescription(), original.exactText(), original.aiMode(),
+                original.imageIntent(), original.itemProvider(), original.itemType(), original.otherItem(),
+                original.garmentColor(), original.placement(), original.otherPlacement(), original.sizeMode(),
+                original.width(), original.height(), original.quantity(), original.estimateAccepted(), null,
+                original.aiPreviewFailed());
+
+        assertThatCode(() -> service.validateForPreview(withoutContentRights, customer))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void rejectsPlacementThatDoesNotBelongToSelectedItem() {
         CustomEmbroideryPayload payload = new CustomEmbroideryPayload(
                 "Taylor Customer", "email", "taylor@example.com", "", false, "Small flower", "",

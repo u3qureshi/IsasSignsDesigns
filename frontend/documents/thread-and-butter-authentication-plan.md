@@ -757,9 +757,10 @@ Recommended answers are shown:
 
 The first authentication UI pass is now implemented without changing backend security:
 
-- `src/components/auth/UserAccountMenu.tsx` adds the bordered maroon account icon in the top-right
-  branding row, directly above the cart. Its icon changes to the site's Dijon/sand theme colour on
-  hover without changing the transparent background.
+- `src/components/auth/UserAccountMenu.tsx` adds the maroon account icon in the top-right branding
+  row, directly above the cart. Both account and cart controls have circular
+  `--theme-kids-bg` backgrounds, and their coloured outline circles draw around them on hover
+  without changing the icon colours.
 - Clicking the icon opens a signed-out menu with **Log in** and **Sign up**.
 - `src/components/auth/AuthDialog.tsx` renders the account card through a React portal so it stays
   centered above the whole site.
@@ -775,6 +776,8 @@ The first authentication UI pass is now implemented without changing backend sec
   orders**, and **Sign out**. The request/order links are visibly marked **Soon** until their
   authenticated pages exist.
 - Account settings can be previewed and edited in React state for the current page session only.
+- The larger **Passwordless account** label sits beside the email/key icon to reduce vertical
+  space in the login and sign-up cards.
 - Reduced-motion browser preferences are respected by collapsing the transition duration.
 
 The next implementation step remains the real backend phases: schema migrations, Spring Security,

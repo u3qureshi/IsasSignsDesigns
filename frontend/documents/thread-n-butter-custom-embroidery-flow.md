@@ -41,6 +41,35 @@ The implemented React/Spring flow intentionally narrows and reorders parts of th
 
 Where the older exploratory notes below conflict with this section or the implementation, this section describes the current decision.
 
+### 2026-07-26 — Current upload placement and shared Printing studio
+
+- The optional single-image upload now appears on card 2, directly beneath the main description
+  textarea and before the optional exact-text field.
+- PNG, JPG/JPEG, and WEBP remain supported with one image maximum and a 10 MB limit.
+- A selected image immediately shows its thumbnail, filename, size, and **Remove** action on card 2.
+- The same `File` state and object-URL preview carry forward to card 3 (**Add your artwork**).
+- Card 3 always retains the same optional upload control. If an image was selected on card 2, it
+  appears there automatically; if no image exists or the carried image is removed, the **Choose an
+  image** control remains available on card 3.
+- The customer can remove or select the image from either card. Removal clears the shared file,
+  preview URL, and stale generated preview while leaving both upload controls available.
+- The upload label is selection-aware on both cards: it shows `(optional)` for AI-from-description
+  and manual-review modes, but removes `(optional)` and shows a required-image notice for
+  exact-upload and upload-based AI preview modes.
+- Every currently required field or option group displays a large bold red `*` immediately after
+  its label text. Optional fields have no asterisk. Conditional requirements update
+  dynamically: the upload gains the marker for upload-required artwork modes, phone gains it when
+  SMS consent is selected, and Other-item/Other-placement/dimensions show it only when those inputs
+  appear.
+- Artwork modes that require an image still block forward navigation if the customer did not add
+  one on card 2.
+- `/printing/custom` now renders the same shared studio as `/embroidery/custom-designs`, using a
+  `studioType="printing"` variant rather than a duplicated form.
+- The Printing variant uses **Custom Printing Studio**, printing-specific instructions,
+  validation messages, estimate language, accessibility labels, submit text, and AI prompt copy.
+- Printing calls `/api/custom-printing/previews` and `/api/custom-printing/requests`; it is not
+  persisted or emailed as an embroidery request.
+
 ---
 
 ## 2. Main Customer Flow
@@ -670,12 +699,8 @@ Require:
   item details, and final price before production.
 ```
 
-Also require:
-
-```text
-☐ I confirm that I own or have permission to use the uploaded
-  images, names, logos, artwork, and other content in this request.
-```
+The separate uploaded-content-rights checkbox was removed from the implemented flow on
+2026-07-26. It is no longer a visible or hidden prerequisite for AI preview generation.
 
 Any marketing consent must be separate and unchecked by default.
 

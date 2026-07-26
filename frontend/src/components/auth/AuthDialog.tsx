@@ -242,21 +242,23 @@ export default function AuthDialog({
         </button>
 
         <div className="pr-10">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-[hsl(var(--theme-sand-300)/0.38)] text-[#711f3d]">
-            {isAccount ? (
-              <UserRound className="h-6 w-6" strokeWidth={2.3} />
-            ) : stage === "code" ? (
-              <KeyRound className="h-6 w-6" strokeWidth={2.3} />
-            ) : (
-              <Mail className="h-6 w-6" strokeWidth={2.3} />
-            )}
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[hsl(var(--theme-sand-300)/0.38)] text-[#711f3d]">
+              {isAccount ? (
+                <UserRound className="h-6 w-6" strokeWidth={2.3} />
+              ) : stage === "code" ? (
+                <KeyRound className="h-6 w-6" strokeWidth={2.3} />
+              ) : (
+                <Mail className="h-6 w-6" strokeWidth={2.3} />
+              )}
+            </div>
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-[hsl(var(--theme-brown-700))] sm:text-base">
+              {isAccount ? "Your profile" : "Passwordless account"}
+            </p>
           </div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[hsl(var(--theme-brown-500))]">
-            {isAccount ? "Your profile" : "Passwordless account"}
-          </p>
           <h2
             id="auth-dialog-title"
-            className="mt-2 font-aoki text-3xl text-[hsl(var(--theme-brown-900))] sm:text-4xl"
+            className="mt-3 font-aoki text-3xl text-[hsl(var(--theme-brown-900))] sm:text-4xl"
           >
             {title}
           </h2>

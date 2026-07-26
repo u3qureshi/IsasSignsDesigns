@@ -49,10 +49,6 @@ public class CustomEmbroideryValidationService {
         if (payload != null && "inspiration".equals(payload.aiMode()) && isEmpty(customerImage)) {
             errors.add("An inspiration image is required.");
         }
-        if (payload != null && "inspiration".equals(payload.aiMode())
-                && !Boolean.TRUE.equals(payload.contentRightsConfirmed())) {
-            errors.add("Content rights must be confirmed before an uploaded image can be sent to AI.");
-        }
         throwIfErrors(errors);
     }
 

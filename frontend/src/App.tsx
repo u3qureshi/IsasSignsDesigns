@@ -48,15 +48,24 @@ export default function App() {
               element={<CategoryPage title={collection.label} category={collection.category} />}
             />
           ))}
-          <Route path="/embroidery/custom-designs" element={<CustomEmbroideryPage />} />
+          <Route
+            path="/embroidery/custom-designs"
+            element={<CustomEmbroideryPage key="embroidery-studio" studioType="embroidery" />}
+          />
           <Route path="/printing" element={<Navigate to={PRINTING_COLLECTIONS[0].path} replace />} />
-          {PRINTING_COLLECTIONS.map((collection) => (
+          {PRINTING_COLLECTIONS.filter(
+            (collection) => collection.path !== "/printing/custom",
+          ).map((collection) => (
             <Route
               key={collection.path}
               path={collection.path}
               element={<CategoryPage title={collection.label} category={collection.category} />}
             />
           ))}
+          <Route
+            path="/printing/custom"
+            element={<CustomEmbroideryPage key="printing-studio" studioType="printing" />}
+          />
           <Route path="/wall-art" element={<CategoryPage title="Wall Art" category="wall-art" />} />
           <Route path="/home-decor" element={<CategoryPage title="Home Decor" category="home-decor" />} />
           <Route path="/kids" element={<KidsPage />} />

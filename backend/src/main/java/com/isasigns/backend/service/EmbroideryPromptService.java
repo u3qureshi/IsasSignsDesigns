@@ -8,16 +8,32 @@ import com.isasigns.backend.dto.customembroidery.CustomEmbroideryPayload;
 public class EmbroideryPromptService {
 
     public String build(CustomEmbroideryPayload payload) {
-        StringBuilder prompt = new StringBuilder("""
-                Create one clean placement preview for a custom embroidery request.
-                Show the selected clothing or item as a simple, polished studio product mockup on a plain neutral
-                background. Show the entire item with comfortable space around it; zoom out enough that the customer
-                can clearly understand the requested placement. Do not crop tightly around the artwork.
+        return build(payload, "embroidery");
+    }
+
+    public String build(CustomEmbroideryPayload payload, String serviceType) {
+        boolean printing = "printing".equals(serviceType);
+        String process = printing ? "printing" : "embroidery";
+        String simulationGuidance = printing
+                ? """
+                Keep the rendering clean and moderately simplified. The customer needs a placement concept, not a
+                production-ready print simulation. Do not add extreme fabric texture, halftone close-ups, ink
+                screens, printing equipment, watermarks, frames, props, people, hands, scenery, or decorative text
+                that was not explicitly requested.
+                """
+                : """
                 Keep the rendering clean and moderately simplified. The customer needs a placement concept, not a
                 photorealistic thread-count simulation. Do not add visible individual stitches, extreme fabric
                 texture, tiny embroidery detail, needles, hoops, watermarks, frames, props, people, hands, scenery,
                 or decorative text that was not explicitly requested.
-                """);
+                """;
+        StringBuilder prompt = new StringBuilder("""
+                Create one clean placement preview for a custom %s request.
+                Show the selected clothing or item as a simple, polished studio product mockup on a plain neutral
+                background. Show the entire item with comfortable space around it; zoom out enough that the customer
+                can clearly understand the requested placement. Do not crop tightly around the artwork.
+                %s
+                """.formatted(process, simulationGuidance.strip()));
 
         append(prompt, "Customer idea", payload.ideaDescription());
         append(prompt, "Exact requested wording", payload.exactText());
@@ -25,7 +41,7 @@ public class EmbroideryPromptService {
         append(prompt, "Item colour", payload.garmentColor());
         append(prompt, "Placement", displayPlacement(payload));
         if ("known".equals(payload.sizeMode()) && payload.width() != null && payload.height() != null) {
-            append(prompt, "Approximate embroidery size",
+            append(prompt, "Approximate " + process + " size",
                     payload.width().toPlainString() + " inches wide by "
                             + payload.height().toPlainString() + " inches high");
         } else {

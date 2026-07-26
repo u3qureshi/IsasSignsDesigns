@@ -30,12 +30,19 @@ public class CustomEmbroideryPreviewService {
     }
 
     public PreviewResponse generate(CustomEmbroideryPayload payload, MultipartFile customerImage) {
+        return generate(payload, customerImage, "embroidery");
+    }
+
+    public PreviewResponse generate(
+            CustomEmbroideryPayload payload,
+            MultipartFile customerImage,
+            String serviceType) {
         validationService.validateForPreview(payload, customerImage);
         var validatedUpload = imageValidationService.validate(customerImage, "Customer image");
         var reference = "inspiration".equals(payload.aiMode())
                 ? imageValidationService.prepareCloudflareReference(validatedUpload)
                 : null;
-        String prompt = promptService.build(payload);
+        String prompt = promptService.build(payload, serviceType);
         var generated = cloudflareImageService.generate(prompt, reference);
         var validatedGenerated = imageValidationService.validateGenerated(
                 generated.bytes(), generated.mediaType());

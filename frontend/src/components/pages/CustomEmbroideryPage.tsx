@@ -24,6 +24,7 @@ type AiMode = "generate" | "exact-upload" | "inspiration" | "manual-review";
 type ImageIntent = "exact" | "inspiration" | "placement";
 type ItemProvider = "customer" | "thread-n-butter";
 type SizeMode = "known" | "recommend";
+export type CustomStudioType = "embroidery" | "printing";
 
 interface CustomEmbroideryForm {
   fullName: string;
@@ -47,7 +48,6 @@ interface CustomEmbroideryForm {
   height: string;
   quantity: number;
   estimateAccepted: boolean;
-  contentRightsConfirmed: boolean;
 }
 
 interface StepDefinition {
@@ -74,7 +74,7 @@ interface ApiErrorBody {
   details?: string[];
 }
 
-const STEPS: StepDefinition[] = [
+const EMBROIDERY_STEPS: StepDefinition[] = [
   {
     shortLabel: "Customer",
     title: "Let's start with you",
@@ -133,6 +133,18 @@ const STEPS: StepDefinition[] = [
   },
 ];
 
+const PRINTING_STEPS: StepDefinition[] = EMBROIDERY_STEPS.map((step, index) => {
+  if (index === 1) return { ...step, title: "Tell us your printing idea" };
+  if (index === 3) return { ...step, eyebrow: "What are we printing?" };
+  if (index === 4) {
+    return {
+      ...step,
+      description: "Select where the printing should sit and give us an approximate size if you know it.",
+    };
+  }
+  return step;
+});
+
 const AI_OPTIONS: Array<{ value: AiMode; title: string; description: string }> = [
   {
     value: "generate",
@@ -155,6 +167,18 @@ const AI_OPTIONS: Array<{ value: AiMode; title: string; description: string }> =
     description: "Submit the idea and optional upload directly to Thread & Butter for follow-up.",
   },
 ];
+
+function aiOptionsFor(studioType: CustomStudioType) {
+  if (studioType === "embroidery") return AI_OPTIONS;
+  return AI_OPTIONS.map((option) =>
+    option.value === "exact-upload"
+      ? {
+          ...option,
+          description: "Keep the uploaded design or logo intact and review it for printing suitability.",
+        }
+      : option,
+  );
+}
 
 const SUPPLIED_ITEMS = [
   "Hoodie",
@@ -223,7 +247,6 @@ const INITIAL_FORM: CustomEmbroideryForm = {
   height: "",
   quantity: 1,
   estimateAccepted: false,
-  contentRightsConfirmed: false,
 };
 
 function ChoiceCard({
@@ -267,12 +290,101 @@ function ChoiceCard({
 
 function FieldLabel({ children, optional = false }: { children: ReactNode; optional?: boolean }) {
   return (
-    <span className="mb-2 block text-sm font-bold text-[hsl(var(--theme-brown-900))]">
-      {children}
-      {optional && (
-        <span className="ml-1 font-semibold text-[hsl(var(--theme-brown-700))]">(optional)</span>
-      )}
+    <span className="mb-2 flex items-start text-sm font-bold text-[hsl(var(--theme-brown-900))]">
+      <span>
+        {children}
+        {optional && (
+          <span className="ml-1 font-semibold text-[hsl(var(--theme-brown-700))]">(optional)</span>
+        )}
+        {!optional && (
+          <span
+            aria-hidden="true"
+            className="ml-1 inline-block align-[-0.15em] text-xl font-black leading-none text-red-600"
+          >
+            *
+          </span>
+        )}
+      </span>
     </span>
+  );
+}
+
+function ArtworkImageControl({
+  image,
+  previewUrl,
+  uploadError,
+  onImageChange,
+  allowUpload,
+  required,
+  studioType,
+}: {
+  image: File | null;
+  previewUrl: string;
+  uploadError: string;
+  onImageChange: (file: File | null) => void;
+  allowUpload: boolean;
+  required: boolean;
+  studioType: CustomStudioType;
+}) {
+  if (!image && !allowUpload) return null;
+
+  return (
+    <div>
+      {allowUpload && (
+        <>
+          <FieldLabel optional={!required}>Upload one image</FieldLabel>
+          {required && !image && (
+            <p className="mb-3 text-sm font-semibold text-[hsl(var(--theme-brown-700))]">
+              An image is required for this artwork option.
+            </p>
+          )}
+        </>
+      )}
+      {image && previewUrl ? (
+        <div className="grid gap-3 rounded-xl border border-stone-200 bg-white p-3 sm:grid-cols-[4rem_1fr_auto] sm:items-center">
+          <img
+            src={previewUrl}
+            alt={`Uploaded ${studioType} reference preview`}
+            className="h-14 w-14 rounded-lg bg-stone-100 object-contain"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-[hsl(var(--theme-brown-900))]">
+              {image.name}
+            </p>
+            <p className="mt-1 text-xs text-stone-400">
+              {(image.size / 1024 / 1024).toFixed(2)} MB · one upload maximum
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onImageChange(null)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 px-3 py-2 text-sm font-semibold text-stone-600 transition hover:border-red-200 hover:text-red-600"
+          >
+            <X className="h-4 w-4" />
+            Remove
+          </button>
+        </div>
+      ) : (
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-stone-200 bg-white px-4 py-3 transition hover:border-[hsl(var(--theme-brown-500))] hover:bg-[hsl(var(--theme-sand-300)/0.08)]">
+          <Upload className="h-5 w-5 shrink-0 text-[hsl(var(--theme-brown-500))]" />
+          <span>
+            <span className="block text-sm font-bold text-[hsl(var(--theme-brown-900))]">
+              Choose an image
+            </span>
+            <span className="block text-xs text-stone-400">
+              PNG, JPG, or WEBP · maximum 10 MB
+            </span>
+          </span>
+          <input
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+            onChange={(event) => onImageChange(event.target.files?.[0] ?? null)}
+            className="sr-only"
+          />
+        </label>
+      )}
+      {uploadError && <p className="mt-2 text-sm font-semibold text-red-600">{uploadError}</p>}
+    </div>
   );
 }
 
@@ -310,7 +422,17 @@ function AiPreviewSkeleton() {
   );
 }
 
-export default function CustomEmbroideryPage() {
+export default function CustomEmbroideryPage({
+  studioType = "embroidery",
+}: {
+  studioType?: CustomStudioType;
+}) {
+  const isPrinting = studioType === "printing";
+  const steps = isPrinting ? PRINTING_STEPS : EMBROIDERY_STEPS;
+  const aiOptions = aiOptionsFor(studioType);
+  const serviceLabel = isPrinting ? "printing" : "embroidery";
+  const servicePastParticiple = isPrinting ? "printed" : "embroidered";
+  const apiBase = isPrinting ? "/api/custom-printing" : "/api/custom-embroidery";
   const [currentStep, setCurrentStep] = useState(0);
   const [highestVisitedStep, setHighestVisitedStep] = useState(0);
   const [form, setForm] = useState<CustomEmbroideryForm>(INITIAL_FORM);
@@ -328,7 +450,7 @@ export default function CustomEmbroideryPage() {
   const tabsRef = useRef<HTMLElement>(null);
   const scrollAfterStepChangeRef = useRef(false);
 
-  const step = STEPS[currentStep];
+  const step = steps[currentStep];
   const StepIcon = step.Icon;
 
   useEffect(() => {
@@ -388,7 +510,7 @@ export default function CustomEmbroideryPage() {
   }
 
   function goToStep(index: number) {
-    const nextStep = Math.min(Math.max(index, 0), STEPS.length - 1);
+    const nextStep = Math.min(Math.max(index, 0), steps.length - 1);
     scrollAfterStepChangeRef.current = true;
     setCurrentStep(nextStep);
     setHighestVisitedStep((highest) => Math.max(highest, nextStep));
@@ -424,9 +546,9 @@ export default function CustomEmbroideryPage() {
     form.sizeMode === "recommend"
       ? "Recommend a suitable size"
       : `${form.width || "—"} in wide × ${form.height || "—"} in high`;
-  const selectedAiLabel = AI_OPTIONS.find((option) => option.value === form.aiMode)?.title;
+  const selectedAiLabel = aiOptions.find((option) => option.value === form.aiMode)?.title;
   const availablePlacements = PLACEMENTS_BY_ITEM[form.suppliedItem] ?? [];
-  const uploadIsOptional = form.aiMode === "generate" || form.aiMode === "manual-review";
+  const imageIsRequired = form.aiMode === "exact-upload" || form.aiMode === "inspiration";
 
   function getStepErrors(stepIndex: number) {
     const errors: string[] = [];
@@ -444,7 +566,7 @@ export default function CustomEmbroideryPage() {
     }
 
     if (stepIndex === 1 && !form.ideaDescription.trim()) {
-      errors.push("Describe what you would like embroidered.");
+      errors.push(`Describe what you would like ${servicePastParticiple}.`);
     }
 
     if (stepIndex === 2) {
@@ -461,18 +583,18 @@ export default function CustomEmbroideryPage() {
       if (!form.itemProvider) errors.push("Choose who will provide the item.");
       if (form.itemProvider && !form.suppliedItem) errors.push("Select the item type.");
       if (form.suppliedItem === "Other" && !form.otherItem.trim()) {
-        errors.push("Describe the item that will be embroidered.");
+        errors.push(`Describe the item that will be ${servicePastParticiple}.`);
       }
     }
 
     if (stepIndex === 4) {
-      if (!form.placement) errors.push("Choose an embroidery placement.");
+      if (!form.placement) errors.push(`Choose a ${serviceLabel} placement.`);
       if (form.placement === "Other" && !form.otherPlacement.trim()) {
-        errors.push("Describe the embroidery placement.");
+        errors.push(`Describe the ${serviceLabel} placement.`);
       }
       if (form.sizeMode === "known") {
-        if (!form.width || Number(form.width) <= 0) errors.push("Enter the embroidery width.");
-        if (!form.height || Number(form.height) <= 0) errors.push("Enter the embroidery height.");
+        if (!form.width || Number(form.width) <= 0) errors.push(`Enter the ${serviceLabel} width.`);
+        if (!form.height || Number(form.height) <= 0) errors.push(`Enter the ${serviceLabel} height.`);
       }
     }
 
@@ -492,13 +614,13 @@ export default function CustomEmbroideryPage() {
     return errors;
   }
 
-  const missingItems = STEPS.flatMap((_, index) => getStepErrors(index));
+  const missingItems = steps.flatMap((_, index) => getStepErrors(index));
 
   function canVisitStep(stepIndex: number) {
     if (stepIndex === currentStep) return true;
     if (stepIndex > highestVisitedStep) return false;
 
-    return STEPS.slice(0, stepIndex).every(
+    return steps.slice(0, stepIndex).every(
       (_, prerequisiteIndex) => getStepErrors(prerequisiteIndex).length === 0,
     );
   }
@@ -549,7 +671,6 @@ export default function CustomEmbroideryPage() {
       height: form.sizeMode === "known" && form.height ? Number(form.height) : null,
       quantity: form.quantity,
       estimateAccepted: form.estimateAccepted,
-      contentRightsConfirmed: form.contentRightsConfirmed,
       aiPreviewFailed,
     };
   }
@@ -582,7 +703,7 @@ export default function CustomEmbroideryPage() {
   }
 
   async function generateAiPreview() {
-    const prerequisiteErrors = STEPS.slice(0, 7).flatMap((_, index) => getStepErrors(index));
+    const prerequisiteErrors = steps.slice(0, 7).flatMap((_, index) => getStepErrors(index));
     if (prerequisiteErrors.length > 0) {
       setStepErrors(prerequisiteErrors);
       return;
@@ -598,7 +719,7 @@ export default function CustomEmbroideryPage() {
       addRequestPart(data);
       if (form.uploadedImage) data.append("customerImage", form.uploadedImage);
 
-      const response = await fetch("/api/custom-embroidery/previews", {
+      const response = await fetch(`${apiBase}/previews`, {
         method: "POST",
         body: data,
       });
@@ -640,7 +761,7 @@ export default function CustomEmbroideryPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (currentStep < STEPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       handleForward();
       return;
     }
@@ -661,7 +782,7 @@ export default function CustomEmbroideryPage() {
         data.append("previewToken", generatedPreview.token);
       }
 
-      const response = await fetch("/api/custom-embroidery/requests", {
+      const response = await fetch(`${apiBase}/requests`, {
         method: "POST",
         body: data,
       });
@@ -727,7 +848,7 @@ export default function CustomEmbroideryPage() {
             </label>
 
             <label className="block">
-              <FieldLabel optional>Phone number</FieldLabel>
+              <FieldLabel optional={!form.smsConsent}>Phone number</FieldLabel>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                 <input
@@ -770,7 +891,7 @@ export default function CustomEmbroideryPage() {
         return (
           <div className="space-y-4">
             <label className="block">
-              <FieldLabel>Describe what you would like embroidered</FieldLabel>
+              <FieldLabel>Describe what you would like {servicePastParticiple}</FieldLabel>
               <textarea
                 rows={5}
                 value={form.ideaDescription}
@@ -782,6 +903,16 @@ export default function CustomEmbroideryPage() {
                 Include the subject, style, wording, colours, detail level, and special instructions.
               </span>
             </label>
+
+            <ArtworkImageControl
+              image={form.uploadedImage}
+              previewUrl={imagePreviewUrl}
+              uploadError={uploadError}
+              onImageChange={handleImage}
+              allowUpload
+              required={imageIsRequired}
+              studioType={studioType}
+            />
 
             <label className="block">
               <FieldLabel optional>Exact text to include</FieldLabel>
@@ -810,7 +941,7 @@ export default function CustomEmbroideryPage() {
             <fieldset>
               <FieldLabel>How would you like us to handle the artwork?</FieldLabel>
               <div className="grid gap-2">
-                {AI_OPTIONS.map((option) => (
+                {aiOptions.map((option) => (
                   <ChoiceCard
                     key={option.value}
                     name="ai-mode"
@@ -824,58 +955,15 @@ export default function CustomEmbroideryPage() {
               </div>
             </fieldset>
 
-            <div>
-              <FieldLabel optional={uploadIsOptional}>Upload one image</FieldLabel>
-              {form.aiMode && !uploadIsOptional && (
-                <p className="mb-3 text-sm text-[hsl(var(--theme-brown-700))]">
-                  An image is required for this artwork option.
-                </p>
-              )}
-              {form.uploadedImage && imagePreviewUrl ? (
-                <div className="grid gap-3 rounded-xl border border-stone-200 bg-white p-3 sm:grid-cols-[4rem_1fr_auto] sm:items-center">
-                  <img
-                    src={imagePreviewUrl}
-                    alt="Uploaded embroidery reference preview"
-                    className="h-14 w-14 rounded-lg bg-stone-100 object-contain"
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-[hsl(var(--theme-brown-900))]">
-                      {form.uploadedImage.name}
-                    </p>
-                    <p className="mt-1 text-xs text-stone-400">
-                      {(form.uploadedImage.size / 1024 / 1024).toFixed(2)} MB · one upload maximum
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleImage(null)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 px-3 py-2 text-sm font-semibold text-stone-600 transition hover:border-red-200 hover:text-red-600"
-                  >
-                    <X className="h-4 w-4" />
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-stone-200 bg-white px-4 py-3 transition hover:border-[hsl(var(--theme-brown-500))] hover:bg-[hsl(var(--theme-sand-300)/0.08)]">
-                  <Upload className="h-5 w-5 shrink-0 text-[hsl(var(--theme-brown-500))]" />
-                  <span>
-                    <span className="block text-sm font-bold text-[hsl(var(--theme-brown-900))]">
-                      Choose an image
-                    </span>
-                    <span className="block text-xs text-stone-400">
-                      PNG, JPG, or WEBP · maximum 10 MB
-                    </span>
-                  </span>
-                  <input
-                    type="file"
-                    accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-                    onChange={(event) => handleImage(event.target.files?.[0] ?? null)}
-                    className="sr-only"
-                  />
-                </label>
-              )}
-              {uploadError && <p className="mt-2 text-sm font-semibold text-red-600">{uploadError}</p>}
-            </div>
+            <ArtworkImageControl
+              image={form.uploadedImage}
+              previewUrl={imagePreviewUrl}
+              uploadError={uploadError}
+              onImageChange={handleImage}
+              allowUpload
+              required={imageIsRequired}
+              studioType={studioType}
+            />
 
             {form.uploadedImage && (
               <fieldset>
@@ -921,7 +1009,7 @@ export default function CustomEmbroideryPage() {
                   checked={form.itemProvider === "customer"}
                   onChange={() => updateField("itemProvider", "customer")}
                   title="I will provide the item"
-                  description="The estimate will cover embroidery only."
+                  description={`The estimate will cover ${serviceLabel} only.`}
                 />
                 <ChoiceCard
                   name="item-provider"
@@ -954,7 +1042,7 @@ export default function CustomEmbroideryPage() {
 
             {form.itemProvider && form.suppliedItem === "Other" && (
               <label className="block">
-                <FieldLabel>What item will be embroidered?</FieldLabel>
+                <FieldLabel>What item will be {servicePastParticiple}?</FieldLabel>
                 <input
                   type="text"
                   value={form.otherItem}
@@ -964,7 +1052,7 @@ export default function CustomEmbroideryPage() {
                 />
                 {form.itemProvider === "customer" && (
                   <span className="mt-2 block text-xs leading-relaxed text-stone-400">
-                    Final approval depends on the material, thickness, seams, construction, and whether it can safely be embroidered.
+                    Final approval depends on the material, thickness, seams, construction, and whether it can safely be {servicePastParticiple}.
                   </span>
                 )}
               </label>
@@ -987,7 +1075,7 @@ export default function CustomEmbroideryPage() {
         return (
           <div className="space-y-5">
             <fieldset>
-              <FieldLabel>Where should the embroidery go?</FieldLabel>
+              <FieldLabel>Where should the {serviceLabel} go?</FieldLabel>
               <p className="mb-4 text-sm text-[hsl(var(--theme-brown-700))]">
                 Showing suitable placements for: <strong>{form.suppliedItem || "no item selected"}</strong>
               </p>
@@ -1123,7 +1211,7 @@ export default function CustomEmbroideryPage() {
               {previewUrl ? (
                 <img
                   src={previewUrl}
-                  alt={aiPreviewFailed ? "AI preview unavailable" : "Embroidery concept preview"}
+                  alt={aiPreviewFailed ? "AI preview unavailable" : `${serviceLabel} concept preview`}
                   className="mb-3 max-h-72 max-w-full rounded-2xl border border-[hsl(var(--theme-sand-300)/0.75)] bg-white p-2 object-contain shadow-sm"
                 />
               ) : (
@@ -1151,8 +1239,9 @@ export default function CustomEmbroideryPage() {
                 <SummaryRow label="Quantity" value={form.quantity} />
               </dl>
               <div className="mt-4 rounded-xl border border-dashed border-[hsl(var(--theme-sand-300))] p-3 text-sm leading-relaxed text-stone-500">
-                Recommended size, estimated stitches, thread colours, complexity, and price will be calculated
-                only after the backend estimator is implemented.
+                {isPrinting
+                  ? "Recommended size, print method, colours, complexity, and price will be calculated only after the backend estimator is implemented."
+                  : "Recommended size, estimated stitches, thread colours, complexity, and price will be calculated only after the backend estimator is implemented."}
               </div>
             </div>
           </div>
@@ -1178,7 +1267,7 @@ export default function CustomEmbroideryPage() {
                   </p>
                   <img
                     src={previewUrl}
-                    alt={aiPreviewFailed ? "AI preview failed to generate" : "Embroidery artwork preview"}
+                    alt={aiPreviewFailed ? "AI preview failed to generate" : `${serviceLabel} artwork preview`}
                     className="mx-auto mb-5 max-h-96 max-w-full rounded-2xl border border-[hsl(var(--theme-sand-300)/0.75)] bg-white p-2 object-contain shadow-sm"
                   />
                   {aiPreviewFailed && (
@@ -1228,9 +1317,16 @@ export default function CustomEmbroideryPage() {
                   className="mt-1 h-4 w-4 rounded accent-[hsl(var(--theme-brown-700))]"
                 />
                 <span className="text-sm leading-relaxed text-stone-600">
-                  I understand that generated artwork, recommended size, stitch count, thread colours, and
-                  pricing will be preliminary estimates. Thread & Butter will confirm the final design, item
-                  details, and final price before production.
+                  I understand that generated artwork, recommended size,{" "}
+                  {isPrinting ? "print method and colours" : "stitch count and thread colours"}, and pricing
+                  will be preliminary estimates. Thread & Butter will confirm the final design, item details,
+                  and final price before production.
+                  <span
+                    aria-hidden="true"
+                    className="ml-1 inline-block align-[-0.15em] text-xl font-black leading-none text-red-600"
+                  >
+                    *
+                  </span>
                 </span>
               </label>
             </div>
@@ -1296,20 +1392,20 @@ export default function CustomEmbroideryPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="font-aoki text-4xl text-[hsl(var(--theme-brown-900))] sm:text-5xl">
-            Custom Embroidery Studio
+            {isPrinting ? "Custom Printing Studio" : "Custom Embroidery Studio"}
           </h1>
           <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold text-[hsl(var(--theme-brown-700))] sm:text-base">
-            Tell us what you would like embroidered!
+            Tell us what you would like {servicePastParticiple}!
           </p>
         </div>
 
         <nav
           ref={tabsRef}
-          aria-label="Custom embroidery form progress"
+          aria-label={`Custom ${serviceLabel} form progress`}
           className="mt-5 scroll-mt-16 overflow-x-auto"
         >
           <ol className="mx-auto flex min-w-max justify-center gap-2 px-1">
-            {STEPS.map((item, index) => {
+            {steps.map((item, index) => {
               const isCurrent = index === currentStep;
               const canNavigate = canVisitStep(index);
               const tabEnabled = canNavigate && (!isGenerating || isCurrent);
@@ -1350,7 +1446,7 @@ export default function CustomEmbroideryPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--theme-brown-500))]">
-                    Step {currentStep + 1} of {STEPS.length} · {step.eyebrow}
+                    Step {currentStep + 1} of {steps.length} · {step.eyebrow}
                   </p>
                   <h2 className="mt-1 font-aoki text-2xl text-[hsl(var(--theme-brown-900))] sm:text-3xl">
                     {step.title}
@@ -1399,10 +1495,10 @@ export default function CustomEmbroideryPage() {
 
               <span className="text-sm font-semibold text-[hsl(var(--theme-brown-700))]">
                 <span className="hidden sm:inline">{step.shortLabel} · </span>
-                {currentStep + 1}/{STEPS.length}
+                {currentStep + 1}/{steps.length}
               </span>
 
-              {currentStep < STEPS.length - 1 ? (
+              {currentStep < steps.length - 1 ? (
                 <button
                   type="button"
                   onClick={handleForward}
@@ -1430,7 +1526,7 @@ export default function CustomEmbroideryPage() {
                     ? "Generating preview…"
                     : isSubmitting
                       ? "Submitting…"
-                      : "Submit My Embroidery Request"}
+                      : `Submit My ${isPrinting ? "Printing" : "Embroidery"} Request`}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               )}
@@ -1439,9 +1535,9 @@ export default function CustomEmbroideryPage() {
         </form>
 
         <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-relaxed text-stone-400">
-          This is a request and quote tool, not checkout. Final artwork, embroidery suitability, item
-          availability, stitch count, thread colours, price, tax, delivery, and shipping will be confirmed
-          before production.
+          This is a request and quote tool, not checkout. Final artwork, {serviceLabel} suitability,
+          item availability, {isPrinting ? "print method and colours" : "stitch count and thread colours"},
+          price, tax, delivery, and shipping will be confirmed before production.
         </p>
       </div>
     </main>

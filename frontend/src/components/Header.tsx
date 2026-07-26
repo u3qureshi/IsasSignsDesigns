@@ -239,7 +239,7 @@ export default function Header() {
 
           <div className="flex w-20 shrink-0 items-center justify-end">
             <button
-              className="group relative rounded-full p-2.5 text-[hsl(var(--theme-isa-green))]"
+              className="group relative rounded-full bg-[hsl(var(--theme-kids-bg))] p-2.5 text-[hsl(var(--theme-isa-green))]"
               type="button"
               aria-label="Open cart"
             >

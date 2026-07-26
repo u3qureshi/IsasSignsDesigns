@@ -23,12 +23,16 @@ public class CustomEmbroideryNotificationMessageFactory {
                         : request.getPlacement());
         String size = displaySize(request);
         String requestNumber = request.getRequestNumber();
+        String serviceType = "printing".equals(request.getServiceType()) ? "printing" : "embroidery";
+        String productionDetails = "printing".equals(serviceType)
+                ? "print method and colours"
+                : "stitch count and thread colours";
 
         String customerSubject = "Thread & Butter request received — " + requestNumber;
         String customerBody = """
                 Hi %s,
 
-                Thank you for submitting your custom embroidery request to Thread & Butter.
+                Thank you for submitting your custom %s request to Thread & Butter.
                 Your submission was successful. We will review it and reach out shortly.
 
                 Request number: %s
@@ -48,12 +52,12 @@ public class CustomEmbroideryNotificationMessageFactory {
                 AI preview failed: %s
 
                 This is a request for review and an estimate, not a confirmed order. We will review the artwork,
-                embroidery suitability, item availability, stitch count, thread colours, pricing, tax, delivery,
-                and shipping before production.
+                %s suitability, item availability, %s, pricing, tax, delivery, and shipping before production.
 
                 Thread & Butter
                 """.formatted(
                 request.getCustomerName(),
+                serviceType,
                 requestNumber,
                 displayValue(request.getCustomerPhone()),
                 yesNo(request.isSmsConsent()),
@@ -68,16 +72,19 @@ public class CustomEmbroideryNotificationMessageFactory {
                 size,
                 request.getQuantity(),
                 yesNo(request.isAiUsed()),
-                yesNo(request.isAiPreviewFailed()));
+                yesNo(request.isAiPreviewFailed()),
+                serviceType,
+                productionDetails);
         String customerSms = "Thread & Butter received request %s for %d %s item(s). "
                 .formatted(requestNumber, request.getQuantity(), item)
                 + "We will review it and contact you with next steps.";
 
-        String adminSubject = "New Thread & Butter embroidery request — " + requestNumber;
+        String adminSubject = "New Thread & Butter " + serviceType + " request — " + requestNumber;
         String adminBody = """
-                A new custom embroidery request was submitted.
+                A new custom %s request was submitted.
 
                 REQUEST
+                Service: %s
                 Request number: %s
                 Status: %s
                 Submitted at: %s
@@ -118,6 +125,8 @@ public class CustomEmbroideryNotificationMessageFactory {
                 SAVED IMAGES
                 %s
                 """.formatted(
+                serviceType,
+                serviceType,
                 requestNumber,
                 request.getStatus(),
                 request.getCreatedAt(),

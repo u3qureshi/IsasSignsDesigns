@@ -63,6 +63,16 @@ public class CustomEmbroiderySubmissionService {
             MultipartFile customerImage,
             MultipartFile generatedImage,
             String previewToken) {
+        return submit(payload, customerImage, generatedImage, previewToken, "embroidery");
+    }
+
+    @Transactional
+    public SubmitResponse submit(
+            CustomEmbroideryPayload payload,
+            MultipartFile customerImage,
+            MultipartFile generatedImage,
+            String previewToken,
+            String serviceType) {
         validationService.validateForSubmit(payload, customerImage, generatedImage, previewToken);
         ValidatedImage validatedCustomer = imageValidationService.validate(customerImage, "Customer image");
         ValidatedImage validatedGenerated = imageValidationService.validate(generatedImage, "Generated image");
@@ -71,9 +81,9 @@ public class CustomEmbroiderySubmissionService {
             previewTokenService.verify(previewToken, validatedGenerated.bytes());
         }
 
-        String requestNumber = createRequestNumber();
+        String requestNumber = createRequestNumber(serviceType);
         String normalizedContact = payload.email().trim().toLowerCase(Locale.ROOT);
-        String prompt = aiUsed ? promptService.build(payload) : null;
+        String prompt = aiUsed ? promptService.build(payload, serviceType) : null;
 
         var uploadedAssets = new ArrayList<UploadedAsset>();
         try {
@@ -90,6 +100,7 @@ public class CustomEmbroiderySubmissionService {
 
             CustomEmbroideryRequest request = new CustomEmbroideryRequest(
                     requestNumber,
+                    serviceType,
                     payload.fullName().trim(),
                     payload.preferredContact(),
                     blankToNull(payload.email()),
@@ -176,10 +187,11 @@ public class CustomEmbroiderySubmissionService {
                 displayOrder);
     }
 
-    private String createRequestNumber() {
+    private String createRequestNumber(String serviceType) {
+        String prefix = "printing".equals(serviceType) ? "TNB-PRI-" : "TNB-EMB-";
         String requestNumber;
         do {
-            requestNumber = "TNB-EMB-" + Year.now(businessTimeZone).getValue() + "-"
+            requestNumber = prefix + Year.now(businessTimeZone).getValue() + "-"
                     + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
         } while (requestRepository.existsByRequestNumber(requestNumber));
         return requestNumber;

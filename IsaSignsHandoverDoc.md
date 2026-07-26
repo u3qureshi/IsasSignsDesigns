@@ -51,7 +51,9 @@ The project is currently an early catalog MVP, not a functioning ecommerce store
 - Global two-level header, promotional bar, navigation, branding, and global footer.
 - React Router routes for the primary catalog navigation.
 - A completed FAQ content page with 17 questions across five sections.
-- Shared API-driven category pages for Kids, Wall Art, Business/Events, legacy Home Decor, all Embroidery submenus, and all Printing submenus, with loading, error, and empty states.
+- Shared API-driven category pages for Kids, Wall Art, Business/Events, legacy Home Decor, the
+  catalog Embroidery submenus, and Printing Popular designs, with loading, error, and empty states.
+- Shared live Custom Design Studio request flows for Embroidery and Printing.
 - An API-driven Best Sellers page using the cross-category `is_featured` flag.
 - Product cards with Cloudinary URL generation, fallback images, per-card image dots, hover zoom, regular/sale price rendering, and detail-page navigation.
 - An in-progress product detail page with image gallery, thumbnails, price/sale rendering, tags, customization messaging, detail/specification accordions, and a UI-only question form.
@@ -591,7 +593,7 @@ There is no catch-all `*` route or dedicated 404 page. Unknown routes render the
 | `/ramadan-decor` | `Navigate` | Legacy URL redirects to Embroidery Seasonal & Holidays |
 | `/printing` | `Navigate` | Redirects to Popular designs for direct URL visits; the nav trigger itself does not navigate |
 | `/printing/popular-designs` | `CategoryPage` | API-driven; category `printing-popular-designs` |
-| `/printing/custom` | `CategoryPage` | API-driven; category `printing-custom` |
+| `/printing/custom` | `CustomEmbroideryPage` printing variant | Shared eight-card Custom Printing Studio; live printing preview/submission APIs |
 | `/wall-art` | `CategoryPage` | API-driven; category `wall-art` |
 | `/home-decor` | `CategoryPage` | API-driven; category `home-decor`; direct route retained but removed from header navigation |
 | `/kids` | `KidsPage` → `CategoryPage` | API-driven; category `kids` |
@@ -1445,7 +1447,7 @@ Canonical mapping:
 | Embroidery submenu | Seasonal & Holidays | `embroidery-seasonal-holidays` |
 | Embroidery submenu | Custom Design Studio | `embroidery-custom-designs` |
 | Printing submenu | Popular designs | `printing-popular-designs` |
-| Printing submenu | Custom Design Studio | `printing-custom` |
+| Printing submenu | Custom Design Studio | `printing-custom` (reserved catalog identifier; the current route opens the request studio instead of filtering products) |
 
 Best Sellers is deliberately not a category. Set `is_featured = true` on any product to show it there while preserving its real category.
 
@@ -1456,10 +1458,14 @@ visible menu: Embroidery > Anime
 React filter: embroidery-anime
 database row: category = 'embroidery-anime'
 
-visible menu: Printing > Custom
-React filter: printing-custom
-database row: category = 'printing-custom'
+visible menu: Printing > Popular designs
+React filter: printing-popular-designs
+database row: category = 'printing-popular-designs'
 ```
+
+`printing-custom` remains the canonical category value for any future custom-printing catalog
+products, but `/printing/custom` currently opens the Custom Printing Studio and does not issue a
+product-category query.
 
 The normalization helper is `backend/docs/category_nomenclature_migration.sql`. Back up and review a shared database before running it. Changing `backend/init.sql` affects only newly initialized Docker volumes; it does not rewrite an existing volume.
 
@@ -1756,7 +1762,9 @@ Definition of done: fresh clone/setup works reproducibly; build/lint/tests pass;
 Completed foundation:
 
 - reusable category page and shared product grid/card;
-- database-backed Kids, Wall Art, Business/Events, legacy Home Decor, Embroidery submenu, and Printing submenu routes;
+- database-backed Kids, Wall Art, Business/Events, legacy Home Decor, catalog Embroidery submenu,
+  and Printing Popular designs routes;
+- live custom-request studio routes for Embroidery and Printing;
 - `featured=true` backend query and database-backed Best Sellers page;
 - lowercase hyphenated category nomenclature.
 
@@ -2543,9 +2551,9 @@ GET    /api/account/embroidery-requests
 
 **Authentication UI prototype implemented on 2026-07-25**
 
-- The global header now includes a bordered maroon account icon in the top-right branding row,
-  directly above the cart. Hovering changes the icon to the site's Dijon/sand theme colour without
-  changing its transparent background.
+- The global header now includes a maroon account icon in the top-right branding row, directly
+  above the cart. Both account and cart icons use circular `--theme-kids-bg` backgrounds and draw
+  their respective coloured outline circles on hover without changing icon colour.
 - Clicking the icon opens an account dropdown. Its signed-out state contains **Log in** and **Sign
   up**.
 - Both actions open a centered React portal dialog that animates outward from the account icon's
@@ -2566,6 +2574,62 @@ GET    /api/account/embroidery-requests
   `frontend/src/components/auth/AuthDialog.tsx`, the `Header.tsx` integration, and the dialog
   animation rules in `frontend/src/index.css`.
 - Strict TypeScript checking and the Vite production build passed after this UI implementation.
+
+**2026-07-26 UI and embroidery validation follow-up**
+
+- Enlarged **Passwordless account** and placed it beside the authentication card's email/key icon
+  to reduce unused vertical space.
+- Removed `contentRightsConfirmed` from the React custom-embroidery form and multipart JSON.
+- Removed the backend rule that required content-rights confirmation before an uploaded
+  inspiration image could be sent for preview generation. The old non-null database column remains
+  for schema compatibility and receives `false`; it is not treated as customer consent.
+- Added a backend regression test proving an inspiration preview is accepted when the legacy field
+  is absent.
+- The frontend production build and focused backend validation test suite passed, and the local
+  backend was restarted with the updated validator.
+
+**2026-07-26 shared image upload and Custom Printing Studio**
+
+- The single optional artwork upload was moved from card 3 (**Add your artwork**) to card 2,
+  directly beneath the main description textarea.
+- The upload continues to enforce PNG/JPEG/WEBP and a 10 MB maximum. The preview includes filename,
+  file size, thumbnail, and a **Remove** action.
+- The selected `File` is held once in the parent form state. Card 3 reads that same state and shows
+  the same image automatically; there is no byte copying or duplicate upload.
+- The optional upload control remains visible on both cards 2 and 3. Removing the image from either
+  card clears it everywhere, invalidates any generated preview that depended on it, and restores
+  the **Choose an image** control on both cards.
+- The upload label responds to the artwork choice. `(optional)` remains for AI-from-description and
+  manual review, while exact-upload and upload-based AI preview remove the optional marker and show
+  that an image is required.
+- All required studio inputs and option-group labels now show a large bold red `*` immediately
+  beside the label text.
+  Optional fields do not. Conditional markers follow the live rules, including image-required
+  artwork modes, phone after SMS consent, Other descriptions, placement, and known dimensions.
+- The shared `CustomEmbroideryPage` component now accepts an `embroidery` or `printing` studio
+  variant. `/embroidery/custom-designs` retains the embroidery experience, while
+  `/printing/custom` renders **Custom Printing Studio** with printing-specific titles,
+  instructions, validation errors, estimate wording, accessibility labels, submit button, and
+  final notices.
+- Printing has distinct live endpoints:
+  - `POST /api/custom-printing/previews`
+  - `POST /api/custom-printing/requests`
+- `CustomPrintingController` delegates to the proven validation, upload, preview-token, storage,
+  persistence, and notification pipeline while explicitly supplying service type `printing`.
+- Migration `V6__custom_design_service_type.sql` adds non-null `service_type` to the legacy-named
+  `custom_embroidery_requests` table, backfills existing rows as `embroidery`, restricts values to
+  `embroidery` or `printing`, and adds a service/creation-time index.
+- New embroidery requests receive `TNB-EMB-…` numbers and new printing requests receive
+  `TNB-PRI-…` numbers.
+- AI placement prompts use embroidery-specific simulation guidance for embroidery and
+  print-specific guidance for printing. Printing prompts do not ask for thread, stitch, needle, or
+  hoop rendering.
+- Customer and administrator notifications now derive their service wording from the saved
+  `service_type`. Printing emails mention printing suitability, print method, and colours and are
+  clearly identified as printing requests.
+- The complete backend test suite and frontend production build passed. Flyway applied migration
+  V6 locally, OpenAPI exposed both printing endpoints, and both development servers remained
+  available.
 
 ---
 

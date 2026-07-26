@@ -51,4 +51,21 @@ class EmbroideryPromptServiceTest {
                 .contains("Placement: Right chest")
                 .contains("Keep the full item visible");
     }
+
+    @Test
+    void createsPrintingSpecificPromptWithoutEmbroiderySimulationLanguage() {
+        CustomEmbroideryPayload payload = new CustomEmbroideryPayload(
+                "Taylor Customer", "email", "taylor@example.com", "", false,
+                "Place my supplied logo on the hoodie", "", "generate", "exact",
+                "customer", "Hoodie", "", "black", "Right chest", "",
+                "known", new BigDecimal("4"), new BigDecimal("3"), 1, true, null, false);
+
+        String prompt = service.build(payload, "printing");
+
+        assertThat(prompt)
+                .contains("custom printing request")
+                .contains("production-ready print simulation")
+                .contains("Approximate printing size")
+                .doesNotContain("thread-count", "individual stitches", "needles", "hoops");
+    }
 }

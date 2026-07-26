@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.PreviewTokenServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-25T05:57:22.637Z" hostname="Usmans-Mac-mini.local" time="0.017">
+<testsuite name="com.isasigns.backend.service.PreviewTokenServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-26T07:31:27.142Z" hostname="Usmans-Mac-mini.local" time="0.013">
   <properties/>
-  <testcase name="createsStableContactHmacWithoutReturningContact()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.014"/>
+  <testcase name="createsStableContactHmacWithoutReturningContact()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.01"/>
   <testcase name="verifiesTheImageUsedToIssueToken()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.001"/>
   <testcase name="rejectsDifferentGeneratedImage()" classname="com.isasigns.backend.service.PreviewTokenServiceTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>

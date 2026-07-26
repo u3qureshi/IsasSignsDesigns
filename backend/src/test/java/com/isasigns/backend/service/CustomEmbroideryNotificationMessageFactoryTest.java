@@ -19,6 +19,7 @@ class CustomEmbroideryNotificationMessageFactoryTest {
     void includesEveryCustomerRequestFieldAndImageMetadataInAdminEmail() {
         CustomEmbroideryRequest request = new CustomEmbroideryRequest(
                 "TNB-EMB-2026-TEST1234",
+                "embroidery",
                 "Taylor Customer",
                 "email",
                 "taylor@example.com",
@@ -91,6 +92,49 @@ class CustomEmbroideryNotificationMessageFactoryTest {
                 .contains("work apron")
                 .contains("upper bib");
         assertThat(messages.adminSmsBody()).contains("Taylor Customer", "3 × work apron");
+    }
+
+    @Test
+    void identifiesPrintingRequestsInBothEmails() {
+        CustomEmbroideryRequest request = new CustomEmbroideryRequest(
+                "TNB-PRI-2026-TEST1234",
+                "printing",
+                "Print Customer",
+                "email",
+                "print@example.com",
+                null,
+                false,
+                "contact-hmac",
+                "A large back logo",
+                "",
+                "manual-review",
+                false,
+                "exact",
+                false,
+                "customer",
+                "Hoodie",
+                null,
+                "black",
+                "Full back",
+                null,
+                "recommend",
+                null,
+                null,
+                2,
+                true,
+                false,
+                null,
+                null,
+                null);
+
+        CustomEmbroideryNotificationMessages messages = factory.create(request, List.of());
+
+        assertThat(messages.customerEmailBody())
+                .contains("custom printing request")
+                .contains("printing suitability")
+                .contains("print method and colours");
+        assertThat(messages.adminEmailSubject()).contains("printing request");
+        assertThat(messages.adminEmailBody()).contains("Service: printing");
     }
 
     @Test

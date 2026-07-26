@@ -20,6 +20,9 @@ public class CustomEmbroideryRequest {
     @Column(name = "request_number", nullable = false, unique = true)
     private String requestNumber;
 
+    @Column(name = "service_type", nullable = false)
+    private String serviceType;
+
     @Column(name = "customer_name", nullable = false)
     private String customerName;
 
@@ -115,6 +118,7 @@ public class CustomEmbroideryRequest {
 
     public CustomEmbroideryRequest(
             String requestNumber,
+            String serviceType,
             String customerName,
             String preferredContactMethod,
             String customerEmail,
@@ -143,6 +147,7 @@ public class CustomEmbroideryRequest {
             String aiModel,
             String generatedPrompt) {
         this.requestNumber = requestNumber;
+        this.serviceType = serviceType;
         this.customerName = customerName;
         this.preferredContactMethod = preferredContactMethod;
         this.customerEmail = customerEmail;
@@ -191,6 +196,10 @@ public class CustomEmbroideryRequest {
 
     public String getRequestNumber() {
         return requestNumber;
+    }
+
+    public String getServiceType() {
+        return serviceType;
     }
 
     public String getStatus() {

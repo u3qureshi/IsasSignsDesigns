@@ -68,8 +68,23 @@ export default function UserAccountMenu() {
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((current) => !current)}
-          className="group relative rounded-full border-2 border-[#711f3d] bg-transparent p-2 text-[#711f3d] transition-colors duration-200 hover:text-[hsl(var(--theme-sand-300))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--theme-sand-300))] focus-visible:ring-offset-2"
+          className="group relative rounded-full bg-[hsl(var(--theme-kids-bg))] p-2.5 text-[#711f3d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#711f3d] focus-visible:ring-offset-2"
         >
+          <svg
+            className="pointer-events-none absolute -inset-1 -rotate-90"
+            viewBox="0 0 40 40"
+            aria-hidden="true"
+          >
+            <circle
+              cx="20"
+              cy="20"
+              r="17"
+              fill="none"
+              stroke="#711f3d"
+              strokeWidth="2"
+              className="[stroke-dasharray:106.8] [stroke-dashoffset:106.8] transition-[stroke-dashoffset] duration-300 ease-out group-hover:[stroke-dashoffset:0]"
+            />
+          </svg>
           <UserRound className="relative h-6 w-6" strokeWidth={2.7} />
           {previewUser && (
             <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[hsl(var(--theme-green-brand))]" />
