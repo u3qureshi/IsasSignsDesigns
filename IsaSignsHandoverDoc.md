@@ -68,7 +68,7 @@ The project is currently an early catalog MVP, not a functioning ecommerce store
 
 ### What is not implemented
 
-- A real homepage.
+- Complete homepage merchandising below the implemented video hero.
 - Complete merchandising content for every category; the page infrastructure exists, but empty categories still require matching database products and verified images.
 - Search behavior despite two visible search controls.
 - Mobile navigation.
@@ -103,7 +103,7 @@ The project has moved from a UI/header prototype into a partially data-driven ca
 | Brand system | Implemented | Logos, Maple Leaf, Handmade graphic, custom fonts, and theme tokens are present. |
 | Header | Implemented, responsive limitations | Desktop-oriented sticky navigation and promotional bar are present. No mobile menu. |
 | Footer | Implemented, links incomplete | Global footer renders; most internal destinations and real social URLs are not implemented. |
-| Homepage | Skeleton | Contains placeholder heading and 30 filler rows used to exercise sticky-header scrolling. |
+| Homepage | Partial | Three-column embroidery/printing video hero with a solid central Thread & Butter brand panel is implemented; merchandising sections are still needed below it. |
 | FAQ | Implemented | 17 local-state accordion questions; no CMS/backend. |
 | Kids listing | Implemented, needs live verification | Fetches backend data through Vite proxy and renders product cards. |
 | Product detail | Partial/uncommitted | Source exists and type-checks, but is currently an untracked file. |
@@ -581,7 +581,7 @@ There is no catch-all `*` route or dedicated 404 page. Unknown routes render the
 
 | Route | Component | Status |
 |---|---|---|
-| `/` | `HomePage` in `App.tsx` | Placeholder/filler page |
+| `/` | `HomePage.tsx` | Responsive split-video Thread & Butter hero |
 | `/best-sellers` | `CategoryPage` | API-driven; requests active products where `is_featured = true` |
 | `/embroidery` | `Navigate` | Redirects to Anime for direct URL visits; the nav trigger itself does not navigate |
 | `/embroidery/anime` | `CategoryPage` | API-driven; category `embroidery-anime` |
@@ -1771,7 +1771,7 @@ Completed foundation:
 Remaining:
 
 1. Populate/verify all catalog categories with real products and Cloudinary images.
-2. Replace placeholder homepage with real featured/category content.
+2. Add featured/category content beneath the implemented homepage video hero.
 3. Implement mobile navigation.
 4. Implement real search or remove inactive search controls until ready.
 5. Add route 404, loading skeletons, better error states, accessibility, and SEO metadata.
@@ -2630,6 +2630,57 @@ GET    /api/account/embroidery-requests
 - The complete backend test suite and frontend production build passed. Flyway applied migration
   V6 locally, OpenAPI exposed both printing endpoints, and both development servers remained
   available.
+
+**2026-07-27 split-video homepage hero**
+
+- Replaced the old homepage heading and 30 filler rows with
+  `frontend/src/components/pages/HomePage.tsx`.
+- The hero uses a true three-column layout: the embroidery video is on the left, a solid dark-brown
+  brand panel fills all remaining space in the centre, and the printing video is on the right.
+- The centre panel contains a larger **Thread & Butter** title, centred horizontally and vertically,
+  with `Thread`, `&`, and `Butter` each on its own line. The earlier butter-and-needle logo was
+  removed from this hero.
+- The centre remains solid dark brown behind the title, while brown-to-transparent gradients extend
+  slightly over the inner edges of both videos. This softens the transition into the moving footage
+  without cropping, resizing, or covering most of either clip.
+- Both clips use muted, looping, inline autoplay because browsers generally block autoplay with
+  sound. They have no controls and are treated as decorative media.
+- `IntersectionObserver` pauses playback when the hero is mostly outside the viewport. A
+  `prefers-reduced-motion` user sees the poster frames instead of forced motion.
+- The user-supplied MOV masters remain in `frontend/src/assets/gifs/`. They are 1080×1920 H.264,
+  60 fps and total roughly 132 MB, so they are not imported by React.
+- The first web encode used 540×960 at 30 fps and was rejected because the resolution reduction
+  and stronger compression made the fast edits visibly soft. Lower frame rate affected fluidity,
+  but the main quality loss came from downscaling and the high compression factor.
+- The current local web delivery retains the original 1080×1920 resolution and 60 fps in silent
+  H.264 MP4 plus full-resolution WebP posters:
+  - `embroidery_edit.web.mp4`: approximately 33 MB;
+  - `printing_edit.web.mp4`: approximately 12 MB;
+  - both poster images together: approximately 352 KB.
+- The hero has no maximum overall width and fills the viewport horizontally. The two video columns
+  retain the source footage's native `9:16` portrait shape, while the centre column expands to use
+  the rest of the available width.
+- Each video uses `object-fit: contain`, so its complete frame remains visible with no crop, zoom,
+  or distortion. Its responsive width is capped so the browser scales the source down instead of
+  enlarging it beyond its useful display size.
+- MP4 video was chosen over GIF because it preserves fast motion with far better compression,
+  colour, and image quality. MOV was retained as the editing master but converted because the
+  original files are too large for an autoplay web hero.
+- Desktop and 390-pixel mobile screenshots were inspected after the three-column revision. The full
+  portrait frames, softened centre panel, and stacked title remain visible without crop-based
+  treatment.
+- The Vite production build passed with the optimized media included.
+- The current 45 MB local pair is appropriate for quality review but too heavy for production
+  autoplay. The recommended production path is to upload the original MOV masters to Cloudinary as
+  public `video` assets, keep the originals unchanged, and deliver responsive transformed versions
+  with automatic quality and format. Cloudinary recommends `q_auto` and `f_auto`, server-side
+  resizing to the actual display dimensions, and responsive delivery; adaptive HLS/DASH remains an
+  option if network-sensitive streaming is needed.
+- These public homepage marketing videos should not use the backend's authenticated customer-image
+  delivery setting. After upload, record stable public IDs and replace the local React imports with
+  Cloudinary delivery URLs. Relevant official references:
+  - <https://cloudinary.com/documentation/video_optimization>
+  - <https://cloudinary.com/documentation/adaptive_bitrate_streaming>
 
 ---
 
