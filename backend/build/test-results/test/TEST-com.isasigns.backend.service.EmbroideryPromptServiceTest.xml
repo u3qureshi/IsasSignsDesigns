@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.EmbroideryPromptServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-26T07:31:27.140Z" hostname="Usmans-Mac-mini.local" time="0.002">
+<testsuite name="com.isasigns.backend.service.EmbroideryPromptServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-28T03:15:20.678Z" hostname="Usmans-Mac-mini.local" time="0.002">
   <properties/>
   <testcase name="createsPrintingSpecificPromptWithoutEmbroiderySimulationLanguage()" classname="com.isasigns.backend.service.EmbroideryPromptServiceTest" time="0.0"/>
-  <testcase name="tellsModelToPreserveExactCustomerArtworkOnTheGarment()" classname="com.isasigns.backend.service.EmbroideryPromptServiceTest" time="0.0"/>
+  <testcase name="tellsModelToPreserveExactCustomerArtworkOnTheGarment()" classname="com.isasigns.backend.service.EmbroideryPromptServiceTest" time="0.001"/>
   <testcase name="includesExactWordsItemPlacementDimensionsAndInspirationInstruction()" classname="com.isasigns.backend.service.EmbroideryPromptServiceTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

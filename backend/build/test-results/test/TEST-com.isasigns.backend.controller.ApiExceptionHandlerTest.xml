@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.controller.ApiExceptionHandlerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-26T07:31:27.070Z" hostname="Usmans-Mac-mini.local" time="0.034">
+<testsuite name="com.isasigns.backend.controller.ApiExceptionHandlerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-28T03:15:20.589Z" hostname="Usmans-Mac-mini.local" time="0.039">
   <properties/>
-  <testcase name="returnsProviderRateLimitsAs429WithRetryAfter()" classname="com.isasigns.backend.controller.ApiExceptionHandlerTest" time="0.029"/>
+  <testcase name="returnsProviderRateLimitsAs429WithRetryAfter()" classname="com.isasigns.backend.controller.ApiExceptionHandlerTest" time="0.034"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

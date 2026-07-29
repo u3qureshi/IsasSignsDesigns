@@ -50,6 +50,7 @@ public class CustomEmbroideryNotificationMessageFactory {
                 Quantity: %d
                 AI preview generated: %s
                 AI preview failed: %s
+                Image previews attached: %s
 
                 This is a request for review and an estimate, not a confirmed order. We will review the artwork,
                 %s suitability, item availability, %s, pricing, tax, delivery, and shipping before production.
@@ -73,6 +74,7 @@ public class CustomEmbroideryNotificationMessageFactory {
                 request.getQuantity(),
                 yesNo(request.isAiUsed()),
                 yesNo(request.isAiPreviewFailed()),
+                images.isEmpty() ? "No" : "Yes, when available",
                 serviceType,
                 productionDetails);
         String customerSms = "Thread & Butter received request %s for %d %s item(s). "

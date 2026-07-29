@@ -6,7 +6,9 @@ After a custom embroidery request commits successfully, the backend now:
    Butter will reach out shortly.
 2. Sends the Thread & Butter administrator one detailed email containing all saved request fields
    and saved-image metadata.
-3. Saves every planned delivery and its outcome in
+3. When present, attaches a delivery-sized JPEG copy of the customer's uploaded artwork and the AI
+   preview to both emails. The protected Cloudinary originals and database metadata are unchanged.
+4. Saves every planned delivery and its outcome in
    `custom_embroidery_notifications`.
 
 Notification delivery does not undo a successfully saved customer request. A delivery is recorded
@@ -32,6 +34,7 @@ SMTP_USERNAME=your-smtp-username
 SMTP_PASSWORD=your-smtp-password-or-app-password
 SMTP_AUTH=true
 SMTP_STARTTLS_ENABLED=true
+SMTP_STARTTLS_REQUIRED=true
 EMAIL_NOTIFICATIONS_ENABLED=true
 ```
 
@@ -48,8 +51,49 @@ SMTP_USERNAME=your-email@gmail.com
 SMTP_PASSWORD=your-16-character-google-app-password-without-spaces
 SMTP_AUTH=true
 SMTP_STARTTLS_ENABLED=true
+SMTP_STARTTLS_REQUIRED=true
 EMAIL_NOTIFICATIONS_ENABLED=true
 ```
+
+`EMAIL_REPLY_TO_ADDRESS` is optional and defaults to `THREAD_AND_BUTTER_ADMIN_EMAIL`. The visible
+From address must remain the authenticated SMTP account or an address that the provider has
+explicitly authorized; changing only the From header to an unrelated address harms authentication
+and deliverability.
+
+## Image attachments
+
+- `UPLOADED_REFERENCE`/`UPLOADED_EXACT_ARTWORK` becomes
+  `thread-and-butter-uploaded-artwork.jpg`.
+- `AI_GENERATED_CONCEPT` becomes `thread-and-butter-ai-preview.jpg`.
+- The backend creates a signed Cloudinary transformation capped at 1600×1600 with email-appropriate
+  JPEG compression, then attaches the returned bytes. Signed Cloudinary URLs are never placed in
+  the email.
+- Each preview is limited to 5 MB. If a protected asset cannot be downloaded, the request remains
+  saved and the text email is still delivered; the failure is logged for diagnosis.
+- These are convenient email previews only. Cloudinary continues storing the exact protected
+  original, including its original format and full resolution.
+
+## Inbox placement
+
+Application code cannot guarantee that an email will avoid spam. The largest improvements come
+from authenticating and aligning the sending domain:
+
+1. Keep the SMTP From address aligned with the account/domain that actually sends the message.
+2. Require STARTTLS in production (`SMTP_STARTTLS_REQUIRED=true`).
+3. For a custom domain, publish SPF for every real sender, enable 2048-bit DKIM with the mail
+   provider, and publish DMARC. Begin DMARC at `p=none`, monitor reports, then move to quarantine or
+   reject only after SPF and DKIM consistently pass.
+4. Send these messages only after the recipient submits the form. Keep confirmations transactional
+   and do not mix promotional content into them.
+5. Use a stable From address, increase volume gradually, avoid bought lists, and monitor the
+   sending domain in Google Postmaster Tools.
+6. Inspect a delivered Gmail message with **Show original** and verify `SPF: PASS`, `DKIM: PASS`,
+   and `DMARC: PASS`.
+
+The mailer now emits standards-compliant MIME messages, a stable Thread & Butter sender name,
+Reply-To support, `Auto-Submitted: auto-generated`, and `X-Auto-Response-Suppress: All`. These
+improve message correctness and prevent reply loops, but SPF/DKIM/DMARC and sender reputation remain
+the decisive deliverability controls.
 
 ## Safe activation order
 

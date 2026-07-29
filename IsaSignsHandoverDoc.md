@@ -2379,6 +2379,37 @@ submission even if Gmail is temporarily unavailable or misconfigured.
 - Thread & Butter receives a separate detailed internal email.
 - Notification delivery outcomes remain auditable in `custom_embroidery_notifications`.
 
+**2026-07-27 image-bearing email and deliverability revision**
+
+- Customer and administrator emails now use multipart MIME rather than plain
+  `SimpleMailMessage`.
+- When saved images exist, both emails receive small JPEG preview attachments:
+  `thread-and-butter-uploaded-artwork.jpg` for a customer upload and
+  `thread-and-butter-ai-preview.jpg` for an AI-generated concept.
+- The backend signs an authenticated Cloudinary transformation, limits the preview to 1600×1600,
+  applies email-appropriate compression, downloads the bytes server-side, and attaches them. It
+  never exposes the signed protected-asset URL in the email.
+- Each attachment is capped at 5 MB. Attachment preparation is best-effort: a Cloudinary failure
+  is logged, but the already-committed request remains intact and the text notification still
+  sends.
+- The exact protected originals remain unchanged in Cloudinary. Only delivery copies are converted
+  to JPEG for email.
+- The signed download was integration-tested against an existing authenticated Cloudinary asset,
+  and the complete backend test suite passed.
+- SMTP now supports `EMAIL_REPLY_TO_ADDRESS`, defaulting to
+  `THREAD_AND_BUTTER_ADMIN_EMAIL`; the sender displays as **Thread & Butter**.
+- Production SMTP can require TLS through `SMTP_STARTTLS_REQUIRED=true`, which is enabled in the
+  ignored local backend environment.
+- Messages include `Auto-Submitted: auto-generated` and `X-Auto-Response-Suppress: All` to identify
+  transactional automation and prevent mail loops.
+- Code cannot guarantee inbox placement. Before production, use an authenticated custom sending
+  domain, keep From aligned with the SMTP provider, configure SPF, 2048-bit DKIM, and DMARC, and
+  verify all three show `PASS` in Gmail **Show original**. Start DMARC monitoring at `p=none`,
+  monitor Google Postmaster Tools, send only expected transactional messages, and avoid mixing
+  marketing content into request confirmations.
+- Detailed configuration and operational guidance is in
+  `backend/docs/CUSTOM_EMBROIDERY_NOTIFICATIONS.md`.
+
 **Local runtime incident and resolution**
 
 - `localhost:5173` stopped loading even though a Vite process held the port.
@@ -2639,10 +2670,12 @@ GET    /api/account/embroidery-requests
   brand panel fills all remaining space in the centre, and the printing video is on the right.
 - The centre panel contains a larger **Thread & Butter** title, centred horizontally and vertically,
   with `Thread`, `&`, and `Butter` each on its own line. The earlier butter-and-needle logo was
-  removed from this hero.
-- The centre remains solid dark brown behind the title, while brown-to-transparent gradients extend
-  slightly over the inner edges of both videos. This softens the transition into the moving footage
-  without cropping, resizing, or covering most of either clip.
+  removed from this hero. The stacked title uses a relaxed `0.94` line height so the three lines do
+  not feel crowded.
+- The centre uses the site's slightly lighter footer-brown colour behind the title. Very narrow,
+  multi-stop brown-to-transparent gradients extend over the inner video edges. They overlap the
+  centre panel by two pixels to prevent subpixel seam lines, begin at the exact centre colour, and
+  quickly fade through progressively lower opacity so almost all footage remains unobstructed.
 - Both clips use muted, looping, inline autoplay because browsers generally block autoplay with
   sound. They have no controls and are treated as decorative media.
 - `IntersectionObserver` pauses playback when the hero is mostly outside the viewport. A
@@ -2660,9 +2693,13 @@ GET    /api/account/embroidery-requests
 - The hero has no maximum overall width and fills the viewport horizontally. The two video columns
   retain the source footage's native `9:16` portrait shape, while the centre column expands to use
   the rest of the available width.
-- Each video uses `object-fit: contain`, so its complete frame remains visible with no crop, zoom,
+- Each video uses `object-fit: contain` and retains its geometry with no internal cover crop, zoom,
   or distortion. Its responsive width is capped so the browser scales the source down instead of
   enlarging it beyond its useful display size.
+- A later height refinement keeps each video's existing responsive width, scale, and `9:16` frame
+  size but places it vertically centred inside a shorter `36vw` hero viewport (capped at 45rem).
+  The hero's `overflow: hidden` clips equal portions from the top and bottom. This makes the section
+  more horizontal without zooming, stretching, or rescaling the footage.
 - MP4 video was chosen over GIF because it preserves fast motion with far better compression,
   colour, and image quality. MOV was retained as the editing master but converted because the
   original files are too large for an autoplay web hero.
@@ -2681,6 +2718,74 @@ GET    /api/account/embroidery-requests
   Cloudinary delivery URLs. Relevant official references:
   - <https://cloudinary.com/documentation/video_optimization>
   - <https://cloudinary.com/documentation/adaptive_bitrate_streaming>
+
+**2026-07-28 scroll-reveal embroidery and printing homepage sections**
+
+- Added two full-width service sections directly beneath the split-video hero in
+  `frontend/src/components/pages/HomePage.tsx`.
+- Each section becomes a true 50/50 grid at the desktop breakpoint and stacks into a readable
+  single-column layout on smaller screens.
+- The embroidery section places
+  `frontend/src/assets/brand/goosebumps_embroidered_hoodie.webp` on the left and embroidery
+  explanation/calls to action on the right.
+- The hoodie begins translated below its final position and moves upward while fading in when the
+  section first intersects the viewport.
+- The printing section reverses the content balance: text and calls to action are on the left while
+  the artwork composition is on the right.
+- `aot_tshirt_print.png` rises first with a slight counter-clockwise rotation. The overlapping
+  `itachi_hoodie_print.webp` follows 200 ms later with a clockwise rotation. Their stagger and
+  opposite angles create a layered physical-product composition.
+- Because the printing hoodie source uses a square canvas and the garment is much shorter relative
+  to that canvas, it must be sized by visible garment height rather than matching CSS width. Its
+  final CSS width is therefore `124%` (capped at 66rem), compared with the T-shirt's `61%`. It is
+  shifted farther right and slightly down to accommodate its wider sleeves.
+- The desktop printing artwork canvas extends 4rem left of its normal grid column and grows by the
+  same amount. This creates real rendering space across the centre boundary instead of moving the
+  T-shirt right to avoid clipping.
+- Within that expanded canvas, the T-shirt sits at `left: -5%`/`bottom: 8%` and the hoodie at
+  `right: -27%`/`bottom: -8%`. This moves both slightly right and down while preserving the expanded
+  anti-clipping canvas. The final garments rotate in
+  opposite directions by 12 degrees, creating a stronger layered fan shape while the T-shirt
+  remains behind the hoodie.
+- The printing artwork grid cell deliberately allows visible overflow so the left-shifted, rotated
+  T-shirt can cross the expanded centre boundary without being cut off. The outer full-width
+  printing section still clips overflow, preventing horizontal page overflow at the viewport
+  edges.
+- The embroidered Goosebumps hoodie is vertically centred in its half instead of bottom-aligned.
+  Its visual area was enlarged to `112%` with a 44rem cap so it fills the panel more confidently
+  while retaining its original aspect ratio.
+- The `CUSTOM EMBROIDERY` and `CUSTOM PRINTING` eyebrow labels use larger responsive type
+  (`text-base` to `text-lg`) and slightly tighter tracking for improved visibility.
+- Homepage service copy was rewritten after reviewing current custom-apparel landing pages. The
+  selected embroidery slogan is **“Your idea, told in thread.”** and the printing slogan is
+  **“Big ideas. Bold prints.”** The accompanying descriptions focus
+  on customer intent, available paths (ready-made or custom), artwork/placement review, and the
+  estimate-before-production workflow without claiming unverified turnaround times, guarantees,
+  production methods, or order minimums.
+- The company-wide slogan **“Your Style Is Our Bread & Butter.”** appears directly beneath the
+  stacked Thread & Butter name in the homepage hero. This is the primary brand promise; the shorter
+  embroidery and printing slogans remain inside their service sections.
+- Added a three-card **From Concept to Creation: Stand Out with Custom Solutions.** section directly
+  below the hero and before the long embroidery/printing service sections.
+- A centred divider uses two brown hairlines with
+  `threadnbutterLogoOutlineIMG.svg` between them.
+- The three card titles remain **Printed With Precision**, **Stitched With Style**, and
+  **Products That Promote**. Their descriptions were rewritten for Thread & Butter rather than
+  copied verbatim from the reference screenshot.
+- Each white card has a raised dark-brown icon tile using `precision-icon.png`,
+  `stitched-with-style-icon.png`, or `promote-icon.png`. The layout is three columns on desktop and
+  stacks with generous separation on smaller screens.
+- Final positioning keeps the T-shirt at `left: -2%`, preserving the left-leaning overlap while
+  revealing its full edge, and moves the hoodie farther right to `right: -24%`. Sizes and
+  12-degree rotations remain unchanged.
+- A reusable local `useScrollReveal` hook uses `IntersectionObserver`, a threshold of `0.18`, and a
+  `-24%` bottom root margin. The deeper trigger prevents the first image from completing its
+  animation while it is only barely visible below the hero; each animation runs once as the user
+  scrolls meaningfully into its section, after which its observer disconnects.
+- Visitors with `prefers-reduced-motion: reduce` receive the final visible layout immediately,
+  without forced movement.
+- Embroidery buttons lead to `/embroidery/anime` and `/embroidery/custom-designs`; printing buttons
+  lead to `/printing/popular-designs` and `/printing/custom`.
 
 ---
 

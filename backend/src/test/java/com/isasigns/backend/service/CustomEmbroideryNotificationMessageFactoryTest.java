@@ -87,6 +87,7 @@ class CustomEmbroideryNotificationMessageFactoryTest {
         assertThat(messages.customerEmailBody())
                 .contains("Your submission was successful")
                 .contains("reach out shortly")
+                .contains("Image previews attached: Yes, when available")
                 .contains("TNB-EMB-2026-TEST1234")
                 .contains("A clean wildflower outline")
                 .contains("work apron")

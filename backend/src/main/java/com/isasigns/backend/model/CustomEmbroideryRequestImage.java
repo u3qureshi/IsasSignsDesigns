@@ -112,6 +112,18 @@ public class CustomEmbroideryRequestImage {
         return cloudinaryPublicId;
     }
 
+    public Long getCloudinaryVersion() {
+        return cloudinaryVersion;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public String getDeliveryType() {
+        return deliveryType;
+    }
+
     public String getFormat() {
         return format;
     }

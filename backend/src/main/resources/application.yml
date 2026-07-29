@@ -35,6 +35,7 @@ spring:
           auth: ${SMTP_AUTH:false}
           starttls:
             enable: ${SMTP_STARTTLS_ENABLED:false}
+            required: ${SMTP_STARTTLS_REQUIRED:false}
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
@@ -63,6 +64,7 @@ app:
     email:
       enabled: ${EMAIL_NOTIFICATIONS_ENABLED:false}
       from-address: ${EMAIL_FROM_ADDRESS:}
+      reply-to-address: ${EMAIL_REPLY_TO_ADDRESS:${THREAD_AND_BUTTER_ADMIN_EMAIL:}}
     sms:
       enabled: ${SMS_NOTIFICATIONS_ENABLED:false}
       from-number: ${TWILIO_FROM_NUMBER:}

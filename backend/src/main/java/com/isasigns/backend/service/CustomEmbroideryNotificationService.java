@@ -22,6 +22,7 @@ public class CustomEmbroideryNotificationService {
     private final CustomEmbroideryRequestImageRepository imageRepository;
     private final CustomEmbroideryNotificationRepository notificationRepository;
     private final CustomEmbroideryNotificationMessageFactory messageFactory;
+    private final CloudinaryStorageService storageService;
     private final EmailDeliveryClient emailClient;
     private final SmsDeliveryClient smsClient;
     private final boolean emailEnabled;
@@ -38,6 +39,7 @@ public class CustomEmbroideryNotificationService {
             CustomEmbroideryRequestImageRepository imageRepository,
             CustomEmbroideryNotificationRepository notificationRepository,
             CustomEmbroideryNotificationMessageFactory messageFactory,
+            CloudinaryStorageService storageService,
             EmailDeliveryClient emailClient,
             SmsDeliveryClient smsClient,
             @Value("${app.notifications.email.enabled:false}") boolean emailEnabled,
@@ -52,6 +54,7 @@ public class CustomEmbroideryNotificationService {
         this.imageRepository = imageRepository;
         this.notificationRepository = notificationRepository;
         this.messageFactory = messageFactory;
+        this.storageService = storageService;
         this.emailClient = emailClient;
         this.smsClient = smsClient;
         this.emailEnabled = emailEnabled;
@@ -75,20 +78,23 @@ public class CustomEmbroideryNotificationService {
             }
             var images = imageRepository.findAllByRequestIdOrderByDisplayOrderAsc(event.requestId());
             var messages = messageFactory.create(request, images);
+            var attachments = storageService.createEmailAttachments(images);
 
             sendEmail(
                     request.getId(),
                     "CUSTOMER",
                     request.getCustomerEmail(),
                     messages.customerEmailSubject(),
-                    messages.customerEmailBody());
+                    messages.customerEmailBody(),
+                    attachments);
 
             sendEmail(
                     request.getId(),
                     "ADMIN",
                     adminEmail,
                     messages.adminEmailSubject(),
-                    messages.adminEmailBody());
+                    messages.adminEmailBody(),
+                    attachments);
         } catch (RuntimeException exception) {
             LOGGER.error("Unexpected embroidery notification failure for request {}.", event.requestId(), exception);
         }
@@ -99,7 +105,8 @@ public class CustomEmbroideryNotificationService {
             String audience,
             String recipient,
             String subject,
-            String body) {
+            String body,
+            java.util.List<EmailAttachment> attachments) {
         var notification = notificationRepository.save(new CustomEmbroideryNotification(
                 requestId, audience, "EMAIL", blankToNull(recipient), subject, body, "SMTP"));
 
@@ -111,7 +118,7 @@ public class CustomEmbroideryNotificationService {
         }
 
         try {
-            emailClient.send(recipient, subject, body);
+            emailClient.send(recipient, subject, body, attachments);
             notification.markSent(null);
         } catch (RuntimeException exception) {
             notification.markFailed(safeMessage(exception));
