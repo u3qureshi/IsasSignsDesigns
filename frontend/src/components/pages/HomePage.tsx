@@ -126,6 +126,7 @@ function HeroVideo({
 }
 
 export default function HomePage() {
+  const conceptReveal = useScrollReveal();
   const embroideryReveal = useScrollReveal();
   const printingReveal = useScrollReveal();
 
@@ -183,6 +184,7 @@ export default function HomePage() {
       </section>
 
       <section
+        ref={conceptReveal.elementRef}
         aria-labelledby="home-concept-title"
         className="bg-[hsl(var(--theme-kids-bg))] px-6 py-16 sm:px-10 sm:py-20"
       >
@@ -206,16 +208,24 @@ export default function HomePage() {
           </div>
 
           <div className="mt-16 grid gap-14 md:grid-cols-3 md:gap-8">
-            {SERVICE_HIGHLIGHTS.map((highlight) => (
+            {SERVICE_HIGHLIGHTS.map((highlight, index) => (
               <article
                 key={highlight.title}
-                className="relative flex min-h-[18rem] flex-col items-center bg-white px-7 pb-9 pt-20 text-center shadow-[0_18px_48px_rgba(50,31,21,0.08)]"
+                className={[
+                  "relative flex min-h-[18rem] flex-col items-center rounded-3xl bg-white px-7 pb-9 pt-20 text-center shadow-[0_18px_48px_rgba(50,31,21,0.08)] transition-[transform,opacity] duration-1000 ease-out",
+                  conceptReveal.isVisible
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-24 opacity-0",
+                ].join(" ")}
+                style={{
+                  transitionDelay: conceptReveal.isVisible ? `${index * 140}ms` : "0ms",
+                }}
               >
-                <div className="absolute -top-10 flex h-20 w-20 items-center justify-center bg-[hsl(var(--theme-brown-footer))] p-3 shadow-lg sm:h-24 sm:w-24">
+                <div className="absolute -top-10 flex h-20 w-20 items-center justify-center rounded-2xl bg-[hsl(var(--theme-brown-footer))] p-3 shadow-lg sm:h-24 sm:w-24">
                   <img
                     src={highlight.icon}
                     alt=""
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-contain brightness-0 invert"
                   />
                 </div>
                 <h3 className="font-aoki text-2xl font-bold leading-tight text-[hsl(var(--theme-brown-900))] sm:text-3xl">

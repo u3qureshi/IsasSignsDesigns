@@ -2775,6 +2775,14 @@ GET    /api/account/embroidery-requests
 - Each white card has a raised dark-brown icon tile using `precision-icon.png`,
   `stitched-with-style-icon.png`, or `promote-icon.png`. The layout is three columns on desktop and
   stacks with generous separation on smaller screens.
+- The cards use large `rounded-3xl` corners. Their raised dark-brown icon tiles use
+  `rounded-2xl` corners, and the source icon artwork is filtered to solid white for consistent
+  contrast across all three tiles.
+- The three complete cards now use the same one-time `IntersectionObserver` reveal system as the
+  product artwork sections. They begin 6rem below their final position and transition upward while
+  fading in over one second. Desktop and stacked-mobile cards reveal left-to-right with 140 ms
+  between each card. The heading and logo divider remain stationary, and reduced-motion visitors
+  receive the final visible state immediately.
 - Final positioning keeps the T-shirt at `left: -2%`, preserving the left-leaning overlap while
   revealing its full edge, and moves the hoodie farther right to `right: -24%`. Sizes and
   12-degree rotations remain unchanged.
