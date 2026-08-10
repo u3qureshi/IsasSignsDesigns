@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 interface NavDropdownItem {
   label: string;
   path: string;
   isNew?: boolean;
+  disabled?: boolean;
 }
 
 interface NavDropdownProps {
@@ -16,6 +17,7 @@ interface NavDropdownProps {
 
 export default function NavDropdown({ label, menuId, items }: NavDropdownProps) {
   const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
 
   return (
     <div
@@ -57,32 +59,55 @@ export default function NavDropdown({ label, menuId, items }: NavDropdownProps) 
             aria-label={`${label} collections`}
             className="overflow-hidden rounded-xl border border-[hsl(var(--theme-sand-300))] bg-white py-2 shadow-xl"
           >
-            {items.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className={[
-                  "group block px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-[hsl(var(--theme-sand-300)/0.35)] focus:bg-[hsl(var(--theme-sand-300)/0.35)] focus:outline-none",
-                  item.isNew
-                    ? "text-red-600 hover:text-red-700"
-                    : "text-[hsl(var(--theme-brown-900))]",
-                ].join(" ")}
-              >
-                <span className="relative inline-block">
-                  {item.label}
-                  {item.isNew && (
-                    <span
-                      aria-label="New"
-                      className="absolute -right-8 -top-2.5 rotate-12 rounded-full bg-red-600 px-1.5 py-0.5 text-[0.5rem] font-black uppercase leading-none tracking-wide text-white shadow-sm transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:rotate-[16deg]"
-                    >
-                      NEW
+            {items.map((item) => {
+              const content = (
+                <span className="flex items-center justify-between gap-4">
+                  <span className="relative inline-block">
+                    {item.label}
+                    {item.isNew && (
+                      <span
+                        aria-label="New"
+                        className="absolute -right-8 -top-2.5 rotate-12 rounded-full bg-red-600 px-1.5 py-0.5 text-[0.5rem] font-black uppercase leading-none tracking-wide text-white shadow-sm transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:rotate-[16deg]"
+                      >
+                        NEW
+                      </span>
+                    )}
+                  </span>
+                  {item.disabled && (
+                    <span className="text-[0.58rem] font-bold uppercase tracking-[0.1em] text-[hsl(var(--theme-brown-500))]">
+                      Soon
                     </span>
                   )}
                 </span>
-              </Link>
-            ))}
+              );
+
+              const itemClass = [
+                "group block border-b border-[hsl(var(--theme-sand-300)/0.45)] px-5 py-2.5 text-sm font-semibold last:border-b-0",
+                item.disabled
+                  ? "cursor-default bg-stone-50 text-[hsl(var(--theme-brown-700)/0.62)]"
+                  : "transition-colors hover:bg-[hsl(var(--theme-sand-300)/0.35)] focus:bg-[hsl(var(--theme-sand-300)/0.35)] focus:outline-none",
+                pathname === item.path ? "bg-[hsl(var(--theme-sage-100)/0.65)]" : "",
+                item.isNew
+                  ? "text-red-600 hover:text-red-700"
+                  : "",
+              ].join(" ");
+
+              return item.disabled ? (
+                <span key={item.path} role="menuitem" aria-disabled="true" className={itemClass}>
+                  {content}
+                </span>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className={`${itemClass} text-[hsl(var(--theme-brown-900))]`}
+                >
+                  {content}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

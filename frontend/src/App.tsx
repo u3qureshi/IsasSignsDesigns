@@ -9,6 +9,7 @@ import ProductDetailPage from "./components/pages/ProductDetailPage";
 import CategoryPage from "./components/pages/CategoryPage";
 import CustomEmbroideryPage from "./components/pages/CustomEmbroideryPage";
 import HomePage from "./components/pages/HomePage";
+import TShirtsPage from "./components/pages/TShirtsPage";
 import { EMBROIDERY_COLLECTIONS } from "./config/embroideryCollections";
 import { PRINTING_COLLECTIONS } from "./config/printingCollections";
 
@@ -37,6 +38,7 @@ export default function App() {
             element={<CustomEmbroideryPage key="embroidery-studio" studioType="embroidery" />}
           />
           <Route path="/printing" element={<Navigate to={PRINTING_COLLECTIONS[0].path} replace />} />
+          <Route path="/services/t-shirts" element={<TShirtsPage />} />
           {PRINTING_COLLECTIONS.filter(
             (collection) => collection.path !== "/printing/custom",
           ).map((collection) => (

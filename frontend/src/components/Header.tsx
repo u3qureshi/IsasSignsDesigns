@@ -6,6 +6,7 @@ import mapleLeafLogo from "../assets/brand/Maple_Leaf.svg";
 import handmadeLogo from "../assets/brand/handmade.svg";
 import { EMBROIDERY_COLLECTIONS } from "../config/embroideryCollections";
 import { PRINTING_COLLECTIONS } from "../config/printingCollections";
+import { SERVICE_COLLECTIONS } from "../config/serviceCollections";
 import NavDropdown from "./NavDropdown";
 import UserAccountMenu from "./auth/UserAccountMenu";
 
@@ -231,6 +232,7 @@ export default function Header() {
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/best-sellers">Best Sellers</Link>
             <NavDropdown label="Embroidery" menuId="embroidery-menu" items={EMBROIDERY_COLLECTIONS} />
             <NavDropdown label="Printing" menuId="printing-menu" items={PRINTING_COLLECTIONS} />
+            <NavDropdown label="Services" menuId="services-menu" items={SERVICE_COLLECTIONS} />
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/wall-art">Wall Art</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/kids">Kids</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/business-events">Business/Events</Link>
