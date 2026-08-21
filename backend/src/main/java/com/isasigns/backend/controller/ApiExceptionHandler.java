@@ -48,7 +48,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse> handleConfiguration(IllegalStateException exception) {
         return response(HttpStatus.SERVICE_UNAVAILABLE,
-                "The custom embroidery service is not fully configured.", List.of());
+                "This service is not fully configured.", List.of());
     }
 
     private ResponseEntity<ApiErrorResponse> response(HttpStatus status, String message, List<String> details) {

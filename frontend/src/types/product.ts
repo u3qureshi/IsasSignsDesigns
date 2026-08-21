@@ -3,6 +3,15 @@ export interface OnSale {
   percent: number;
 }
 
+export interface ProductVariant {
+  id: string;
+  name: string;
+  slug: string;
+  hex: string;
+  image: string;
+  sizes: string[];
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -20,6 +29,7 @@ export interface Product {
   isCustomizable: boolean;
   tags: string[];
   onSale: OnSale | null;
+  variants: ProductVariant[];
   createdAt: string | null;
   updatedAt: string | null;
 }

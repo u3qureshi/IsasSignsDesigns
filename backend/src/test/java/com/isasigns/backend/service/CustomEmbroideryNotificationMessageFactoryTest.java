@@ -139,6 +139,49 @@ class CustomEmbroideryNotificationMessageFactoryTest {
     }
 
     @Test
+    void formatsQuickRequestEmailsForTheCustomerAndAdmin() {
+        CustomEmbroideryRequest request = new CustomEmbroideryRequest(
+                "TNB-EMB-2026-QUICK123",
+                "embroidery",
+                "Quick Customer",
+                "email",
+                "quick@example.com",
+                "4165551234",
+                false,
+                "contact-hmac",
+                "Company / organization: Example Co\n\nProducts:\n1. Hat — quantity 10",
+                null,
+                "quick-request",
+                false,
+                "exact",
+                false,
+                "not-specified",
+                "Hat",
+                null,
+                null,
+                "Other",
+                "To be confirmed",
+                "recommend",
+                null,
+                null,
+                10,
+                false,
+                false,
+                null,
+                null,
+                null);
+
+        CustomEmbroideryNotificationMessages messages = factory.create(request, List.of());
+
+        assertThat(messages.customerEmailBody())
+                .contains("Quick Customer", "TNB-EMB-2026-QUICK123", "Example Co", "Hat — quantity 10")
+                .contains("No design file was included");
+        assertThat(messages.adminEmailSubject()).contains("quick embroidery request");
+        assertThat(messages.adminEmailBody())
+                .contains("AI-free quick request", "quick@example.com", "Example Co");
+    }
+
+    @Test
     void normalizesCanadianPhoneNumbersForTwilio() {
         assertThat(CustomEmbroideryNotificationService.normalizePhone("(416) 555-1234"))
                 .isEqualTo("+14165551234");

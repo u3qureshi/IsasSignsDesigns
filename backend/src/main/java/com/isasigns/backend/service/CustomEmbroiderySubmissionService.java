@@ -81,6 +81,30 @@ public class CustomEmbroiderySubmissionService {
             previewTokenService.verify(previewToken, validatedGenerated.bytes());
         }
 
+        return persist(
+                payload,
+                validatedCustomer,
+                validatedGenerated,
+                aiUsed,
+                serviceType);
+    }
+
+    @Transactional
+    public SubmitResponse submitQuick(
+            CustomEmbroideryPayload payload,
+            MultipartFile customerImage,
+            String serviceType) {
+        ValidatedImage validatedCustomer = imageValidationService.validate(customerImage, "Design file");
+        return persist(payload, validatedCustomer, null, false, serviceType);
+    }
+
+    private SubmitResponse persist(
+            CustomEmbroideryPayload payload,
+            ValidatedImage validatedCustomer,
+            ValidatedImage validatedGenerated,
+            boolean aiUsed,
+            String serviceType) {
+
         String requestNumber = createRequestNumber(serviceType);
         String normalizedContact = payload.email().trim().toLowerCase(Locale.ROOT);
         String prompt = aiUsed ? promptService.build(payload, serviceType) : null;

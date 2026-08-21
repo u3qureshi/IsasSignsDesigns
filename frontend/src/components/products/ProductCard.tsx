@@ -39,9 +39,15 @@ export function ProductPrice({ product }: { product: Product }) {
 export default function ProductCard({ product }: { product: Product }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const images = product.images ?? [];
-  const currentPublicId = images[activeIndex] ?? null;
+  const variants = product.variants ?? [];
+  const activeVariant = variants[activeIndex] ?? null;
+  const currentPublicId = activeVariant?.image ?? images[activeIndex] ?? null;
   const src = currentPublicId
-    ? getCloudinaryUrl(currentPublicId, { width: 600, height: 600 })
+    ? getCloudinaryUrl(currentPublicId, {
+        width: 600,
+        height: 600,
+        crop: variants.length > 0 ? "fit" : "fill",
+      })
     : "https://placehold.co/600x600?text=ISA+Designs";
 
   return (
@@ -50,8 +56,10 @@ export default function ProductCard({ product }: { product: Product }) {
         <img
           key={src}
           src={src}
-          alt={product.name}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          alt={activeVariant ? `${product.name} in ${activeVariant.name}` : product.name}
+          className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
+            variants.length > 0 ? "object-contain p-3 mix-blend-multiply" : "object-cover"
+          }`}
           onError={(event) => {
             const image = event.currentTarget;
             image.onerror = null;
@@ -60,7 +68,41 @@ export default function ProductCard({ product }: { product: Product }) {
         />
       </div>
 
-      {images.length > 1 && (
+      {variants.length > 0 && (
+        <>
+          <div
+            className="mt-2 flex max-w-full gap-1.5 overflow-x-auto pb-1"
+            aria-label={`Choose a colour for ${product.name}`}
+          >
+            {variants.map((variant, index) => (
+              <button
+                key={variant.id}
+                type="button"
+                title={variant.name}
+                aria-label={`${variant.name} ${product.name}`}
+                aria-pressed={index === activeIndex}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setActiveIndex(index);
+                }}
+                className={`h-6 w-6 shrink-0 rounded-full border-2 transition-transform hover:scale-110 ${
+                  index === activeIndex
+                    ? "border-[hsl(var(--theme-brown-900))] ring-1 ring-[hsl(var(--theme-brown-900)/0.25)]"
+                    : "border-white ring-1 ring-gray-300"
+                }`}
+                style={{ backgroundColor: variant.hex }}
+              />
+            ))}
+          </div>
+          <p className="mt-0.5 flex justify-between text-xs text-gray-500">
+            <span>{activeVariant?.name}</span>
+            <span>{variants.length} colours</span>
+          </p>
+        </>
+      )}
+
+      {variants.length === 0 && images.length > 1 && (
         <div className="mt-2 flex justify-center gap-2">
           {images.map((_, index) => (
             <button

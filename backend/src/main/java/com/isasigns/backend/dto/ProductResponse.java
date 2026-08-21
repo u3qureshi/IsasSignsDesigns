@@ -27,6 +27,7 @@ public record ProductResponse(
         @Schema(description = "Whether this product supports customization", example = "false") Boolean isCustomizable,
         @ArraySchema(schema = @Schema(example = "montessori"), arraySchema = @Schema(description = "Search and filter tags")) List<String> tags,
         @Schema(description = "Sale configuration; null means not on sale", example = "{\"enabled\": true, \"percent\": 15}") JsonNode onSale,
+        @Schema(description = "Selectable product variants such as clothing colours and sizes") JsonNode variants,
         @Schema(description = "Record creation timestamp", example = "2026-02-21T07:31:47.474497Z") OffsetDateTime createdAt,
         @Schema(description = "Record last update timestamp", example = "2026-02-21T07:31:47.474497Z") OffsetDateTime updatedAt) {
 }

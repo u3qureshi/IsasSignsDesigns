@@ -88,6 +88,7 @@ public class ProductController {
                 product.getIsCustomizable(),
                 java.util.Arrays.asList(product.getTags()),
                 parseJson(product.getOnSale()),
+                parseJson(product.getVariants()),
                 product.getCreatedAt(),
                 product.getUpdatedAt());
     }

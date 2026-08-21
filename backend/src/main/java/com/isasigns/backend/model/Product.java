@@ -66,6 +66,9 @@ public class Product {
     @Column(name = "on_sale", columnDefinition = "jsonb")
     private String onSale;
 
+    @Column(columnDefinition = "jsonb", nullable = false)
+    private String variants = "[]";
+
     public Product() {
     }
 
@@ -156,5 +159,9 @@ public class Product {
 
     public String getOnSale() {
         return onSale;
+    }
+
+    public String getVariants() {
+        return variants;
     }
 }

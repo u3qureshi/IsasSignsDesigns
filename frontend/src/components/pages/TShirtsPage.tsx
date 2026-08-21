@@ -10,7 +10,7 @@ import {
   Star,
   UserRound,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { openQuickRequest } from "../../types/quickRequest";
 import heroImage from "../../assets/brand/custom-tshirts-hero.webp";
 import classicTShirtImage from "../../assets/brand/vecteezy_ai-generated-tshirt-isolated-on-transparent-background_35200581.png";
 import tankTopImage from "../../assets/brand/shirt-tank.webp";
@@ -128,8 +128,9 @@ function PlacementShirt({ mark }: { mark: (typeof PLACEMENTS)[number]["mark"] })
 
 function CtaButton({ inverse = false }: { inverse?: boolean }) {
   return (
-    <Link
-      to="/printing/custom"
+    <button
+      type="button"
+      onClick={() => openQuickRequest("printing")}
       className={[
         "group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold transition duration-200",
         inverse
@@ -139,7 +140,7 @@ function CtaButton({ inverse = false }: { inverse?: boolean }) {
     >
       Start your T-shirt design
       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-    </Link>
+    </button>
   );
 }
 
@@ -174,7 +175,7 @@ export default function TShirtsPage() {
         </div>
       </section>
 
-      <section className="px-6 py-20 sm:px-10 sm:py-28">
+      <section className="bg-[hsl(var(--theme-sage-100)/0.28)] px-6 py-20 sm:px-10 sm:py-28">
         <div className="mx-auto grid max-w-[82rem] gap-12 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:gap-24">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-[hsl(var(--theme-brown-600))]">Built around your idea</p>

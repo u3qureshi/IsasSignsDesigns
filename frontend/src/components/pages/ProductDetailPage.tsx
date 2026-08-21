@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Minus, Plus, ShoppingCart } from "lucide-react";
 import { getCloudinaryUrl } from "../../lib/cloudinary";
 import type { Product } from "../../types/product";
+import { useCart } from "../cart/CartContext";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -151,10 +152,14 @@ function AskAQuestion({ productName }: { productName: string }) {
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
@@ -168,6 +173,9 @@ export default function ProductDetailPage() {
       })
       .then((data: Product) => {
         setProduct(data);
+        setActiveVariantIndex(0);
+        setSelectedSize(null);
+        setQuantity(1);
         setLoading(false);
       })
       .catch((err) => {
@@ -206,10 +214,48 @@ export default function ProductDetailPage() {
   }
 
   const images = product.images ?? [];
-  const mainPublicId = images[activeIndex] ?? null;
+  const variants = product.variants ?? [];
+  const activeVariant = variants[activeVariantIndex] ?? null;
+  const mainPublicId = activeVariant?.image ?? images[activeIndex] ?? null;
   const mainSrc = mainPublicId
-    ? getCloudinaryUrl(mainPublicId, { width: 900, height: 900, crop: "fill" })
+    ? getCloudinaryUrl(mainPublicId, {
+        width: 900,
+        height: 900,
+        crop: variants.length > 0 ? "fit" : "fill",
+      })
     : "https://placehold.co/900x900?text=ISA+Designs";
+  const effectivePriceCents = product.onSale?.enabled
+    ? salePriceCents(product.priceCents, product.onSale.percent)
+    : product.priceCents;
+  const requiresSize = variants.length > 0;
+  const canAddToCart = !requiresSize || Boolean(selectedSize);
+  const currentProduct = product;
+
+  function handleAddToCart() {
+    if (!canAddToCart) return;
+
+    addItem(
+      {
+        productId: currentProduct.id,
+        productSlug: currentProduct.slug,
+        productName: currentProduct.name,
+        unitPriceCents: effectivePriceCents,
+        currency: currentProduct.currency,
+        imagePublicId: mainPublicId,
+        variant: activeVariant
+          ? {
+              id: activeVariant.id,
+              name: activeVariant.name,
+              slug: activeVariant.slug,
+              hex: activeVariant.hex,
+            }
+          : null,
+        size: selectedSize,
+      },
+      quantity,
+    );
+    setQuantity(1);
+  }
 
   return (
     <main className="min-h-screen bg-white">
@@ -235,8 +281,10 @@ export default function ProductDetailPage() {
               <img
                 key={mainSrc}
                 src={mainSrc}
-                alt={product.name}
-                className="h-full w-full object-cover transition-opacity duration-300"
+                alt={activeVariant ? `${product.name} in ${activeVariant.name}` : product.name}
+                className={`h-full w-full transition-opacity duration-300 ${
+                  variants.length > 0 ? "object-contain p-5 mix-blend-multiply" : "object-cover"
+                }`}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "https://placehold.co/900x900?text=ISA+Designs";
@@ -245,7 +293,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
+            {variants.length === 0 && images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {images.map((publicId, i) => {
                   const thumbSrc = getCloudinaryUrl(publicId, {
@@ -297,6 +345,100 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="mt-4">
               <PriceDisplay product={product} />
+            </div>
+
+            {variants.length > 0 && activeVariant && (
+              <div className="mt-6 space-y-5">
+                <fieldset>
+                  <legend className="mb-2 text-sm font-semibold text-gray-800">
+                    Colour: <span className="font-normal text-gray-600">{activeVariant.name}</span>
+                  </legend>
+                  <div className="flex flex-wrap gap-2" aria-label="Available colours">
+                    {variants.map((variant, index) => (
+                      <button
+                        key={variant.id}
+                        type="button"
+                        title={variant.name}
+                        aria-label={`Choose ${variant.name}`}
+                        aria-pressed={index === activeVariantIndex}
+                        onClick={() => {
+                          setActiveVariantIndex(index);
+                          setSelectedSize(null);
+                        }}
+                        className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                          index === activeVariantIndex
+                            ? "border-[hsl(var(--theme-brown-900))] ring-2 ring-[hsl(var(--theme-brown-900)/0.2)]"
+                            : "border-white ring-1 ring-gray-300"
+                        }`}
+                        style={{ backgroundColor: variant.hex }}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend className="mb-2 text-sm font-semibold text-gray-800">
+                    Size{selectedSize ? `: ${selectedSize}` : ""}
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {activeVariant.sizes.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        aria-pressed={selectedSize === size}
+                        className={`min-w-11 rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+                          selectedSize === size
+                            ? "border-[hsl(var(--theme-green-900))] bg-[hsl(var(--theme-green-900))] text-white"
+                            : "border-gray-300 bg-white text-gray-700 hover:border-[hsl(var(--theme-green-700))]"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
+            )}
+
+            <div className="mt-6 rounded-2xl border border-[hsl(var(--theme-sand-300)/0.65)] bg-[hsl(var(--theme-sand-300)/0.08)] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex h-12 items-center justify-between rounded-full border border-stone-200 bg-white sm:w-36">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                    disabled={quantity === 1}
+                    aria-label="Decrease quantity"
+                    className="rounded-l-full p-4 text-stone-500 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-7 text-center text-sm font-bold text-[hsl(var(--theme-brown-900))]">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.min(99, current + 1))}
+                    disabled={quantity === 99}
+                    aria-label="Increase quantity"
+                    className="rounded-r-full p-4 text-stone-500 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={!canAddToCart}
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[hsl(var(--theme-green-900))] px-6 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-green-700))] disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  {canAddToCart ? "Add to cart" : "Choose a size to add"}
+                </button>
+              </div>
+              <p className="mt-2 text-center text-xs text-stone-400 sm:text-left">
+                Your cart is saved on this device. Prices are confirmed securely at checkout.
+              </p>
             </div>
 
             {/* Tags */}

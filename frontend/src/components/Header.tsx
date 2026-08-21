@@ -9,8 +9,10 @@ import { PRINTING_COLLECTIONS } from "../config/printingCollections";
 import { SERVICE_COLLECTIONS } from "../config/serviceCollections";
 import NavDropdown from "./NavDropdown";
 import UserAccountMenu from "./auth/UserAccountMenu";
+import { useCart } from "./cart/CartContext";
 
 export default function Header() {
+  const { openCart, totalQuantity } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [stickySearchOpen, setStickySearchOpen] = useState(false);
   const [showStickySearchPlaceholder, setShowStickySearchPlaceholder] = useState(false);
@@ -233,9 +235,8 @@ export default function Header() {
             <NavDropdown label="Embroidery" menuId="embroidery-menu" items={EMBROIDERY_COLLECTIONS} />
             <NavDropdown label="Printing" menuId="printing-menu" items={PRINTING_COLLECTIONS} />
             <NavDropdown label="Services" menuId="services-menu" items={SERVICE_COLLECTIONS} />
-            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/wall-art">Wall Art</Link>
-            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/kids">Kids</Link>
-            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/business-events">Business/Events</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/gallery">Gallery</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/clothing">Clothing</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/faq">FAQ</Link>
           </nav>
 
@@ -243,7 +244,12 @@ export default function Header() {
             <button
               className="group relative rounded-full bg-[hsl(var(--theme-kids-bg))] p-2.5 text-[hsl(var(--theme-isa-green))]"
               type="button"
-              aria-label="Open cart"
+              aria-label={`Open cart${
+                totalQuantity
+                  ? ` with ${totalQuantity} ${totalQuantity === 1 ? "item" : "items"}`
+                  : ""
+              }`}
+              onClick={openCart}
             >
               <svg
                 className="pointer-events-none absolute -inset-1 -rotate-90"
@@ -261,6 +267,11 @@ export default function Header() {
                 />
               </svg>
               <ShoppingCart className="h-6 w-6" strokeWidth={3} />
+              {totalQuantity > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#711f3d] px-1 text-[0.65rem] font-bold leading-none text-white ring-2 ring-white">
+                  {totalQuantity > 99 ? "99+" : totalQuantity}
+                </span>
+              )}
             </button>
           </div>
         </div>

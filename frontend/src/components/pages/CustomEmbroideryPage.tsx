@@ -17,8 +17,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import brokenImageIcon from "../../assets/brand/broken-image-icon.avif";
 import threadButterLogoOutline from "../../assets/brand/threadnbutterLogoOutlineIMG.svg";
+import type { QuickRequestDraft, QuickRequestNavigationState } from "../../types/quickRequest";
 
 type AiMode = "generate" | "exact-upload" | "inspiration" | "manual-review";
 type ImageIntent = "exact" | "inspiration" | "placement";
@@ -249,6 +251,60 @@ const INITIAL_FORM: CustomEmbroideryForm = {
   estimateAccepted: false,
 };
 
+function mapQuickRequestItem(itemType: string, customItem: string) {
+  if (SUPPLIED_ITEMS.includes(itemType)) {
+    return { suppliedItem: itemType, otherItem: "" };
+  }
+  if (itemType === "Sweatshirt") {
+    return { suppliedItem: "Crewneck", otherItem: "" };
+  }
+  return {
+    suppliedItem: itemType ? "Other" : "",
+    otherItem: itemType === "Other" ? customItem.trim() : itemType,
+  };
+}
+
+function prefillFromQuickRequest(
+  draft: QuickRequestDraft | undefined,
+  studioType: CustomStudioType,
+): CustomEmbroideryForm {
+  if (!draft) return INITIAL_FORM;
+
+  const products = draft.products.filter(
+    (product) => product.itemType || product.customItem.trim() || product.quantity,
+  );
+  const firstProduct = products[0];
+  const mappedItem = mapQuickRequestItem(
+    firstProduct?.itemType ?? "",
+    firstProduct?.customItem ?? "",
+  );
+  const productSummary = products
+    .map((product) => {
+      const item = product.itemType === "Other" ? product.customItem.trim() : product.itemType;
+      return `${item || "Item not selected"} — quantity ${product.quantity || "not entered"}`;
+    })
+    .join("\n");
+  const context = [
+    draft.notes.trim(),
+    draft.company.trim() ? `Company / organization: ${draft.company.trim()}` : "",
+    productSummary ? `Items from quick request:\n${productSummary}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    ...INITIAL_FORM,
+    fullName: [draft.firstName.trim(), draft.lastName.trim()].filter(Boolean).join(" "),
+    email: draft.email.trim(),
+    phone: draft.phone.replace(/\D/g, "").slice(0, 15),
+    ideaDescription: studioType === "embroidery" ? "" : context,
+    uploadedImage: draft.designFile,
+    suppliedItem: mappedItem.suppliedItem,
+    otherItem: mappedItem.otherItem,
+    quantity: Math.max(1, Number(firstProduct?.quantity) || 1),
+  };
+}
+
 function ChoiceCard({
   name,
   value,
@@ -427,6 +483,8 @@ export default function CustomEmbroideryPage({
 }: {
   studioType?: CustomStudioType;
 }) {
+  const location = useLocation();
+  const quickRequest = (location.state as QuickRequestNavigationState | null)?.quickRequest;
   const isPrinting = studioType === "printing";
   const steps = isPrinting ? PRINTING_STEPS : EMBROIDERY_STEPS;
   const aiOptions = aiOptionsFor(studioType);
@@ -435,7 +493,9 @@ export default function CustomEmbroideryPage({
   const apiBase = isPrinting ? "/api/custom-printing" : "/api/custom-embroidery";
   const [currentStep, setCurrentStep] = useState(0);
   const [highestVisitedStep, setHighestVisitedStep] = useState(0);
-  const [form, setForm] = useState<CustomEmbroideryForm>(INITIAL_FORM);
+  const [form, setForm] = useState<CustomEmbroideryForm>(() =>
+    prefillFromQuickRequest(quickRequest, studioType),
+  );
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [generatedPreview, setGeneratedPreview] = useState<GeneratedPreview | null>(null);
   const [generatedPreviewUrl, setGeneratedPreviewUrl] = useState("");
@@ -1397,6 +1457,12 @@ export default function CustomEmbroideryPage({
           <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold text-[hsl(var(--theme-brown-700))] sm:text-base">
             Tell us what you would like {servicePastParticiple}!
           </p>
+          {quickRequest && (
+            <div className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 rounded-full bg-[hsl(var(--theme-sage-100)/0.35)] px-4 py-2 text-sm font-bold text-[hsl(var(--theme-green-900))]">
+              <Check className="h-4 w-4" strokeWidth={3} />
+              Your quick-request details have been added below.
+            </div>
+          )}
         </div>
 
         <nav

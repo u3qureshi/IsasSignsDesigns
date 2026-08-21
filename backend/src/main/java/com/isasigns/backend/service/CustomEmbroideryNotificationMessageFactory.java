@@ -13,6 +13,10 @@ public class CustomEmbroideryNotificationMessageFactory {
     public CustomEmbroideryNotificationMessages create(
             CustomEmbroideryRequest request,
             List<CustomEmbroideryRequestImage> images) {
+        if ("quick-request".equals(request.getAiMode())) {
+            return createQuickRequestMessages(request, images);
+        }
+
         String item = displayValue(
                 "Other".equals(request.getItemType())
                         ? request.getCustomItemDescription()
@@ -166,6 +170,82 @@ public class CustomEmbroideryNotificationMessageFactory {
                         item,
                         placement,
                         request.getPreferredContactMethod());
+
+        return new CustomEmbroideryNotificationMessages(
+                customerSubject,
+                customerBody,
+                customerSms,
+                adminSubject,
+                adminBody,
+                adminSms);
+    }
+
+    private CustomEmbroideryNotificationMessages createQuickRequestMessages(
+            CustomEmbroideryRequest request,
+            List<CustomEmbroideryRequestImage> images) {
+        String serviceType = "printing".equals(request.getServiceType()) ? "printing" : "embroidery";
+        String requestNumber = request.getRequestNumber();
+        String attachmentStatus = images.isEmpty() ? "No design file was included." : "The design file is attached.";
+        String customerSubject = "Thread & Butter request received — " + requestNumber;
+        String customerBody = """
+                Hi %s,
+
+                Thank you for sending your %s request to Thread & Butter. We received it successfully and
+                will review the details before reaching out with next steps.
+
+                Request number: %s
+                Email: %s
+                Phone: %s
+
+                REQUEST DETAILS
+                %s
+
+                %s
+
+                This request is not a confirmed order. We will confirm artwork suitability, product
+                availability, pricing, tax, production timing, delivery, and shipping before work begins.
+
+                Thread & Butter
+                """.formatted(
+                request.getCustomerName(),
+                serviceType,
+                requestNumber,
+                displayValue(request.getCustomerEmail()),
+                displayValue(request.getCustomerPhone()),
+                request.getIdeaDescription(),
+                attachmentStatus);
+        String adminSubject = "New Thread & Butter quick " + serviceType + " request — " + requestNumber;
+        String adminBody = """
+                A new AI-free quick request was submitted.
+
+                REQUEST
+                Service: %s
+                Request number: %s
+                Status: %s
+                Submitted at: %s
+
+                CUSTOMER
+                Full name: %s
+                Email: %s
+                Phone: %s
+
+                REQUEST DETAILS
+                %s
+
+                SAVED IMAGES
+                %s
+                """.formatted(
+                serviceType,
+                requestNumber,
+                request.getStatus(),
+                request.getCreatedAt(),
+                request.getCustomerName(),
+                displayValue(request.getCustomerEmail()),
+                displayValue(request.getCustomerPhone()),
+                request.getIdeaDescription(),
+                displayImages(images));
+        String customerSms = "Thread & Butter received quick request " + requestNumber + ".";
+        String adminSms = "New Thread & Butter quick " + serviceType + " request " + requestNumber + ".";
 
         return new CustomEmbroideryNotificationMessages(
                 customerSubject,
