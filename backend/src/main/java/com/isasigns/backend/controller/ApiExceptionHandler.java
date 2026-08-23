@@ -9,14 +9,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import com.isasigns.backend.dto.ApiErrorResponse;
 import com.isasigns.backend.exception.AiProviderLimitException;
+import com.isasigns.backend.exception.AuthRequestException;
 import com.isasigns.backend.exception.ExternalServiceException;
 import com.isasigns.backend.exception.RequestValidationException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(AuthRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuth(AuthRequestException exception) {
+        var builder = ResponseEntity.status(exception.getStatus());
+        if (exception.getRetryAfterSeconds() != null) {
+            builder.header(HttpHeaders.RETRY_AFTER, Long.toString(exception.getRetryAfterSeconds()));
+        }
+        return builder.body(new ApiErrorResponse(
+                exception.getStatus().value(), exception.getMessage(), List.of(), OffsetDateTime.now()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodValidation(MethodArgumentNotValidException exception) {
+        var details = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getDefaultMessage() == null ? "Invalid request." : error.getDefaultMessage())
+                .distinct()
+                .toList();
+        return response(HttpStatus.BAD_REQUEST, "Request validation failed", details);
+    }
 
     @ExceptionHandler(RequestValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(RequestValidationException exception) {

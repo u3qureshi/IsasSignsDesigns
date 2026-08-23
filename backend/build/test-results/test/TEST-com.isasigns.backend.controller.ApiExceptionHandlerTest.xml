@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.isasigns.backend.controller.ApiExceptionHandlerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-22T21:47:46.076Z" hostname="Mac.lan" time="0.042">
+  <properties/>
+  <testcase name="returnsProviderRateLimitsAs429WithRetryAfter()" classname="com.isasigns.backend.controller.ApiExceptionHandlerTest" time="0.036"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

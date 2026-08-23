@@ -171,9 +171,9 @@ are future work. Blue components are managed providers.
 - Shared eight-card Custom Design Studio used by both Embroidery and Printing.
 - Client-side image validation, form validation, AI loading/error states, preview display, and real
   multipart submission.
-- Passwordless sign-up/login/account interface is a **memory-only prototype**. Any eight digits
-  simulate login; no authentication API, cookie, or user session exists yet.
-- Search and cart controls are visual only.
+- Passwordless sign-up/login/account flow is connected to the Spring API. Four-digit email codes
+  establish a session backed by a short-lived JWT access cookie and rotating opaque refresh token.
+- The cart persists on the device and redirects to Stripe Checkout; search remains visual only.
 
 ### Backend
 
@@ -381,13 +381,13 @@ sequenceDiagram
   link -> Stripe Checkout -> production.
 - The AI preview is a concept, not final production approval and not an automatic price promise.
 
-## 8. Target passwordless authentication and authorization
+## 8. Passwordless authentication and authorization
 
-The UI prototype is already present, but backend authentication is not. Preserve the detailed plan
-in `frontend/documents/thread-and-butter-authentication-plan.md`:
+The customer authentication flow is implemented. Preserve the detailed design and current-state
+record in `frontend/documents/thread-and-butter-authentication-plan.md`:
 
 - email is the only login identifier;
-- eight-digit, single-use, ten-minute codes delivered through production SES;
+- four-digit, single-use, ten-minute codes delivered through the configured SMTP sender;
 - generic code-request response to reduce account enumeration;
 - per-email and per-IP rate limits;
 - codes stored only as HMACs;

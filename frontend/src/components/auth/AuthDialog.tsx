@@ -15,26 +15,21 @@ import {
   type FormEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import { useAuth } from "./AuthContext";
 
 export type AuthDialogView = "login" | "signup" | "account";
-
-export interface AuthPreviewUser {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  smsConsent: boolean;
-}
 
 interface AuthDialogProps {
   initialView: AuthDialogView;
   origin: { x: number; y: number };
-  previewUser: AuthPreviewUser | null;
   onClose: () => void;
-  onPreviewUserChange: (user: AuthPreviewUser) => void;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+}
 
 function FieldError({ children }: { children: string }) {
   return (
@@ -47,10 +42,9 @@ function FieldError({ children }: { children: string }) {
 export default function AuthDialog({
   initialView,
   origin,
-  previewUser,
   onClose,
-  onPreviewUserChange,
 }: AuthDialogProps) {
+  const { user, startSignup, startLogin, verifyCode, updateProfile } = useAuth();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const firstInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimerRef = useRef<number | null>(null);
@@ -58,14 +52,18 @@ export default function AuthDialog({
   const [view, setView] = useState<AuthDialogView>(initialView);
   const [stage, setStage] = useState<"details" | "code">("details");
   const [closing, setClosing] = useState(false);
-  const [email, setEmail] = useState(previewUser?.email ?? "");
-  const [firstName, setFirstName] = useState(previewUser?.firstName ?? "");
-  const [lastName, setLastName] = useState(previewUser?.lastName ?? "");
-  const [phone, setPhone] = useState(previewUser?.phone ?? "");
-  const [smsConsent, setSmsConsent] = useState(previewUser?.smsConsent ?? false);
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [emailConfirmation, setEmailConfirmation] = useState("");
+  const [firstName, setFirstName] = useState(user?.firstName ?? "");
+  const [lastName, setLastName] = useState(user?.lastName ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [smsConsent, setSmsConsent] = useState(user?.smsConsent ?? false);
   const [code, setCode] = useState("");
+  const [challengeId, setChallengeId] = useState("");
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
 
   useLayoutEffect(() => {
     const panel = panelRef.current;
@@ -104,6 +102,14 @@ export default function AuthDialog({
     };
   }, []);
 
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => {
+      setResendSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
+
   function requestClose() {
     if (closeRequestedRef.current) return;
     closeRequestedRef.current = true;
@@ -115,11 +121,14 @@ export default function AuthDialog({
     setView(nextView);
     setStage("details");
     setCode("");
+    setChallengeId("");
+    setResendSeconds(0);
     setError("");
     setSaved(false);
-    if (!previewUser) {
+    if (!user) {
       setFirstName("");
       setLastName("");
+      setEmailConfirmation("");
       setPhone("");
       setSmsConsent(false);
     }
@@ -129,7 +138,13 @@ export default function AuthDialog({
   function validateDetails() {
     const normalizedEmail = email.trim();
     if (!EMAIL_PATTERN.test(normalizedEmail)) return "Enter a valid email address.";
-    if (view === "signup" && !firstName.trim()) return "Enter your first name.";
+    if (view === "signup") {
+      if (!firstName.trim()) return "Enter your first name.";
+      if (!EMAIL_PATTERN.test(emailConfirmation.trim())) return "Enter your email address again.";
+      if (normalizedEmail.toLowerCase() !== emailConfirmation.trim().toLowerCase()) {
+        return "The two email addresses do not match.";
+      }
+    }
     if (phone && (phone.length < 10 || phone.length > 15)) {
       return "Phone number must contain 10 to 15 digits.";
     }
@@ -137,7 +152,7 @@ export default function AuthDialog({
     return "";
   }
 
-  function handleDetailsSubmit(event: FormEvent) {
+  async function handleDetailsSubmit(event: FormEvent) {
     event.preventDefault();
     setSaved(false);
     const nextError = validateDetails();
@@ -146,29 +161,54 @@ export default function AuthDialog({
       return;
     }
     setError("");
-    setStage("code");
-    setCode("");
-    window.setTimeout(() => firstInputRef.current?.focus(), 0);
+    setBusy(true);
+    try {
+      const challenge = view === "signup"
+        ? await startSignup({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+            emailConfirmation: emailConfirmation.trim(),
+            phone,
+            smsConsent,
+          })
+        : await startLogin(email.trim());
+      setChallengeId(challenge.challengeId);
+      setResendSeconds(challenge.resendAvailableInSeconds);
+      setStage("code");
+      setCode("");
+      window.setTimeout(() => firstInputRef.current?.focus(), 0);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function handleCodeSubmit(event: FormEvent) {
+  async function handleCodeSubmit(event: FormEvent) {
     event.preventDefault();
-    if (code.length !== 8) {
-      setError("Enter the complete eight-digit code.");
+    if (code.length !== 4) {
+      setError("Enter the complete four-digit code.");
       return;
     }
 
-    onPreviewUserChange({
-      firstName: view === "signup" ? firstName.trim() : previewUser?.firstName || "Customer",
-      lastName: view === "signup" ? lastName.trim() : previewUser?.lastName || "",
-      email: email.trim().toLowerCase(),
-      phone: view === "signup" ? phone : previewUser?.phone || "",
-      smsConsent: view === "signup" ? smsConsent : previewUser?.smsConsent || false,
-    });
-    requestClose();
+    if (!challengeId) {
+      setError("Request a new code and try again.");
+      return;
+    }
+    setError("");
+    setBusy(true);
+    try {
+      await verifyCode(challengeId, code);
+      requestClose();
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function handleAccountSubmit(event: FormEvent) {
+  async function handleAccountSubmit(event: FormEvent) {
     event.preventDefault();
     if (!firstName.trim()) {
       setError("Enter your first name.");
@@ -184,14 +224,44 @@ export default function AuthDialog({
     }
 
     setError("");
-    setSaved(true);
-    onPreviewUserChange({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email,
-      phone,
-      smsConsent,
-    });
+    setBusy(true);
+    try {
+      await updateProfile({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone,
+        smsConsent,
+      });
+      setSaved(true);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendCode() {
+    setCode("");
+    setError("");
+    setBusy(true);
+    try {
+      const challenge = view === "signup"
+        ? await startSignup({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+            emailConfirmation: emailConfirmation.trim(),
+            phone,
+            smsConsent,
+          })
+        : await startLogin(email.trim());
+      setChallengeId(challenge.challengeId);
+      setResendSeconds(challenge.resendAvailableInSeconds);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy(false);
+    }
   }
 
   const isAccount = view === "account";
@@ -206,7 +276,7 @@ export default function AuthDialog({
   const description = isAccount
     ? "Keep your contact information up to date."
     : stage === "code"
-      ? `Enter the eight-digit code sent to ${email.trim() || "your email"}.`
+      ? `Enter the four-digit code sent to ${email.trim() || "your email"}.`
       : isSignup
         ? "A few details, one email code, and you are in—no password required."
         : "Enter your email and we will send a one-time sign-in code.";
@@ -346,6 +416,26 @@ export default function AuthDialog({
             </label>
 
             {isSignup && (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-bold text-[hsl(var(--theme-brown-900))]">
+                  Confirm email address
+                </span>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  <input
+                    type="email"
+                    value={emailConfirmation}
+                    onChange={(event) => setEmailConfirmation(event.target.value)}
+                    autoComplete="off"
+                    inputMode="email"
+                    placeholder="Enter your email again"
+                    className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[hsl(var(--theme-brown-500))] focus:ring-2 focus:ring-[hsl(var(--theme-sand-300)/0.35)]"
+                  />
+                </div>
+              </label>
+            )}
+
+            {isSignup && (
               <>
                 <label className="block">
                   <span className="mb-1.5 block text-sm font-bold text-[hsl(var(--theme-brown-900))]">
@@ -390,10 +480,15 @@ export default function AuthDialog({
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#711f3d] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-700))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#711f3d] focus-visible:ring-offset-2"
+              disabled={busy}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#711f3d] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-700))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#711f3d] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
             >
               <Mail className="h-4 w-4" />
-              {isSignup ? "Create account & email code" : "Email me a sign-in code"}
+              {busy
+                ? "Sending code…"
+                : isSignup
+                  ? "Create account & email code"
+                  : "Email me a sign-in code"}
             </button>
 
             <p className="text-center text-xs font-bold leading-relaxed text-[hsl(var(--theme-brown-900))]">
@@ -406,16 +501,16 @@ export default function AuthDialog({
           <form onSubmit={handleCodeSubmit} className="mt-7 space-y-5" noValidate>
             <label className="block">
               <span className="mb-2 block text-center text-sm font-bold text-[hsl(var(--theme-brown-900))]">
-                Eight-digit code
+                Four-digit code
               </span>
               <input
                 ref={firstInputRef}
                 value={code}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))}
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 4))}
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="00000000"
-                aria-label="Eight-digit email code"
+                placeholder="0000"
+                aria-label="Four-digit email code"
                 className="w-full rounded-2xl border border-stone-200 bg-white px-5 py-4 text-center font-mono text-2xl font-bold tracking-[0.38em] text-[#711f3d] outline-none transition placeholder:text-stone-200 focus:border-[hsl(var(--theme-brown-500))] focus:ring-2 focus:ring-[hsl(var(--theme-sand-300)/0.35)]"
               />
             </label>
@@ -424,11 +519,11 @@ export default function AuthDialog({
 
             <button
               type="submit"
-              disabled={code.length !== 8}
+              disabled={code.length !== 4 || busy}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#711f3d] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-700))] disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Check className="h-4 w-4" />
-              {isSignup ? "Verify & create account" : "Verify & sign in"}
+              {busy ? "Verifying…" : isSignup ? "Verify & create account" : "Verify & sign in"}
             </button>
 
             <div className="flex items-center justify-between text-xs font-bold">
@@ -445,19 +540,21 @@ export default function AuthDialog({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setCode("");
-                  setError("");
-                }}
-                className="text-[hsl(var(--theme-brown-700))] hover:text-[#711f3d]"
+                disabled={busy || resendSeconds > 0}
+                onClick={() => void resendCode()}
+                className="text-[hsl(var(--theme-brown-700))] hover:text-[#711f3d] disabled:cursor-not-allowed disabled:text-stone-400"
               >
-                Resend code
+                {busy
+                  ? "Sending…"
+                  : resendSeconds > 0
+                    ? `Resend in ${resendSeconds}s`
+                    : "Resend code"}
               </button>
             </div>
 
             <p className="rounded-xl bg-[hsl(var(--theme-sand-300)/0.2)] px-4 py-3 text-center text-xs leading-relaxed text-stone-500">
-              UI preview only: no authentication email is sent yet. Enter any eight digits to
-              preview the signed-in menu.
+              The code expires after ten minutes and can only be used once. If it lands in junk,
+              mark it as not spam so future codes are easier to find.
             </p>
           </form>
         )}
@@ -525,19 +622,17 @@ export default function AuthDialog({
             {saved && (
               <p className="flex items-center gap-2 rounded-xl bg-[hsl(var(--theme-sage-100)/0.28)] px-4 py-3 text-xs font-bold text-[hsl(var(--theme-green-700))]">
                 <Check className="h-4 w-4" />
-                UI preview updated for this browser tab.
+                Your account details have been saved.
               </p>
             )}
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#711f3d] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-700))]"
+              disabled={busy}
+              className="w-full rounded-xl bg-[#711f3d] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[hsl(var(--theme-brown-700))] disabled:cursor-wait disabled:opacity-60"
             >
-              Save changes
+              {busy ? "Saving…" : "Save changes"}
             </button>
-            <p className="text-center text-xs text-stone-400">
-              Profile persistence will be connected during the backend authentication phase.
-            </p>
           </form>
         )}
       </div>

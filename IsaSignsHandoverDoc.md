@@ -41,50 +41,67 @@ The repository is the source of truth when older notes conflict with current cod
 
 ## 2. Executive summary
 
-Isa's Signs & Designs is a Canada-based, small-business storefront for handmade laser-cut, engraved, personalized, Islamic, children's, event, and business products. The intended system is a fast, premium-feeling, Canada-first ecommerce site whose product catalog is controlled by data rather than hardcoded frontend content.
+The storefront now trades under the customer-facing **Thread & Butter** brand and focuses on
+custom printing, embroidery, ready-to-order designs, and blank apparel. It remains a Canada-based
+small-business application and a single React/Spring Boot/PostgreSQL monolith.
 
-The project is currently an early catalog MVP, not a functioning ecommerce store.
+The project is now a functioning pre-production ecommerce MVP. Catalog browsing, configurable
+apparel, a persistent guest cart, Stripe test checkout, custom-service requests, email
+notifications, and passwordless customer authentication are implemented. Production deployment,
+live payments, domain email deliverability, fulfillment tooling, and launch/legal work remain.
 
 ### What is implemented now
 
-- React/TypeScript/Vite/Tailwind frontend shell.
-- Global two-level header, promotional bar, navigation, branding, and global footer.
-- React Router routes for the primary catalog navigation.
-- A completed FAQ content page with 17 questions across five sections.
-- Shared API-driven category pages for Kids, Wall Art, Business/Events, legacy Home Decor, the
-  catalog Embroidery submenus, and Printing Popular designs, with loading, error, and empty states.
-- Shared live Custom Design Studio request flows for Embroidery and Printing.
-- An API-driven Best Sellers page using the cross-category `is_featured` flag.
-- Product cards with Cloudinary URL generation, fallback images, per-card image dots, hover zoom, regular/sale price rendering, and detail-page navigation.
-- An in-progress product detail page with image gallery, thumbnails, price/sale rendering, tags, customization messaging, detail/specification accordions, and a UI-only question form.
-- Java 21/Spring Boot/PostgreSQL backend scaffold.
-- Active-product listing, case-insensitive category filtering, and active-product lookup by slug.
-- JPA entity-to-DTO separation.
-- HTTP 404 handling for a missing/inactive slug.
-- OpenAPI/Swagger generation.
-- Docker Compose PostgreSQL environment and an idempotent initial seed script.
-- A 15-product seed catalog: 11 Kids products and one product in each of four other categories.
-- Product data fields for descriptions, feature flags, inventory, customization, tags, and JSONB sale configuration.
+- React 19/TypeScript/Vite/Tailwind storefront with the Thread & Butter brand system, homepage,
+  promotional bar, two-level sticky header, dropdown navigation, FAQ, and footer.
+- The sticky header shows the account control immediately left of the cart after the top branding
+  row scrolls away; the same account menu remains in the top row before scrolling.
+- Dedicated, responsive service landing pages for T-shirts, polo shirts, sweatshirts/fleece, and
+  hats, with shared brand styling, real garment imagery, reviews treatment, placement guidance,
+  and quick-request launch buttons.
+- Database-backed Gallery and Best Sellers experiences with reusable purchasable cards,
+  Cloudinary images, tags, prices, image variants, and detail navigation.
+- A Clothing catalog selling blank Gildan garments, including tees, long sleeves, hoodies,
+  crewnecks, and sweatpants with colour image selectors and size choices.
+- Product detail pages, on-device persistent cart state, cart drawer, quantity management, and
+  server-authoritative product/variant/price validation.
+- Guest Stripe Checkout in sandbox/test mode, persisted orders/order items, verified idempotent
+  webhook handling, success/cancel pages, and pending-order reconciliation.
+- Shared Custom Embroidery and Custom Printing Studios with image upload, AI preview generation,
+  manual submission, validation, Cloudinary persistence, PostgreSQL records, and business/customer
+  email notifications.
+- A two-step non-AI quick-request modal opened by the existing service-page CTA buttons. It accepts
+  printing/embroidery, multiple products and quantities, optional artwork/notes/company, customer
+  details, sends both-party email notifications, and can carry entered details into the AI studio.
+- Application-owned passwordless authentication: confirm-email signup, email-only login,
+  four-digit email OTP verification, PostgreSQL users/roles/challenges, short-lived JWT access
+  cookies, rotating opaque refresh sessions, CSRF protection, profile updates, and logout.
+- Java 21/Spring Boot/PostgreSQL backend with Flyway migrations through V19, Swagger/OpenAPI,
+  structured validation/error handling, and an automated service test suite.
+- A documented low-traffic AWS deployment direction using one EC2 instance initially, managed DNS,
+  HTTPS, PostgreSQL, secrets, backups, and an upgrade path rather than premature ECS complexity.
 
 ### What is not implemented
 
-- Complete homepage merchandising below the implemented video hero.
-- Complete merchandising content for every category; the page infrastructure exists, but empty categories still require matching database products and verified images.
-- Search behavior despite two visible search controls.
-- Mobile navigation.
-- Cart state, cart page, cart persistence, or working cart button.
-- Checkout, Stripe integration, orders, webhooks, inventory reservation, fulfillment, or order tracking.
-- Login/accounts or authentication.
-- Product customization controls.
-- Admin catalog management.
-- A backend for the Ask a Question form; the current success message is simulated.
-- Routes targeted by most footer links.
-- Production deployment, CI/CD, monitoring, backups, or production secrets management.
-- Automated backend tests or frontend tests.
+- Search behavior despite visible search controls.
+- A dedicated mobile navigation/hamburger experience.
+- Customer-facing order history and ownership linkage in checkout; guest checkout remains the only
+  completed purchase path even though authentication and `customer_orders.user_id` now exist.
+- Inventory reservation, fulfillment workflows, shipment tracking, refunds, and an admin console.
+- A backend for the product-detail Ask a Question form; its success state remains UI-only.
+- Live Stripe activation, verified production tax/shipping policy, and production webhook setup.
+- A custom email domain and authenticated transactional sender. Gmail SMTP works but can deliver to
+  Junk/Spam.
+- Production deployment, CI/CD, monitoring/alerting, automated backups, and secret injection.
+- Legal/privacy/terms/returns content and completion of placeholder footer destinations.
+- A frontend unit/integration test framework; production builds pass, but frontend behavior is
+  currently checked manually.
 
 ### Current phase
 
-The project has moved from a UI/header prototype into a partially data-driven catalog. The correct immediate focus is to stabilize and refactor the catalog foundation before adding cart and payments.
+The project is in pre-production hardening. The next focus is to connect authenticated customers to
+their orders, complete launch-critical content and mobile behavior, deploy the monolith to AWS over
+HTTPS, configure production secrets/domain email, and run end-to-end Stripe launch tests.
 
 ---
 
@@ -101,25 +118,30 @@ The project has moved from a UI/header prototype into a partially data-driven ca
 | Area | Status | Current reality |
 |---|---|---|
 | Brand system | Implemented | Logos, Maple Leaf, Handmade graphic, custom fonts, and theme tokens are present. |
-| Header | Implemented, responsive limitations | Desktop-oriented sticky navigation and promotional bar are present. No mobile menu. |
+| Header | Implemented, responsive limitations | Sticky navigation, dropdowns, account control, live cart badge, and promotional bar are present. Scrolled header shows account immediately left of cart. No mobile menu. |
 | Footer | Implemented, links incomplete | Global footer renders; most internal destinations and real social URLs are not implemented. |
-| Homepage | Partial | Three-column embroidery/printing video hero with a solid central Thread & Butter brand panel is implemented; merchandising sections are still needed below it. |
+| Homepage | Implemented | Split-video hero, custom-service cards, embroidery/printing sections, CTAs, responsive animation, and reduced-motion behavior are present. |
 | FAQ | Implemented | 17 local-state accordion questions; no CMS/backend. |
 | Kids listing | Implemented, needs live verification | Fetches backend data through Vite proxy and renders product cards. |
-| Product detail | Partial/uncommitted | Source exists and type-checks, but is currently an untracked file. |
+| Product detail | Implemented, inquiry partial | Gallery, variant/size selection, price, tags, details, specifications, and Add to Cart work. Ask a Question is still UI-only. |
 | Product category pages | Implemented, content varies | All product menu/submenu routes reuse `CategoryPage` and `ProductCard`; their content depends on matching database rows. |
 | Product API | Implemented | Read-only list/category/featured/slug API. |
-| Custom Embroidery API | Implemented, submission provider test pending | Multipart preview/submission endpoints, validation, AI/storage clients, and persistence exist; Cloudflare preview and malformed-request runtime behavior are verified. |
-| Database | Implemented locally | PostgreSQL 15 Compose service, initial schema/seed script, and Flyway custom-request migrations exist. |
+| Service pages | Implemented | T-shirts, polos, sweatshirts/fleece, and hats have dedicated branded pages and real asset-based product/placement imagery. |
+| Gallery / Best Sellers | Implemented | Shared ready-to-order product collection and purchasable card design. Best Sellers reuses the collection with distinct heading copy. |
+| Clothing | Implemented | Seven Gildan blank-apparel products with per-colour images, selectors, supported sizes, and database-backed product details. |
+| Custom Design APIs | Implemented | Embroidery and Printing multipart preview/submission endpoints share validation, AI/storage, persistence, and notification infrastructure. |
+| Quick requests | Implemented | Existing service CTAs open a two-step non-AI request form; backend validates, stores, and emails both parties. |
+| Authentication | Implemented | Four-digit email OTP, users/roles, signed access JWT cookie, rotating refresh cookie, CSRF, profile update, and logout. Account orders/requests remain future work. |
+| Database | Implemented locally | PostgreSQL Compose service plus Flyway migrations V2–V19 for requests, gallery/clothing, checkout, and authentication. |
 | Swagger/OpenAPI runtime | Implemented | Runtime endpoints exist; checked-in exports are stale. |
-| Cloudinary delivery | Partial | URL helper exists; seed image values are not valid Cloudinary public IDs. |
+| Cloudinary delivery | Implemented, configuration-dependent | Gallery/clothing/service assets and customer uploads use the existing Cloudinary integration; production credentials/delivery policy remain environment concerns. |
 | Sales | Partial | DB/API/UI shapes exist, but seed script contains no non-null sales and validation is absent. |
-| Best Sellers | Implemented, needs data | Uses `GET /api/products?featured=true`; products appear when `is_featured = true`. |
+| Best Sellers | Implemented | Uses the Gallery collection/card experience with Best Sellers-specific title and supporting copy. |
 | Search | Visual only | Inputs/icons do not execute searches. |
-| Cart | Visual only | Cart icon has hover animation but no handler/state/page. |
+| Cart | Implemented for guests | Device-persistent cart drawer supports quantities, variants, removal, totals, and secure checkout launch. |
 | Ask a Question | Visual only | Form validates locally, then always shows success without sending data. |
-| Checkout/orders | Planned | No schema, backend, frontend, or Stripe code. |
-| Tests | Partial | Nine backend custom-flow unit tests pass; no frontend test framework is configured. |
+| Checkout/orders | Implemented in Stripe test mode | Backend recalculates prices, persists orders/items, creates Checkout Sessions, verifies webhooks, and reconciles the success page. Fulfillment/admin/order history are absent. |
+| Tests | Partial | Backend automated suites cover request validation, previews, notifications, checkout/webhooks, JWTs, OTPs, and refresh rotation. No frontend test framework is configured. |
 | Production operations | Planned | No deployment or CI configuration. |
 
 ---
@@ -233,7 +255,8 @@ Commits `5c6d43b` and `e67aa84` refined footer social-label spacing.
 
 ### Work after the last commit / current uncommitted work
 
-At the 2026-07-19 audit, the following feature work is not committed:
+The following was the state recorded during the 2026-07-19 audit and is retained as history; it is
+not the current working-tree inventory:
 
 - `frontend/src/App.tsx` imports and routes the product detail page;
 - `frontend/src/components/pages/KidsPage.tsx` wraps cards in detail-page links and prevents image-dot clicks from triggering navigation;
@@ -260,28 +283,26 @@ There are also many modified/deleted generated Gradle/cache/build files because 
 
 ### Remote identity
 
-The prior handoff called the repository `u3qureshi/IsasSignsDesigns`. The current configured remote points to a differently spelled/hyphenated repository path. Confirm the intended canonical GitHub repository before publishing new work.
+The canonical remote is now:
 
-### Critical credential warning
+```text
+https://github.com/u3qureshi/IsasSignsDesigns.git
+```
 
-The Git remote currently embeds a GitHub personal access token in its URL. The actual token is intentionally not reproduced here.
+GitHub reported that the earlier `IsasSigns-Designs.git` location moved. A push was also rejected by
+GitHub's private-email protection; fix future commits by configuring a GitHub `noreply` commit email
+or by deliberately changing the GitHub email privacy preference before pushing.
 
-Treat the token as compromised:
+### Git credential status
 
-1. revoke/rotate it in GitHub immediately;
-2. remove credentials from the remote URL;
-3. verify no token remains in shell history, documentation, credential helpers, screenshots, or chat exports;
-4. use a credential manager or SSH key for future authentication.
-
-Safe inspection and remediation pattern:
+The configured remote currently contains no embedded personal access token. Continue using GitHub
+CLI, a credential manager, or SSH rather than embedding a token in the repository URL. Safe
+inspection pattern:
 
 ```bash
 git remote -v
-git remote set-url origin https://github.com/<owner>/<repository>.git
 git remote -v
 ```
-
-Do not paste the old URL into another chat or document.
 
 ### Dirty working-tree warning
 
@@ -674,14 +695,18 @@ When consuming component values, use `hsl(var(--token))`. Opacity forms should b
 ### Sticky navigation row
 
 - `position: sticky; top: 0` with a high z-index.
-- Contains a reserved left column, central navigation, and reserved right cart area.
+- Contains a reserved left column, central navigation, and a right-side account/cart control area.
 - Determines `isScrolled` using a threshold derived from the measured top-row height.
 - At large widths above the `max-[1366px]` cutoff, the left area can reveal the compact icon and expandable sticky search after scrolling.
 - Sticky search underline animates for 300 ms; its placeholder is deliberately delayed by 300 ms.
 - Returning above the threshold closes and resets sticky search.
 - Navigation labels are bold brown with an animated brown underline.
 - Embroidery and Printing are button-only navigation triggers implemented with the shared `NavDropdown` component. Hovering, clicking, or keyboard-activating a trigger opens its collection dropdown; only a collection link navigates.
-- Cart uses a Lucide cart and an SVG circle whose dash offset animates on hover.
+- When `isScrolled` is true, the shared `UserAccountMenu` appears immediately left of the cart.
+  Before scrolling, that menu is rendered in the top brand row instead, avoiding two simultaneously
+  active account controls.
+- Cart uses a Lucide cart and an SVG circle whose dash offset animates on hover. Its badge displays
+  the live cart quantity and opens the persistent cart drawer.
 
 ### Deliberate constraint
 
@@ -690,7 +715,8 @@ Do not reintroduce complex height-collapse/sticky-switch animation without a cle
 ### Header gaps
 
 - Neither search input searches.
-- The cart button does nothing.
+- Account and cart controls work; authenticated order/request history entries remain disabled and
+  labelled **Soon**.
 - There is no mobile menu or hamburger; the top-level nav can overflow on narrow screens.
 - The sticky compact logo/search is hidden at 1366 px and below, so the intended scrolled identity/search treatment is primarily large-desktop behavior.
 - There is no active-route styling.
@@ -1674,10 +1700,11 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 
 ### Critical / security
 
-1. Git remote contains a personal access token. Revoke/rotate and remove it immediately.
-2. No checkout/order implementation exists; do not treat the site as capable of accepting orders.
-3. The Ask a Question form claims success without transmitting anything.
-4. Browser sale calculations cannot be used as payable-price authority.
+1. Stripe is configured for development/test use; do not switch to live payments until production
+   HTTPS, webhook signing, policies, tax/shipping settings, monitoring, and recovery are verified.
+2. The Ask a Question form claims success without transmitting anything.
+3. Gmail SMTP delivery can land in Junk and is not a production transactional-email posture.
+4. Production authentication secrets must be injected outside Git and secure cookies require HTTPS.
 
 ### High priority / blocks reliable catalog progress
 
@@ -1694,9 +1721,9 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 
 - Other category pages missing.
 - Search missing.
-- Cart missing.
-- product options/customization missing.
-- inventory not enforced.
+- Authenticated order/request history and ownership-aware account pages are missing.
+- Inventory is checked when checkout begins but is not reserved during payment.
+- Fulfillment, shipment tracking, refunds, and an administration interface are missing.
 - inquiry/contact backend missing.
 - footer destination pages missing.
 - social/WhatsApp destinations are placeholders.
@@ -2441,6 +2468,9 @@ submission even if Gmail is temporarily unavailable or misconfigured.
 
 ### 2026-07-25 — Passwordless authentication architecture planned, not implemented
 
+> Historical planning record. Authentication was implemented later; the 2026-08-22 entry is the
+> authoritative current state, and the final UX uses four-digit rather than eight-digit codes.
+
 **Requested direction**
 
 - Customers will authenticate with an email address and emailed one-time code.
@@ -2481,7 +2511,7 @@ submission even if Gmail is temporarily unavailable or misconfigured.
 8. A verified new account is activated or an existing active account is authenticated.
 9. The backend issues secure cookies and React reloads the safe `/api/auth/me` profile.
 
-Recommended initial code controls are eight digits, ten-minute expiry, five guesses, a 60-second
+The initial planning recommendation was eight digits, ten-minute expiry, five guesses, a 60-second
 resend cooldown, single use, newest-code-wins invalidation, and rate limits by both normalized
 email and IP address. Authentication secrets must never be logged.
 
@@ -2794,6 +2824,153 @@ GET    /api/account/embroidery-requests
   without forced movement.
 - Embroidery buttons lead to `/embroidery/anime` and `/embroidery/custom-designs`; printing buttons
   lead to `/printing/popular-designs` and `/printing/custom`.
+
+### 2026-08-22 — Current storefront, commerce, request, deployment, and authentication handoff
+
+This entry is the authoritative current-state addendum for work completed after the July journal
+entries. Where an older section calls cart, checkout, or authentication a prototype or planned
+feature, this entry and the current source code supersede it.
+
+**Navigation and header**
+
+- The customer-facing navigation is now **Best Sellers**, **Embroidery**, **Printing**,
+  **Services**, **Gallery**, **Clothing**, and **FAQ**.
+- Wall Art, Kids, and Business/Events references were removed from the visible navigation without
+  deleting their routes or source.
+- The Services dropdown contains only T-Shirts, Collared/Polo Shirts, Sweatshirts/Fleece, and Hats.
+  Outerwear, Specialty Clothing, and Promotional Products were removed from the menu.
+- The upper brand row contains the account control before scrolling. When that row leaves the
+  viewport, the sticky navigation renders the same account control directly left of the cart. The
+  component is shared, so login/signup, signed-in status, account settings, and logout behave the
+  same in either location.
+
+**Service landing pages**
+
+- `/services/t-shirts`, `/services/polo-shirts`, `/services/sweatshirts-fleece`, and
+  `/services/hats` are dedicated responsive marketing pages based on reference-site information but
+  rewritten in Thread & Butter language, colours, typography, spacing, and visual system.
+- T-shirt placement illustrations cover full front, matching left/right chest placements, full
+  back, and sleeve. Product cards use supplied tank, tee, long-sleeve, and oversized-shirt assets.
+- The polo page uses supplied polo option icons; performance/easy-care icon sizing was tuned, and
+  `polo_embroidery` accompanies a vertically stacked representation-card layout.
+- The sweatshirts/fleece page uses supplied garment imagery and includes turtleneck in place of the
+  earlier performance option.
+- The hats hero uses `hat_embroidery.png`; supplied placement images replace generated stand-ins.
+  The available hat grid contains five consistently sized cards, centred three over two, and omits
+  structured/unstructured entries. Its second section uses the shared light-sage service-section
+  background, now also applied to the corresponding section on the other service pages.
+- Service-page review sections use a default profile icon rather than a customer portrait and
+  retain visually strong star treatment until real reviews are available.
+
+**Quick non-AI service request**
+
+- Existing service CTA buttons such as **Start your hat design** open the shared
+  `QuickRequestLauncher`; no extra floating launcher was introduced.
+- Step one selects Printing or Embroidery, supports multiple item/quantity lines, optional artwork,
+  and optional notes. Step two collects customer identity/contact data; company is optional and
+  required fields have a bold red asterisk.
+- The backend `POST /api/quick-requests` endpoint validates multipart submissions, persists the
+  request, and sends customer and administrator emails through the existing notification system.
+- Customers can continue into the applicable AI studio with compatible draft values carried
+  forward. Embroidery deliberately does not prefill the AI studio's creative-description field;
+  users must describe what they want the AI to embroider themselves.
+- UI terminology says **Printing**, not **Screen Printing**.
+
+**Gallery and Best Sellers**
+
+- `/gallery` is a ready-to-order collection using the former Kids card interaction style rather
+  than the Kids content itself. File names informed titles, descriptions, prices, tags, slugs, and
+  multi-image grouping; the catalog records are installed by Flyway V7–V9.
+- Gallery imagery is delivered through Cloudinary identifiers. The duck/water shirt was replaced
+  by `Duck_And_Daisy_Embroidered_Crewneck_60_1.webp`.
+- Itachi-inspired, Shenanigans, Beyond the Wall, and Unproductive designs were promoted into the
+  first visual row.
+- `/best-sellers` reuses the Gallery product/card implementation with its own eyebrow, title, and
+  description rather than maintaining a second product dataset.
+
+**Blank clothing catalog**
+
+- `/clothing` sells single blank garments at retail prices. Each product uses colour-specific
+  garment-only images, a colour selector, available sizes, product details, and cart integration.
+- Flyway V10–V16 add the current Gildan collection: 64000 Softstyle T-Shirt, G200 Ultra Cotton
+  T-Shirt, G840 DryBlend Long Sleeve, SF500 Softstyle Midweight Hoodie, 18500 Heavy Blend Hoodie,
+  18000 Heavy Blend Crewneck, and 18200 Heavy Blend Sweatpants.
+- Images supplied in the local Gildan folders were mapped to colour variants and corresponding
+  Cloudinary assets rather than relying on model photographs from the wholesaler pages.
+
+**Cart, Stripe Checkout, and orders**
+
+- `CartProvider` stores guest cart state under `thread-and-butter-cart:v1` on the current device.
+  The drawer supports product/variant/size lines, quantities, removal, clearing, totals, and a live
+  header badge.
+- `POST /api/checkout/sessions` never trusts browser prices. It reloads active products, validates
+  selected variants/sizes and stock, calculates sale prices, enforces line/quantity limits, applies
+  configured shipping, saves the pending order/items, and creates a hosted Stripe Checkout Session.
+- Current defaults are CAD product currency, $15 standard shipping, free shipping from $100, and
+  automatic tax disabled unless explicitly configured.
+- Flyway V17 adds `customer_orders`, `order_items`, and idempotent `payment_webhook_events`.
+- `POST /api/checkout/webhooks/stripe` verifies Stripe signatures and handles repeated events
+  safely. The success page also reconciles a pending session with Stripe so the UI does not remain
+  indefinitely on **Confirming payment** when webhook timing is delayed during development.
+- Checkout is guest-only and should remain in Stripe sandbox/test mode until the live account,
+  webhook URL, tax/shipping rules, policies, and production deployment are ready. An e-transfer
+  discount was discussed but is not implemented and must not be advertised as functional yet.
+
+**Passwordless authentication**
+
+- Signup asks for an email twice, preventing accidental address typos before sending a code. Login
+  asks for the email once. Both flows use the existing Gmail SMTP sender; delivery works but users
+  may need to check Junk/Spam until a custom domain and authenticated transactional sender are used.
+- Verification now uses a **four-digit** numeric code generated with Java `SecureRandom`. Codes
+  expire after ten minutes, allow five guesses, have a 60-second resend cooldown, and are limited to
+  five requests per email per 15 minutes and 30 requests per source per hour.
+- Only an HMAC digest of the challenge-bound code is stored. Challenges are single-use, only the
+  newest challenge for an email/purpose is accepted, and unknown login emails receive the same
+  generic response without a usable challenge or message, reducing account enumeration.
+- A successful code creates a 15-minute signed JWT access token in the host-only HttpOnly
+  `tnb_access` cookie and a random 30-day refresh credential in the host-only HttpOnly
+  `tnb_refresh` cookie, scoped to `/api/auth`. Raw refresh tokens are never stored in PostgreSQL.
+- Refresh tokens rotate at every use. Reuse of a replaced token revokes its entire session family.
+  The React `AuthProvider` performs a single-flight refresh when `/api/auth/me` reports an expired
+  access session, including after a browser reload.
+- Cookie-authenticated writes use the readable XSRF token plus the `X-XSRF-TOKEN` request header.
+  Logout revokes the refresh record and clears both authentication cookies.
+- `GET/PATCH /api/auth/me` provide current identity and profile persistence. Account menu entries
+  for orders and custom requests remain disabled until ownership-aware pages are implemented.
+- Flyway V18 adds user profile fields, `user_roles`, email challenges, refresh sessions, and nullable
+  order ownership. V19 changes digest columns to `varchar` for Hibernate schema validation.
+- Production requires separate strong `AUTH_OTP_PEPPER` and `AUTH_JWT_SECRET` values outside Git,
+  `AUTH_SECURE_COOKIES=true`, HTTPS, and correct reverse-proxy forwarding. Local-only defaults exist
+  so development can start without production secrets.
+
+**AWS and domain direction**
+
+- The recommended first deployment is one small EC2 instance for the low-traffic monolith, with
+  Docker Compose or equivalent process management, HTTPS termination, health checks, logs,
+  PostgreSQL backup discipline, and secrets in SSM Parameter Store/Secrets Manager. This is easier
+  to learn, showcase, and operate cheaply than ECS for the expected initial traffic.
+- A purchased domain is separate from AWS compute. Route 53 or another DNS provider maps the domain
+  to the AWS endpoint; an Elastic IP prevents ordinary EC2 public-IP changes from breaking that
+  mapping. ACM or Let's Encrypt supplies HTTPS depending on the chosen ingress architecture.
+- Buying a domain does not automatically include a mailbox. Domain email requires a mailbox or
+  forwarding provider, while transactional authentication/order email should ultimately use a
+  domain-verified sender with SPF, DKIM, and DMARC. The current Gmail sender can continue during
+  development.
+- See `frontend/documents/aws-ec2-production-deployment-plan.md` for the deployment sequence and
+  `frontend/documents/thread-and-butter-authentication-plan.md` for the detailed authentication
+  threat model and implementation.
+
+**Verification state**
+
+- The authentication migrations were applied through V19 against local PostgreSQL and the real
+  Spring application started successfully with Flyway/Hibernate validation.
+- Backend automated tests and the frontend production build passed after the checkout and
+  authentication work. Auth smoke checks verified public routes, unauthorized `/api/auth/me`,
+  generic unknown-account login, CSRF rejection, and refresh behavior.
+- After the sticky account-control and four-digit OTP update, `./gradlew cleanTest test`,
+  `npm run build`, and `git diff --check` all passed again on 2026-08-22.
+- Generated Gradle/build artifacts are still tracked or present in the working tree. Do not delete
+  or commit them casually; fix repository hygiene in a deliberate, isolated change.
 
 ---
 

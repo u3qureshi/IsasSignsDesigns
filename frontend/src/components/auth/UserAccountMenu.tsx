@@ -9,18 +9,16 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import AuthDialog, {
-  type AuthDialogView,
-  type AuthPreviewUser,
-} from "./AuthDialog";
+import AuthDialog, { type AuthDialogView } from "./AuthDialog";
+import { useAuth } from "./AuthContext";
 
 export default function UserAccountMenu() {
+  const { user, loading, logout } = useAuth();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dialogView, setDialogView] = useState<AuthDialogView | null>(null);
   const [dialogOrigin, setDialogOrigin] = useState({ x: 0, y: 0 });
-  const [previewUser, setPreviewUser] = useState<AuthPreviewUser | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -64,7 +62,7 @@ export default function UserAccountMenu() {
         <button
           ref={triggerRef}
           type="button"
-          aria-label={previewUser ? "Open account menu" : "Open login and account menu"}
+          aria-label={user ? "Open account menu" : "Open login and account menu"}
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((current) => !current)}
@@ -86,7 +84,7 @@ export default function UserAccountMenu() {
             />
           </svg>
           <UserRound className="relative h-6 w-6" strokeWidth={2.7} />
-          {previewUser && (
+          {user && (
             <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[hsl(var(--theme-green-brand))]" />
           )}
         </button>
@@ -97,15 +95,15 @@ export default function UserAccountMenu() {
             aria-label="Account menu"
             className="absolute right-0 top-full z-[90] mt-2 w-64 overflow-hidden rounded-2xl border border-[hsl(var(--theme-sand-300))] bg-white py-2 shadow-[0_18px_50px_hsl(var(--theme-brown-900)/0.2)]"
           >
-            {previewUser ? (
+            {user ? (
               <>
                 <div className="border-b border-stone-100 px-4 py-3">
                   <p className="truncate text-sm font-bold text-[hsl(var(--theme-brown-900))]">
-                    {previewUser.firstName} {previewUser.lastName}
+                    {user.firstName} {user.lastName}
                   </p>
-                  <p className="mt-0.5 truncate text-xs text-stone-400">{previewUser.email}</p>
+                  <p className="mt-0.5 truncate text-xs text-stone-400">{user.email}</p>
                   <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-wider text-[hsl(var(--theme-green-700))]">
-                    UI preview
+                    Signed in
                   </p>
                 </div>
                 <button
@@ -143,8 +141,8 @@ export default function UserAccountMenu() {
                   type="button"
                   role="menuitem"
                   onClick={() => {
-                    setPreviewUser(null);
                     setMenuOpen(false);
+                    void logout();
                   }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-red-700 transition hover:bg-red-50"
                 >
@@ -152,6 +150,10 @@ export default function UserAccountMenu() {
                   Sign out
                 </button>
               </>
+            ) : loading ? (
+              <div className="px-4 py-4 text-sm font-semibold text-stone-400">
+                Checking your session…
+              </div>
             ) : (
               <>
                 <div className="px-4 pb-2 pt-3">
@@ -190,9 +192,7 @@ export default function UserAccountMenu() {
         <AuthDialog
           initialView={dialogView}
           origin={dialogOrigin}
-          previewUser={previewUser}
           onClose={closeDialog}
-          onPreviewUserChange={setPreviewUser}
         />
       )}
     </>

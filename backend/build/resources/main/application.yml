@@ -1,4 +1,6 @@
 spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   config:
     import:
       - optional:file:.env[.properties]
@@ -42,9 +44,26 @@ spring:
 
 server:
   port: 8081
+  forward-headers-strategy: framework
 
 app:
   time-zone: ${APP_TIME_ZONE:America/Toronto}
+  auth:
+    email-enabled: ${AUTH_EMAIL_ENABLED:${EMAIL_NOTIFICATIONS_ENABLED:false}}
+    otp-pepper: ${AUTH_OTP_PEPPER:local-development-otp-pepper-change-before-production}
+    jwt-secret: ${AUTH_JWT_SECRET:local-development-jwt-secret-change-before-production}
+    issuer: ${AUTH_JWT_ISSUER:https://auth.thread-and-butter.invalid}
+    audience: ${AUTH_JWT_AUDIENCE:thread-and-butter-web}
+    access-token-minutes: ${AUTH_ACCESS_TOKEN_MINUTES:15}
+    refresh-token-days: ${AUTH_REFRESH_TOKEN_DAYS:30}
+    otp-minutes: ${AUTH_OTP_MINUTES:10}
+    otp-max-attempts: ${AUTH_OTP_MAX_ATTEMPTS:5}
+    request-cooldown-seconds: ${AUTH_REQUEST_COOLDOWN_SECONDS:60}
+    email-limit-per-15-minutes: ${AUTH_EMAIL_LIMIT_PER_15_MINUTES:5}
+    ip-limit-per-hour: ${AUTH_IP_LIMIT_PER_HOUR:30}
+    secure-cookies: ${AUTH_SECURE_COOKIES:false}
+    access-cookie-name: ${AUTH_ACCESS_COOKIE_NAME:tnb_access}
+    refresh-cookie-name: ${AUTH_REFRESH_COOKIE_NAME:tnb_refresh}
   checkout:
     storefront-url: ${STOREFRONT_URL:http://localhost:5173}
     free-shipping-threshold-cents: ${CHECKOUT_FREE_SHIPPING_THRESHOLD_CENTS:10000}
