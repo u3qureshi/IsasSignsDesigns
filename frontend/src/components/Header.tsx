@@ -233,6 +233,7 @@ export default function Header() {
           </div>
 
           <nav className="mx-auto flex flex-1 items-center justify-center gap-[clamp(0.75rem,1.8vw,2.75rem)] text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))]">
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/">Home</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/best-sellers">Best Sellers</Link>
             <NavDropdown label="Embroidery" menuId="embroidery-menu" items={EMBROIDERY_COLLECTIONS} />
             <NavDropdown label="Printing" menuId="printing-menu" items={PRINTING_COLLECTIONS} />

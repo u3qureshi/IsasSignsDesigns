@@ -72,19 +72,18 @@ export default function Footer() {
       {/* ── Top: tagline + blurb ─────────────────────────────────────────── */}
       <div className="px-8 py-12 text-center">
         <div className="max-w-screen-xl mx-auto">
-          <p className="font-aoki text-xl mb-4 tracking-wide text-white">
-            Meaningful Islamic Decor, Crafted in Canada
+          <p className="mb-5 font-aoki text-2xl tracking-wide text-white sm:text-3xl">
+            Custom Apparel, Crafted in Canada
           </p>
-          <p className="text-md leading-relaxed max-w-5xl mx-auto text-white">
-            Bring warmth, remembrance, and beauty into your home with modern
-            Islamic wall art and thoughtful Islam-inspired pieces—made to be
-            affordable without compromising quality. From Arabic calligraphy
-            designs to prayer-corner essentials, Islamic kids products, and
-            personalized gifts, each item is designed with care and handcrafted
-            in our Canadian studio. Whether you're decorating your space, gifting
-            for Ramadan/Eid, or creating something special for a nikkah or
-            wedding, our pieces are made to feel timeless—built to last and meant
-            to be lived with.
+          <p className="mx-auto max-w-5xl text-base leading-relaxed text-white sm:text-lg">
+            Bring your ideas to life with custom embroidery, vibrant printing,
+            and thoughtfully selected apparel—made accessible without
+            compromising quality. From personalized T-shirts, hoodies, polos,
+            and hats to team apparel, business merchandise, and ready-to-order
+            designs, every piece is prepared with care in our Canadian studio.
+            Whether you are creating something for yourself, outfitting a team,
+            promoting your business, or marking a special occasion, we make it
+            easy to choose a favourite or create something distinctly yours.
           </p>
         </div>
       </div>
@@ -98,7 +97,7 @@ export default function Footer() {
           <div className="md:justify-self-start">
             <img
               src={logo}
-              alt="Isa's Signs & Designs"
+              alt="Thread & Butter"
               className="w-56 h-56 object-contain"
             />
           </div>
@@ -164,7 +163,7 @@ export default function Footer() {
         className="text-center text-xs pb-6"
         style={{ color: "hsl(var(--theme-sand-300) / 0.5)" }}
       >
-        © {new Date().getFullYear()} Isa's Signs & Designs. All rights reserved.
+        © {new Date().getFullYear()} Thread & Butter. All rights reserved.
       </div>
     </footer>
   );

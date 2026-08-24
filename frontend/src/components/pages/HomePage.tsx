@@ -134,9 +134,9 @@ export default function HomePage() {
     <main className="bg-[hsl(var(--theme-kids-bg))]">
       <section
         aria-label="Thread & Butter embroidery and printing showcase"
-        className="grid h-[36vw] max-h-[45rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-stretch overflow-hidden bg-[hsl(var(--theme-brown-footer))]"
+        className="grid h-[30vw] max-h-[37.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-stretch overflow-hidden bg-[hsl(var(--theme-brown-footer))]"
       >
-        <div className="relative w-[24vw] max-w-[33.75rem] shrink-0 bg-black">
+        <div className="relative w-[20vw] max-w-[28.125rem] shrink-0 bg-black">
           <HeroVideo
             src={embroideryVideo}
             poster={embroideryPoster}
@@ -144,7 +144,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 flex min-w-0 items-center justify-center bg-[hsl(var(--theme-brown-footer))] px-3 py-4 text-center sm:px-8">
+        <div className="relative z-10 flex min-w-0 items-center justify-center bg-[hsl(var(--theme-brown-footer))] px-3 py-3 text-center sm:px-8">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-y-0 right-[calc(100%_-_2px)] w-[clamp(1rem,3vw,2.75rem)]"
@@ -163,18 +163,18 @@ export default function HomePage() {
           />
 
           <div className="relative z-10 flex min-w-0 flex-col items-center justify-center">
-            <h1 className="font-aoki text-[clamp(2rem,7vw,8rem)] leading-[0.94] tracking-[-0.04em] text-[hsl(var(--theme-kids-bg))]">
+            <h1 className="font-aoki text-[clamp(1.8rem,6.35vw,7.25rem)] leading-[0.94] tracking-[-0.04em] text-[hsl(var(--theme-kids-bg))]">
               <span className="block">Thread</span>
               <span className="block">&amp;</span>
               <span className="block">Butter</span>
             </h1>
-            <p className="mt-3 text-[clamp(0.62rem,1.35vw,1.3rem)] font-semibold tracking-[0.06em] text-[hsl(var(--theme-kids-bg)/0.9)] sm:mt-5">
+            <p className="mt-6 text-[clamp(0.135rem,1.75vw,1.75rem)] font-semibold tracking-[0.06em] text-[hsl(var(--theme-kids-bg)/0.9)] sm:mt-9">
               Your Style Is Our Bread &amp; Butter.
             </p>
           </div>
         </div>
 
-        <div className="relative w-[24vw] max-w-[33.75rem] shrink-0 bg-black">
+        <div className="relative w-[20vw] max-w-[28.125rem] shrink-0 bg-black">
           <HeroVideo
             src={printingVideo}
             poster={printingPoster}
