@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.StripeWebhookServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-08-22T21:47:47.235Z" hostname="Mac.lan" time="0.079">
+<testsuite name="com.isasigns.backend.service.StripeWebhookServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-08-24T20:42:16.829Z" hostname="Usmans-Mac-mini.local" time="0.067">
   <properties/>
-  <testcase name="rejectsAnInvalidSignatureBeforeChangingAnything()" classname="com.isasigns.backend.service.StripeWebhookServiceTest" time="0.025"/>
-  <testcase name="aSignedPaidCheckoutMarksTheOrderPaidAndPublishesOneEvent()" classname="com.isasigns.backend.service.StripeWebhookServiceTest" time="0.014"/>
+  <testcase name="rejectsAnInvalidSignatureBeforeChangingAnything()" classname="com.isasigns.backend.service.StripeWebhookServiceTest" time="0.023"/>
+  <testcase name="aSignedPaidCheckoutMarksTheOrderPaidAndPublishesOneEvent()" classname="com.isasigns.backend.service.StripeWebhookServiceTest" time="0.013"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

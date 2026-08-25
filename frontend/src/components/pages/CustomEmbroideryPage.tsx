@@ -504,6 +504,7 @@ export default function CustomEmbroideryPage({
   const [apiError, setApiError] = useState("");
   const [aiPreviewFailed, setAiPreviewFailed] = useState(false);
   const [showPreviewFailureToast, setShowPreviewFailureToast] = useState(false);
+  const [showQuickRequestNotice, setShowQuickRequestNotice] = useState(Boolean(quickRequest));
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
@@ -512,6 +513,10 @@ export default function CustomEmbroideryPage({
 
   const step = steps[currentStep];
   const StepIcon = step.Icon;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [studioType]);
 
   useEffect(() => {
     if (!form.uploadedImage) {
@@ -555,6 +560,16 @@ export default function CustomEmbroideryPage({
 
     return () => window.clearTimeout(timeout);
   }, [showPreviewFailureToast]);
+
+  useEffect(() => {
+    if (!showQuickRequestNotice) return;
+
+    const timeout = window.setTimeout(() => {
+      setShowQuickRequestNotice(false);
+    }, 10_000);
+
+    return () => window.clearTimeout(timeout);
+  }, [showQuickRequestNotice]);
 
   function updateField<K extends keyof CustomEmbroideryForm>(
     field: K,
@@ -1457,7 +1472,7 @@ export default function CustomEmbroideryPage({
           <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold text-[hsl(var(--theme-brown-700))] sm:text-base">
             Tell us what you would like {servicePastParticiple}!
           </p>
-          {quickRequest && (
+          {showQuickRequestNotice && (
             <div className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 rounded-full bg-[hsl(var(--theme-sage-100)/0.35)] px-4 py-2 text-sm font-bold text-[hsl(var(--theme-green-900))]">
               <Check className="h-4 w-4" strokeWidth={3} />
               Your quick-request details have been added below.

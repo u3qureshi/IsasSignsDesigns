@@ -183,7 +183,7 @@ export default function Header() {
 
       {/* Row 2: Sticky nav */}
       <div className="sticky top-0 z-50 border-b border-[hsl(var(--theme-sand-300))] bg-white">
-        <div className="flex items-center px-3 py-0.5">
+        <div className="relative flex items-center px-3 py-0.5">
           <div className="w-[clamp(0rem,20vw,20rem)] shrink-0 overflow-hidden">
             <div className="flex items-center gap-3 pl-[clamp(0.5rem,2vw,2.5rem)] max-[1366px]:hidden">
               <div
@@ -232,7 +232,7 @@ export default function Header() {
             </div>
           </div>
 
-          <nav className="mx-auto flex flex-1 items-center justify-center gap-[clamp(0.75rem,1.8vw,2.75rem)] text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))]">
+          <nav className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-[clamp(0.9rem,2vw,3rem)] whitespace-nowrap text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))]">
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/">Home</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/best-sellers">Best Sellers</Link>
             <NavDropdown label="Embroidery" menuId="embroidery-menu" items={EMBROIDERY_COLLECTIONS} />
@@ -240,10 +240,11 @@ export default function Header() {
             <NavDropdown label="Services" menuId="services-menu" items={SERVICE_COLLECTIONS} />
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/gallery">Gallery</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/clothing">Clothing</Link>
-            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/faq">FAQ</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/about">About Us</Link>
+            <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/reviews">Reviews</Link>
           </nav>
 
-          <div className="flex w-32 shrink-0 items-center justify-end gap-3">
+          <div className="ml-auto flex w-32 shrink-0 items-center justify-end gap-3">
             {isScrolled && <UserAccountMenu />}
             <button
               className="group relative rounded-full bg-[hsl(var(--theme-kids-bg))] p-2.5 text-[hsl(var(--theme-isa-green))]"

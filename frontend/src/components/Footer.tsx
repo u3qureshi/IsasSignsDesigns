@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Info, Mail, Star, HelpCircle, LogIn, Package, MessageCircle } from "lucide-react";
 import logo from "../assets/brand/threadnbutterLogoIMG.png";
+import { useAuth } from "./auth/AuthContext";
 
 /* ── Pinterest icon (not in lucide) ─────────────────────────────────────── */
 function PinterestIcon({ size = 28 }: { size?: number }) {
@@ -58,15 +59,35 @@ function socialHoverClass(label: string): string {
 
 const NAV_LINKS = [
   { label: "About Us",         icon: <Info size={15} />,         to: "/about" },
-  { label: "Contact Us",       icon: <Mail size={15} />,         to: "/contact" },
+  { label: "Contact Us",       icon: <Mail size={15} />,         to: "/about#contact" },
   { label: "Reviews",          icon: <Star size={15} />,         to: "/reviews" },
-  { label: "FAQ",              icon: <HelpCircle size={15} />,   to: "/faq" },
+  { label: "FAQ",              icon: <HelpCircle size={15} />,   to: "/about#faq" },
   { label: "Login",            icon: <LogIn size={15} />,        to: "/login" },
   { label: "Track Your Order", icon: <Package size={15} />,      to: "/track" },
-  { label: "WhatsApp",         icon: <MessageCircle size={15} />, href: "https://wa.me/" },
+  { label: "WhatsApp",         icon: <MessageCircle size={15} />, href: "https://wa.me/16477005182" },
 ];
 
 export default function Footer() {
+  const { user, loading } = useAuth();
+  const visibleNavLinks = NAV_LINKS.filter(
+    ({ label }) => label !== "Login" || (!loading && !user),
+  );
+
+  function handleInternalFooterLink(to: string) {
+    const [pathname, hash] = to.split("#");
+
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      return;
+    }
+
+    if (window.location.pathname === pathname) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
   return (
     <footer style={{ backgroundColor: "hsl(var(--theme-brown-footer))" }}>
       {/* ── Top: tagline + blurb ─────────────────────────────────────────── */}
@@ -104,11 +125,12 @@ export default function Footer() {
 
           <div className="md:justify-self-center md:text-center">
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 place-items-start">
-              {NAV_LINKS.map(({ label, icon, to, href }) =>
+              {visibleNavLinks.map(({ label, icon, to, href }) =>
                 to ? (
                   <Link
                     key={label}
                     to={to}
+                    onClick={() => handleInternalFooterLink(to)}
                     className="flex items-center gap-2 text-xl font-semibold text-white transition-opacity hover:opacity-60"
                   >
                     <span className="opacity-80">{icon}</span>

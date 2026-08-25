@@ -11,6 +11,8 @@ const FILTERS = [
   { label: "Wall Art", tag: "wall-art" },
   { label: "Personalized", tag: "personalized" },
   { label: "Anime-Inspired", tag: "anime-inspired" },
+  { label: "Seasonal & Holidays", tag: "seasonal" },
+  { label: "Baby & Kids", tag: "baby" },
 ] as const;
 
 const FIRST_ROW_SLUGS = [

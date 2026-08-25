@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.CheckoutServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-08-22T21:47:46.859Z" hostname="Mac.lan" time="0.239">
+<testsuite name="com.isasigns.backend.service.CheckoutServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-08-24T20:42:16.513Z" hostname="Usmans-Mac-mini.local" time="0.212">
   <properties/>
-  <testcase name="reconcilesAPaidStripeSessionWhenTheWebhookHasNotArrived()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.101"/>
-  <testcase name="appliesTheCatalogSaleAndFreeShippingAtTheThreshold()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.034"/>
-  <testcase name="rejectsAColourOrSizeThatIsNotInTheCatalog()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.003"/>
-  <testcase name="rebuildsTheOrderFromCatalogPricingAndSelectedOptions()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.006"/>
+  <testcase name="reconcilesAPaidStripeSessionWhenTheWebhookHasNotArrived()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.086"/>
+  <testcase name="appliesTheCatalogSaleAndFreeShippingAtTheThreshold()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.044"/>
+  <testcase name="rejectsAColourOrSizeThatIsNotInTheCatalog()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.006"/>
+  <testcase name="rebuildsTheOrderFromCatalogPricingAndSelectedOptions()" classname="com.isasigns.backend.service.CheckoutServiceTest" time="0.008"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

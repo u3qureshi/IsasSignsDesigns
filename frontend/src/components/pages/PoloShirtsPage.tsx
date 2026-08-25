@@ -6,9 +6,8 @@ import {
   Feather,
   ShieldCheck,
   Sparkles,
-  Star,
-  UserRound,
 } from "lucide-react";
+import CustomerReviewsPreview from "../reviews/CustomerReviewsPreview";
 import { openQuickRequest } from "../../types/quickRequest";
 import heroImage from "../../assets/brand/custom-polos-hero.webp";
 import poloEmbroideryImage from "../../assets/brand/polo_embroidery.webp";
@@ -315,31 +314,7 @@ export default function PoloShirtsPage() {
         </div>
       </section>
 
-      <section className="bg-[hsl(var(--theme-sand-300)/0.28)] px-6 py-20 sm:px-10 sm:py-28" aria-labelledby="polo-reviews-title">
-        <div className="mx-auto max-w-[82rem] text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[hsl(var(--theme-brown-600))]">Customer reviews</p>
-          <h2 id="polo-reviews-title" className="mx-auto mt-3 max-w-4xl font-aoki text-[clamp(2.8rem,5vw,5.2rem)] leading-none">
-            What people are saying about us
-          </h2>
-          <article className="mx-auto mt-12 max-w-4xl rounded-[2rem] bg-white px-7 py-10 shadow-[0_18px_50px_rgba(50,31,21,0.08)] sm:px-12 sm:py-14">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[hsl(var(--theme-sage-100))] text-[hsl(var(--theme-green-900))]">
-              <UserRound className="h-10 w-10" strokeWidth={1.6} aria-hidden="true" />
-            </div>
-            <div className="mt-6 flex justify-center gap-1 text-[hsl(var(--theme-brown-500))]" aria-label="No ratings yet">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star key={index} className="h-6 w-6 fill-current" strokeWidth={2.5} aria-hidden="true" />
-              ))}
-            </div>
-            <h3 className="mt-6 font-aoki text-2xl font-bold sm:text-3xl">Customer stories are coming soon.</h3>
-            <p className="mx-auto mt-4 max-w-2xl text-base font-medium leading-7 text-[hsl(var(--theme-brown-700))] sm:text-lg sm:leading-8">
-              We’re looking forward to sharing verified feedback from the teams and organizations we outfit. Check back soon for their experiences.
-            </p>
-            <span className="mt-8 inline-flex rounded-full border-2 border-[hsl(var(--theme-brown-500)/0.42)] px-6 py-3 text-sm font-bold text-[hsl(var(--theme-brown-700)/0.7)]" aria-disabled="true">
-              Reviews coming soon
-            </span>
-          </article>
-        </div>
-      </section>
+      <CustomerReviewsPreview titleId="polo-reviews-title" />
     </main>
   );
 }

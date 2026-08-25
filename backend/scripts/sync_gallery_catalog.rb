@@ -99,6 +99,36 @@ TITLE_OVERRIDES = {
 
 WALL_ART_BASES = TITLE_OVERRIDES.keys.last(13).freeze
 IGNORED_PRICED_BASES = ["Funny_Goose_Drink_More_Water_Shirt"].freeze
+POST_V7_PRICED_BASES = [
+  "Embroidered_Black_Cat_Broomstick",
+  "always_cold_embroidered_hoodie",
+  "autumn_cozy_season_embroidered_hoodie",
+  "autumn_spooky_goose_crewneck",
+  "autumn_spooky_goose_crewneck_type2",
+  "in_my_cozy_era_sweatshirt_hoodie_crewneck",
+  "winter_cardinal_snow_crewneck",
+  "winter_hockey_goose_crewneck",
+  "Personalized_Organic_Cotton_Knit_Baby_Blanket_Embroidered_Name_Keepsake",
+  "little_goose_embroidery_baby_crewneck",
+  "Auntie's_Favorite_Silly_Goose_Embroidered_Baby_Romper",
+  "Personalized_Baby_Name_Embroidered_Romper_Organic_Cotton_Ribbed_Footie_Jumpsuit",
+  "I_Go_Where_Mommy_Goes_Romper_Duck_Baby_Outfit_Embroidered_Baby_Bodysuit",
+  "funny_Silly_Goose_on_the_loose_Baby_Romper",
+  "hear_me_roar_Baby_Romper",
+  "one_piece_fruit_of_the_devil_embroidered_hoodie",
+  "luffy_wanted_poster_one_piece",
+  "one_piece_zoro_embroidered_hoodie",
+  "aot_eren_embroidered_hoodie",
+  "demon_slayer_zenitsu_eyes_embroidered_hoodie",
+  "hunter_x_hunter_kurapika_embroidered_hoodie",
+  "vinland_saga_embroidered_hoodie",
+  "one_piece_to_be_continued_embroidered_hoodie",
+  "haikyuu_checkmark_embroidered_hoodie",
+  "fullmetal_alchemist_edward_eyes_embroidered_hoodie",
+  "Full_Metal_Alchemist_Transmutation_embroidered_crewneck",
+  "fullmetal_alchemist_flamel_symbol_hat",
+  "Fullmetal_alchemist_Flamel_Embroidered_Hoodie",
+].freeze
 
 def load_env(path)
   return {} unless File.exist?(path)
@@ -139,7 +169,8 @@ def priced_groups
       base = stem.sub(/_\d{2,3}\z/, "") if price >= 20
     end
     next unless base
-    next if IGNORED_PRICED_BASES.include?(base)
+    # These assets are owned by later additive migrations and must not rewrite V7.
+    next if IGNORED_PRICED_BASES.include?(base) || POST_V7_PRICED_BASES.include?(base)
 
     groups[base] ||= { price: price, files: [] }
     raise "Conflicting prices for #{base}" unless groups[base][:price] == price

@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useLocation } from "react-router-dom";
+import threadButterLogo from "../../assets/brand/threadnbutterLogoIMG.png";
 
 interface FaqItem {
   question: string;
@@ -12,210 +15,162 @@ interface FaqSection {
 
 const FAQ_SECTIONS: FaqSection[] = [
   {
-    heading: "General",
+    heading: "About Thread & Butter",
     items: [
       {
-        question: "What do you mean by Islamic wall art?",
+        question: "What does Thread & Butter make?",
         answer:
-          "Islamic wall art is decor inspired by Qur'anic verses, Arabic calligraphy, and Islamic geometric design—made to bring beauty and remembrance into everyday spaces. Our pieces are designed with a clean, modern look so they fit naturally in homes, prayer corners, offices, and gift spaces.",
+          "We create custom embroidered and printed apparel, ready-to-order designs, and quality blank garments. Our collection includes T-shirts, polos, hoodies, crewnecks, fleece, hats, long sleeves, and more for individuals, teams, events, and businesses.",
       },
       {
-        question: "Why buy from Isa's Signs & Designs?",
+        question: "Why choose Thread & Butter?",
         answer: (
           <>
             <p className="mb-2">
-              We're a small Canadian studio and we make our products in-house—design,
-              laser cutting/engraving, assembly, and finishing. That means:
+              We combine the flexibility of a small Canadian business with a guided,
+              easy-to-use ordering experience. That means:
             </p>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>Consistent quality control</li>
-              <li>Faster communication for questions / custom requests</li>
-              <li>No dropshipping</li>
-              <li>Better turnaround times for local shipping</li>
+            <ul className="list-inside list-disc space-y-1 text-sm">
+              <li>Personal support for custom ideas and artwork</li>
+              <li>Careful review before a custom design enters production</li>
+              <li>Ready-to-order pieces and flexible custom options in one place</li>
+              <li>Apparel selected with comfort, decoration, and everyday wear in mind</li>
             </ul>
           </>
         ),
       },
       {
-        question: "Do I need an account to order?",
+        question: "Is your work made in Canada?",
         answer:
-          "No. Most customers prefer a quick checkout, so we support guest checkout. If you choose to create an account later, it can help with things like saving details and tracking orders more easily.",
+          "Thread & Butter is a Canadian business, and our custom decoration and order preparation are handled with care through our Canadian studio. Some blank garments are sourced from established apparel manufacturers before we print or embroider them.",
       },
       {
-        question: "Can I customize a piece (names, sizes, colors, wording)?",
+        question: "Do I need an account to shop?",
+        answer:
+          "No. Guest checkout is available. You can also create a passwordless account using a one-time email code, making it easier to keep your contact details connected to future account features.",
+      },
+      {
+        question: "What is the difference between Gallery and Clothing?",
+        answer:
+          "Gallery features finished, ready-to-order Thread & Butter designs. Clothing is our collection of undecorated blank garments in multiple colours and sizes, ready to wear as-is or use as the starting point for a custom request.",
+      },
+    ],
+  },
+  {
+    heading: "Custom Printing & Embroidery",
+    items: [
+      {
+        question: "Should I choose printing or embroidery?",
         answer: (
           <>
             <p className="mb-2">
-              Yes—many of our items are customizable. Common customizations include:
+              It depends on the artwork, garment, and finish you want:
             </p>
-            <ul className="list-disc list-inside space-y-1 text-sm mb-2">
-              <li>Names (kids room signs, family name plaques)</li>
-              <li>Wording and dates (nikkah / wedding signage)</li>
-              <li>Size options (where available)</li>
-              <li>Color / material choices (wood vs acrylic options)</li>
+            <ul className="mb-2 list-inside list-disc space-y-1 text-sm">
+              <li>Embroidery offers a textured, polished finish suited to logos, names, hats, and uniforms.</li>
+              <li>Printing works well for colourful artwork, larger graphics, and detailed shirt or hoodie designs.</li>
             </ul>
             <p>
-              If you don't see the option on a product page, message us and we'll tell
-              you what's possible.
+              If you are unsure, submit a quick request and we will help you choose.
             </p>
           </>
         ),
       },
       {
-        question: "What materials do you use?",
+        question: "Can I submit my own logo, artwork, or inspiration image?",
         answer:
-          "Most pieces are made from premium wood and acrylic (often layered for a clean 3D look). Some designs may include specialty finishes depending on the product. Each listing will clearly state the material and care tips.",
+          "Yes. Our quick-request and Custom Design Studio forms accept PNG, JPG, and WEBP images up to 10 MB. Upload the clearest version you have, and include notes about placement, colours, size, and the result you have in mind.",
       },
       {
-        question: "How do I hang or install the wall art?",
-        answer: (
-          <>
-            <p className="mb-2">
-              Most items are designed to be easy to mount. Depending on the product,
-              you may receive:
-            </p>
-            <ul className="list-disc list-inside space-y-1 text-sm mb-2">
-              <li>Mounting tape (best for smooth walls / light pieces)</li>
-              <li>Keyhole slots or hanging points (for larger items)</li>
-              <li>Tabletop stands (for desks, shelves, and counters)</li>
-            </ul>
-            <p>
-              We include guidance for the specific item so you feel confident
-              installing it.
-            </p>
-          </>
-        ),
+        question: "How does the AI Custom Design Studio work?",
+        answer:
+          "Choose embroidery or printing, describe your idea, add garment and placement details, and optionally upload an inspiration image. The studio can generate a visual concept to help communicate your direction before you submit the complete request for review.",
       },
       {
-        question: "Where does Islamic wall art look best?",
-        answer: (
-          <>
-            <p className="mb-2">Popular spots are:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm mb-2">
-              <li>Living room feature wall</li>
-              <li>Entryway (a beautiful welcome reminder)</li>
-              <li>Prayer corner / home musalla space</li>
-              <li>Bedroom or office (quiet daily inspiration)</li>
-            </ul>
-            <p>
-              Smaller pieces also look great on shelves or gallery walls.
-            </p>
-          </>
-        ),
+        question: "Is an AI preview the final production proof?",
+        answer:
+          "No. AI previews are concept images, so details, colours, scale, and placement may differ from the final result. We review the submitted request and artwork before confirming production details or pricing.",
       },
       {
-        question: "Is Islamic wall art a good gift?",
-        answer: (
-          <>
-            <p className="mb-2">Yes—these are meaningful gifts for:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm mb-2">
-              <li>Ramadan and Eid</li>
-              <li>Nikkahs and weddings</li>
-              <li>Housewarmings</li>
-              <li>New babies / nurseries</li>
-            </ul>
-            <p>
-              We also offer items at different price points so you can gift beautifully
-              without overspending.
-            </p>
-          </>
-        ),
+        question: "Can you handle team, event, or business apparel?",
+        answer:
+          "Yes. We welcome coordinated apparel for teams, staff, clubs, events, creators, and businesses. Use the quick-request form to list each garment and quantity, then include your deadline and branding requirements in the notes.",
+      },
+      {
+        question: "Is there a minimum quantity for a custom request?",
+        answer:
+          "You can contact us about a single custom piece or a larger coordinated order. Feasibility and pricing depend on the garment, decoration method, artwork, and quantity, so we confirm those details after reviewing your request.",
       },
     ],
   },
   {
-    heading: "Kids & Montessori",
+    heading: "Products, Sizing & Care",
     items: [
       {
-        question: "What kind of Islamic kids products do you make?",
-        answer:
-          "We create faith-inspired kids products and Montessori-style learning pieces designed to be engaging, durable, and beautiful in the home—like name signs, learning boards, and interactive pieces that encourage good habits and curiosity.",
-      },
-      {
-        question: "Are your kids / Montessori products safe?",
-        answer:
-          "We aim for kid-friendly design: smooth edges, durable materials, and simple forms. As with any children's product, adult supervision is recommended—especially for smaller parts. Each listing will note the recommended age range and any safety details.",
-      },
-    ],
-  },
-  {
-    heading: "Weddings & Nikkahs",
-    items: [
-      {
-        question: "Do you make nikkah and wedding signage?",
+        question: "Which apparel styles and colours are available?",
         answer: (
           <>
-            <p className="mb-2">Yes! We create event signage such as:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm mb-2">
-              <li>Welcome signs</li>
-              <li>Table numbers</li>
-              <li>Name / place cards</li>
-              <li>Gift table signs</li>
-              <li>Custom wording boards</li>
+            <p className="mb-2">Our current selection includes:</p>
+            <ul className="mb-2 list-inside list-disc space-y-1 text-sm">
+              <li>T-shirts, tanks, and long sleeves</li>
+              <li>Polos and work-ready apparel</li>
+              <li>Hoodies, crewnecks, sweatpants, fleece, and turtlenecks</li>
+              <li>Caps, trucker hats, performance hats, bucket hats, and visors</li>
             </ul>
-            <p>
-              If you have a theme, color palette, or inspiration photo, send it and
-              we'll match the vibe.
-            </p>
+            <p>Available colours and sizes are shown on each applicable product page.</p>
           </>
         ),
       },
       {
-        question: "How far in advance should I order event signage?",
+        question: "How should I choose a size?",
         answer:
-          "Earlier is better—especially for custom wording and larger pieces. As a general rule, ordering 2–4 weeks before your event gives comfortable time for design approval and production (rush options may be possible depending on workload).",
+          "Check the sizes offered for the selected garment and consider the fit described on its product page. Different brands and styles can fit differently, so contact us before ordering if you need garment measurements or help coordinating group sizes.",
       },
-    ],
-  },
-  {
-    heading: "Business & Signage",
-    items: [
       {
-        question: "Do you make business signs and professional signage?",
+        question: "Will colours look exactly the same on my screen?",
+        answer:
+          "Screens, lighting, fabric blends, and production methods can all affect colour appearance. We aim to represent each garment and design clearly, but minor differences between the online preview and physical product are normal.",
+      },
+      {
+        question: "How should I care for decorated apparel?",
         answer: (
-          <>
-            <p className="mb-2">Yes. We make clean, modern signage for:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm mb-2">
-              <li>Reception desks / office walls</li>
-              <li>Open/closed signs and hours</li>
-              <li>QR code signs (Google reviews, menus, Instagram)</li>
-              <li>Table-top / countertop signs for markets / pop-ups</li>
-              <li>Branded plaques and displays</li>
-            </ul>
-            <p>If you have a logo file, we can usually work from that.</p>
-          </>
-        ),
-      },
-      {
-        question: "Can you engrave my business logo?",
-        answer:
-          "Yes—send your logo (SVG, PDF, or high-res PNG) and we'll confirm the best method (engrave, cut-out, or layered). We'll also advise on material choice so it looks premium and readable.",
-      },
-    ],
-  },
-  {
-    heading: "Ordering, Shipping & Care",
-    items: [
-      {
-        question: "Where do you make your products?",
-        answer:
-          "Everything is designed and produced in Canada in our own studio. We don't outsource or dropship.",
-      },
-      {
-        question: "How do I care for my wood / acrylic pieces?",
-        answer: (
-          <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>Dust gently with a soft cloth</li>
-            <li>Avoid harsh chemicals</li>
-            <li>Keep away from prolonged direct moisture / heat</li>
-            <li>Acrylic can scratch, so treat it like a high-gloss surface</li>
+          <ul className="list-inside list-disc space-y-1 text-sm">
+            <li>Follow the garment label and any instructions included with your order</li>
+            <li>Wash inside out in cold water with similar colours</li>
+            <li>Avoid bleach and harsh chemicals</li>
+            <li>Use low heat or hang dry, and do not iron directly over the decoration</li>
           </ul>
         ),
+      },
+    ],
+  },
+  {
+    heading: "Ordering, Payment & Delivery",
+    items: [
+      {
+        question: "How is pricing determined?",
+        answer:
+          "Ready-to-order and blank-apparel prices appear directly on their product pages. Custom pricing depends on the garment, quantity, artwork, placement, dimensions, colours, and decoration method. A custom request is reviewed before final production details are confirmed.",
+      },
+      {
+        question: "How can I pay for an online order?",
+        answer:
+          "Online product orders use Stripe's secure hosted checkout. Thread & Butter does not store your complete card information on its own servers.",
+      },
+      {
+        question: "How much is shipping?",
+        answer:
+          "Standard shipping is calculated in your checkout summary. The current storefront offers free shipping when the qualifying merchandise subtotal reaches $100; any applicable tax is shown during checkout.",
+      },
+      {
+        question: "How long will a custom order take?",
+        answer:
+          "Timing varies with garment availability, quantity, artwork readiness, approvals, and current workload. If your order is for an event or deadline, include the date in your request so feasibility can be confirmed before production.",
       },
       {
         question: "What if my item arrives damaged?",
         answer:
-          "Message us right away with photos of the packaging and the item. We'll work with you to make it right as quickly as possible.",
+          "Contact us promptly with your order information and clear photos of the item and packaging. We will review what happened and help determine the appropriate next step.",
       },
     ],
   },
@@ -251,17 +206,275 @@ function AccordionItem({ question, answer }: FaqItem) {
 }
 
 export default function FaqPage() {
+  const location = useLocation();
+  const [contactStatus, setContactStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [contactError, setContactError] = useState("");
+
+  async function handleContactMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
+    const request = {
+      name: String(formData.get("name") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      subject: String(formData.get("subject") ?? "").trim(),
+      message: String(formData.get("message") ?? "").trim(),
+    };
+
+    setContactStatus("sending");
+    setContactError("");
+    try {
+      const response = await fetch("/api/contact-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as {
+          message?: string;
+          details?: string[];
+        } | null;
+        throw new Error(body?.details?.[0] || body?.message || "Your message could not be sent.");
+      }
+
+      formElement.reset();
+      setContactStatus("sent");
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : "Your message could not be sent.");
+      setContactStatus("error");
+    }
+  }
+
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector(location.hash)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash, location.pathname]);
+
   return (
     <main
       className="min-h-screen"
       style={{ backgroundColor: "hsl(var(--theme-kids-bg))" }}
     >
-      <div className="max-w-3xl mx-auto px-6 py-14" style={{ color: "hsl(var(--theme-brown-900))" }}>
-        <h1 className="font-aoki text-4xl text-center mb-12 tracking-wide">
-          Frequently Asked Questions
-        </h1>
+      <section className="bg-[hsl(var(--theme-sage-100)/0.48)] px-6 py-10 sm:px-10 sm:py-14">
+        <div className="mx-auto max-w-6xl text-center" style={{ color: "hsl(var(--theme-brown-900))" }}>
+          <p className="font-aoki text-[clamp(1.75rem,3.2vw,3rem)] font-bold leading-none tracking-wide text-[hsl(var(--theme-brown-600))]">
+            About Thread &amp; Butter
+          </p>
+          <h1 className="mx-auto mt-3 max-w-4xl font-aoki text-[clamp(2.2rem,4.3vw,4.3rem)] leading-[1.04] tracking-[-0.02em]">
+            Your ideas, made wearable.
+          </h1>
+          <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-7 text-[hsl(var(--theme-brown-700))] sm:text-lg">
+            Thread &amp; Butter is a{" "}
+            <span className="relative inline-block font-black text-[#c1121f]">
+              Canadian
+              <svg
+                viewBox="-2015 -2000 4030 4030"
+                aria-hidden="true"
+                className="absolute -right-2 -top-2 h-3.5 w-3.5 text-[#c1121f] sm:-top-2.5 sm:h-4 sm:w-4"
+              >
+                <path
+                  fill="currentColor"
+                  d="m-90 2030 45-863a95 95 0 0 0-111-98l-859 151 116-320a65 65 0 0 0-20-73l-941-762 212-99a65 65 0 0 0 34-79l-186-572 542 115a65 65 0 0 0 73-38l105-247 423 454a65 65 0 0 0 111-57l-204-1052 327 189a65 65 0 0 0 91-27l332-652 332 652a65 65 0 0 0 91 27l327-189-204 1052a65 65 0 0 0 111 57l423-454 105 247a65 65 0 0 0 73 38l542-115-186 572a65 65 0 0 0 34 79l212 99-941 762a65 65 0 0 0-20 73l116 320-859-151a95 95 0 0 0-111 98l45 863z"
+                />
+              </svg>
+            </span>{" "}
+            custom-apparel studio built around personal ideas, thoughtful details, and clothing people genuinely want to wear. We
+            bring embroidery, printing, ready-to-order designs, and carefully selected
+            blanks together in one approachable experience.
+          </p>
 
-        <div className="space-y-10">
+          <div className="mt-7 grid gap-4 text-left md:grid-cols-3">
+            {[
+              ["Made together", "Start with a finished favourite, send a quick request, or shape a custom concept with our guided design studio."],
+              ["Reviewed with care", "Artwork, garment choices, placement, and production details are considered before a custom request moves forward."],
+              ["Made for your moment", "Create one meaningful piece or coordinate apparel for a team, business, event, gift, or everyday wardrobe."],
+            ].map(([title, description]) => (
+              <article key={title} className="rounded-3xl bg-white p-5 shadow-[0_16px_45px_hsl(var(--theme-brown-900)/0.08)]">
+                <h2 className="font-aoki text-2xl tracking-wide">{title}</h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-[hsl(var(--theme-brown-700))]">
+                  {description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="contact"
+        className="scroll-mt-28 bg-white px-6 py-10 sm:px-10 sm:py-12"
+        aria-labelledby="contact-title"
+      >
+        <div className="mx-auto max-w-5xl text-center text-[hsl(var(--theme-brown-900))]">
+          <p className="text-sm font-bold uppercase tracking-[0.22em] text-[hsl(var(--theme-brown-600))]">
+            We would love to hear from you
+          </p>
+          <h2 id="contact-title" className="mt-2 font-aoki text-4xl tracking-wide sm:text-5xl">
+            Contact Us
+          </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-base font-medium leading-7 text-[hsl(var(--theme-brown-700))] sm:text-lg">
+            Have a question about an order, product, or custom idea? Reach out using whichever option is easiest for you.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <a
+              href="tel:+16477005182"
+              className="rounded-3xl bg-[hsl(var(--theme-sage-100)/0.55)] p-5 transition-transform hover:-translate-y-1"
+            >
+              <Phone className="mx-auto h-8 w-8 text-[hsl(var(--theme-green-900))]" aria-hidden="true" />
+              <h3 className="mt-2 font-aoki text-2xl">Call us</h3>
+              <p className="mt-1 font-bold text-[hsl(var(--theme-brown-700))]">+1 (647) 700-5182</p>
+            </a>
+
+            <a
+              href="mailto:chrastinovakajaa@outlook.com"
+              className="rounded-3xl bg-[hsl(var(--theme-sand-200)/0.65)] p-5 transition-transform hover:-translate-y-1"
+            >
+              <Mail className="mx-auto h-8 w-8 text-[hsl(var(--theme-green-900))]" aria-hidden="true" />
+              <h3 className="mt-2 font-aoki text-2xl">Email us</h3>
+              <p className="mt-1 break-all font-bold text-[hsl(var(--theme-brown-700))]">
+                chrastinovakajaa@outlook.com
+              </p>
+            </a>
+
+            <a
+              href="https://wa.me/16477005182"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-3xl bg-[hsl(var(--theme-sage-100)/0.55)] p-5 transition-transform hover:-translate-y-1"
+            >
+              <MessageCircle className="mx-auto h-8 w-8 text-[hsl(var(--theme-green-900))]" aria-hidden="true" />
+              <h3 className="mt-2 font-aoki text-2xl">WhatsApp</h3>
+              <p className="mt-1 font-bold text-[hsl(var(--theme-brown-700))]">+1 (647) 700-5182</p>
+            </a>
+          </div>
+
+          <div
+            id="contact-form"
+            className="relative mt-7 scroll-mt-28 overflow-hidden rounded-[2rem] bg-[hsl(var(--theme-kids-bg))] p-5 text-left shadow-[0_20px_60px_hsl(var(--theme-brown-900)/0.1)] sm:p-6 lg:p-7"
+          >
+            <img
+              src={threadButterLogo}
+              alt="Thread & Butter"
+              className="absolute right-4 top-4 h-20 w-20 object-contain sm:right-6 sm:top-5 sm:h-24 sm:w-24"
+            />
+
+            <div className="max-w-2xl pr-16 sm:pr-24">
+              <p className="text-lg font-bold uppercase tracking-[0.22em] text-[hsl(var(--theme-brown-600))] sm:text-xl">
+                Get in touch
+              </p>
+              <h3 className="mt-1 font-aoki text-3xl leading-tight sm:text-4xl">
+                Tell us what you have in mind.
+              </h3>
+              <p className="mt-2 text-sm font-medium leading-6 text-[hsl(var(--theme-brown-700))] sm:text-base">
+                Have a question we haven't answered? Whether you're curious about custom orders,
+                want to bring your brand to life, or are looking to partner with us—we'd love to
+                hear from you.
+              </p>
+            </div>
+
+            <form className="mt-5 grid gap-3 sm:grid-cols-2" onSubmit={handleContactMessage}>
+              <label className="block">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-[hsl(var(--theme-brown-700))]">
+                  What's your name?
+                  <span className="ml-1 align-super text-sm text-red-600" aria-hidden="true">*</span>
+                </span>
+                <input
+                  type="text"
+                  name="name"
+                  autoComplete="name"
+                  required
+                  className="mt-1.5 w-full rounded-xl border border-[hsl(var(--theme-brown-900)/0.16)] bg-white px-4 py-2.5 text-base outline-none transition focus:border-[hsl(var(--theme-green-700))] focus:ring-2 focus:ring-[hsl(var(--theme-sage-100))]"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-[hsl(var(--theme-brown-700))]">
+                  What's your email?
+                  <span className="ml-1 align-super text-sm text-red-600" aria-hidden="true">*</span>
+                </span>
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  required
+                  className="mt-1.5 w-full rounded-xl border border-[hsl(var(--theme-brown-900)/0.16)] bg-white px-4 py-2.5 text-base outline-none transition focus:border-[hsl(var(--theme-green-700))] focus:ring-2 focus:ring-[hsl(var(--theme-sage-100))]"
+                />
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-[hsl(var(--theme-brown-700))]">
+                  Subject <span className="font-bold tracking-normal text-[hsl(var(--theme-brown-600))]">(optional)</span>
+                </span>
+                <input
+                  type="text"
+                  name="subject"
+                  className="mt-1.5 w-full rounded-xl border border-[hsl(var(--theme-brown-900)/0.16)] bg-white px-4 py-2.5 text-base outline-none transition focus:border-[hsl(var(--theme-green-700))] focus:ring-2 focus:ring-[hsl(var(--theme-sage-100))]"
+                />
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-[hsl(var(--theme-brown-700))]">
+                  Your message
+                  <span className="ml-1 align-super text-sm text-red-600" aria-hidden="true">*</span>
+                </span>
+                <textarea
+                  name="message"
+                  rows={4}
+                  required
+                  className="mt-1.5 w-full resize-y rounded-xl border border-[hsl(var(--theme-brown-900)/0.16)] bg-white px-4 py-2.5 text-base outline-none transition focus:border-[hsl(var(--theme-green-700))] focus:ring-2 focus:ring-[hsl(var(--theme-sage-100))]"
+                />
+              </label>
+
+              <div className="sm:col-span-2">
+                <button
+                  type="submit"
+                  disabled={contactStatus === "sending"}
+                  className="inline-flex rounded-full bg-[hsl(var(--theme-green-900))] px-8 py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-65 disabled:hover:translate-y-0"
+                >
+                  {contactStatus === "sending" ? "Sending…" : "Send Message"}
+                </button>
+
+                {contactStatus === "sent" && (
+                  <p className="mt-4 font-bold text-[hsl(var(--theme-green-900))]" role="status">
+                    Your message has been sent. A confirmation is on its way to your email.
+                  </p>
+                )}
+                {contactStatus === "error" && (
+                  <p className="mt-4 font-bold text-red-700" role="alert">
+                    {contactError}
+                  </p>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <div
+        id="faq"
+        className="mx-auto max-w-3xl scroll-mt-28 px-6 py-10"
+        style={{ color: "hsl(var(--theme-brown-900))" }}
+      >
+        <p className="text-center text-sm font-bold uppercase tracking-[0.22em] text-[hsl(var(--theme-brown-600))]">
+          Helpful details
+        </p>
+        <h2 className="mb-8 mt-2 text-center font-aoki text-4xl tracking-wide sm:text-5xl">
+          Frequently Asked Questions
+        </h2>
+
+        <div className="space-y-7">
           {FAQ_SECTIONS.map((section) => (
             <section key={section.heading}>
               <h2

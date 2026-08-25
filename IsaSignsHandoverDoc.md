@@ -76,7 +76,7 @@ live payments, domain email deliverability, fulfillment tooling, and launch/lega
 - Application-owned passwordless authentication: confirm-email signup, email-only login,
   four-digit email OTP verification, PostgreSQL users/roles/challenges, short-lived JWT access
   cookies, rotating opaque refresh sessions, CSRF protection, profile updates, and logout.
-- Java 21/Spring Boot/PostgreSQL backend with Flyway migrations through V19, Swagger/OpenAPI,
+- Java 21/Spring Boot/PostgreSQL backend with Flyway migrations through V24, Swagger/OpenAPI,
   structured validation/error handling, and an automated service test suite.
 - A documented low-traffic AWS deployment direction using one EC2 instance initially, managed DNS,
   HTTPS, PostgreSQL, secrets, backups, and an upgrade path rather than premature ECS complexity.
@@ -132,7 +132,7 @@ HTTPS, configure production secrets/domain email, and run end-to-end Stripe laun
 | Custom Design APIs | Implemented | Embroidery and Printing multipart preview/submission endpoints share validation, AI/storage, persistence, and notification infrastructure. |
 | Quick requests | Implemented | Existing service CTAs open a two-step non-AI request form; backend validates, stores, and emails both parties. |
 | Authentication | Implemented | Four-digit email OTP, users/roles, signed access JWT cookie, rotating refresh cookie, CSRF, profile update, and logout. Account orders/requests remain future work. |
-| Database | Implemented locally | PostgreSQL Compose service plus Flyway migrations V2–V19 for requests, gallery/clothing, checkout, and authentication. |
+| Database | Implemented locally | PostgreSQL Compose service plus Flyway migrations V2–V24 for requests, gallery/clothing collections, checkout, and authentication. |
 | Swagger/OpenAPI runtime | Implemented | Runtime endpoints exist; checked-in exports are stale. |
 | Cloudinary delivery | Implemented, configuration-dependent | Gallery/clothing/service assets and customer uploads use the existing Cloudinary integration; production credentials/delivery policy remain environment concerns. |
 | Sales | Partial | DB/API/UI shapes exist, but seed script contains no non-null sales and validation is absent. |
@@ -605,24 +605,27 @@ There is no catch-all `*` route or dedicated 404 page. Unknown routes render the
 | `/` | `HomePage.tsx` | Responsive split-video Thread & Butter hero |
 | `/best-sellers` | `CategoryPage` | API-driven; requests active products where `is_featured = true` |
 | `/embroidery` | `Navigate` | Redirects to Anime for direct URL visits; the nav trigger itself does not navigate |
-| `/embroidery/anime` | `CategoryPage` | API-driven; category `embroidery-anime` |
-| `/embroidery/baby-clothing` | `CategoryPage` | API-driven; category `embroidery-baby-clothing` |
-| `/embroidery/fathers-day` | `CategoryPage` | API-driven; category `embroidery-fathers-day` |
-| `/embroidery/mothers-day` | `CategoryPage` | API-driven; category `embroidery-mothers-day` |
-| `/embroidery/seasonal-holidays` | `CategoryPage` | API-driven; category `embroidery-seasonal-holidays` |
+| `/embroidery/anime` | `CategoryPage` | API-driven; collection tag `embroidery-anime` |
+| `/embroidery/baby-clothing` | `CategoryPage` | API-driven; collection tag `embroidery-baby-clothing` |
+| `/embroidery/fathers-day` | `CategoryPage` | API-driven; collection tag `embroidery-fathers-day` |
+| `/embroidery/mothers-day` | `CategoryPage` | API-driven; collection tag `embroidery-mothers-day` |
+| `/embroidery/seasonal-holidays` | `CategoryPage` | API-driven; collection tag `embroidery-seasonal-holidays` |
 | `/embroidery/custom-designs` | `CustomEmbroideryPage` | Eight-step request wizard connected to AI preview generation, authenticated image storage, and submitted-request persistence |
 | `/ramadan-decor` | `Navigate` | Legacy URL redirects to Embroidery Seasonal & Holidays |
 | `/printing` | `Navigate` | Redirects to Popular designs for direct URL visits; the nav trigger itself does not navigate |
-| `/printing/popular-designs` | `CategoryPage` | API-driven; category `printing-popular-designs` |
+| `/printing/popular-designs` | `CategoryPage` | API-driven; collection tag `printing-popular-designs` |
 | `/printing/custom` | `CustomEmbroideryPage` printing variant | Shared eight-card Custom Printing Studio; live printing preview/submission APIs |
 | `/wall-art` | `CategoryPage` | API-driven; category `wall-art` |
 | `/home-decor` | `CategoryPage` | API-driven; category `home-decor`; direct route retained but removed from header navigation |
 | `/kids` | `KidsPage` → `CategoryPage` | API-driven; category `kids` |
 | `/business-events` | `CategoryPage` | API-driven; category `business-events` |
+| `/reviews` | `ReviewsPage` | Forty-five customer ratings sorted newest-first |
 | `/faq` | `FaqPage` | Implemented content page |
 | `/products/:slug` | `ProductDetailPage` | Partial; current route/file uncommitted |
 
-Footer links point at `/about`, `/contact`, `/reviews`, `/login`, and `/track`, none of which are defined. WhatsApp and social URLs are placeholders rather than business-specific destinations.
+The footer's `/about` and `/reviews` destinations are implemented. `/contact`, `/login`, and
+`/track` are still undefined, while WhatsApp and social URLs remain placeholders rather than
+business-specific destinations.
 
 ---
 
@@ -1457,23 +1460,23 @@ Rules:
 - React's category value must exactly match the database value;
 - visible labels remain friendly text such as “Father's Day” or “Popular designs.”
 
-Canonical mapping:
+Canonical mapping for primary categories and reusable collection tags:
 
-| Menu/page | Visible label | `products.category` |
+| Menu/page | Visible label | Primary category or collection tag |
 |---|---|---|
 | Former direct page | Home Decor | `home-decor` |
 | Main menu | Kids | `kids` |
 | Former direct page | Ramadan Decor | `ramadan-decor` |
 | Main menu | Wall Art | `wall-art` |
 | Main menu | Business/Events | `business-events` |
-| Embroidery submenu | Anime | `embroidery-anime` |
-| Embroidery submenu | Baby clothing | `embroidery-baby-clothing` |
-| Embroidery submenu | Father's Day | `embroidery-fathers-day` |
-| Embroidery submenu | Mother's Day | `embroidery-mothers-day` |
-| Embroidery submenu | Seasonal & Holidays | `embroidery-seasonal-holidays` |
-| Embroidery submenu | Custom Design Studio | `embroidery-custom-designs` |
-| Printing submenu | Popular designs | `printing-popular-designs` |
-| Printing submenu | Custom Design Studio | `printing-custom` (reserved catalog identifier; the current route opens the request studio instead of filtering products) |
+| Embroidery submenu | Anime | tag `embroidery-anime` |
+| Embroidery submenu | Baby clothing | tag `embroidery-baby-clothing` |
+| Embroidery submenu | Father's Day | tag `embroidery-fathers-day` |
+| Embroidery submenu | Mother's Day | tag `embroidery-mothers-day` |
+| Embroidery submenu | Seasonal & Holidays | tag `embroidery-seasonal-holidays` |
+| Embroidery submenu | Custom Design Studio | Opens the studio; no catalog query |
+| Printing submenu | Popular designs | tag `printing-popular-designs` |
+| Printing submenu | Custom Design Studio | Opens the studio; no catalog query |
 
 Best Sellers is deliberately not a category. Set `is_featured = true` on any product to show it there while preserving its real category.
 
@@ -1482,16 +1485,15 @@ Examples:
 ```text
 visible menu: Embroidery > Anime
 React filter: embroidery-anime
-database row: category = 'embroidery-anime'
+database row: category = 'gallery', tags includes 'embroidery-anime'
 
 visible menu: Printing > Popular designs
 React filter: printing-popular-designs
-database row: category = 'printing-popular-designs'
+database row: category = 'gallery', tags includes 'printing-popular-designs'
 ```
 
-`printing-custom` remains the canonical category value for any future custom-printing catalog
-products, but `/printing/custom` currently opens the Custom Printing Studio and does not issue a
-product-category query.
+The public product endpoint accepts `tag=<collection-tag>` for these reusable collections. This
+avoids duplicating a product or removing it from Gallery merely to show it under a submenu.
 
 The normalization helper is `backend/docs/category_nomenclature_migration.sql`. Back up and review a shared database before running it. Changing `backend/init.sql` affects only newly initialized Docker volumes; it does not rewrite an existing volume.
 
@@ -1728,7 +1730,7 @@ The early checked-in `backend/boot.log` shows a historical successful database c
 - footer destination pages missing.
 - social/WhatsApp destinations are placeholders.
 - no legal, shipping, return, privacy, or terms pages.
-- no order tracking/login/reviews implementation.
+- no order tracking or dedicated login route implementation; reviews are implemented at `/reviews`.
 
 ### Backend hardening
 
@@ -2859,8 +2861,8 @@ feature, this entry and the current source code supersede it.
   The available hat grid contains five consistently sized cards, centred three over two, and omits
   structured/unstructured entries. Its second section uses the shared light-sage service-section
   background, now also applied to the corresponding section on the other service pages.
-- Service-page review sections use a default profile icon rather than a customer portrait and
-  retain visually strong star treatment until real reviews are available.
+- Service-page review sections use a default profile icon rather than customer portraits and now
+  preview real customer feedback through the shared reviews dataset.
 
 **Quick non-AI service request**
 
@@ -2971,6 +2973,95 @@ feature, this entry and the current source code supersede it.
   `npm run build`, and `git diff --check` all passed again on 2026-08-22.
 - Generated Gradle/build artifacts are still tracked or present in the working tree. Do not delete
   or commit them casually; fix repository hygiene in a deliberate, isolated change.
+
+### 2026-08-24 — Gallery cards reused across Printing and Embroidery collections
+
+- Gallery remains the single source of truth for ready-to-order product records. Products are no
+  longer moved into mutually exclusive submenu categories to make a collection page work.
+- `GET /api/products` now accepts an exact `tag` filter backed by PostgreSQL's `text[]` membership
+  query. `CategoryPage` supports either a primary category or a collection tag.
+- Flyway V20 appends collection tags without changing the products' `gallery` category:
+  - all 15 active cards tagged `printed` appear under Printing > Popular designs;
+  - 22 anime-inspired embroidered products appear under Embroidery > Anime;
+  - six appropriate embroidered products appear under Father's Day;
+  - five appropriate embroidered products appear under Mother's Day;
+  - five couples/personalized gift products appear under Seasonal & Holidays.
+- At the time V20 was added, Baby Clothing deliberately remained empty instead of displaying adult
+  apparel or old nursery décor. That temporary gap was subsequently resolved by the approved baby
+  catalogue introduced in V23.
+- V20 was applied locally, the live endpoints returned the counts above, the complete backend tests
+  passed, and the frontend production build passed.
+
+### 2026-08-24 — Seasonal and holiday embroidery catalogue expansion
+
+- Fourteen supplied product photos were organized into eight ready-to-order products at $60 CAD:
+  Always Cold, Black Cat & Broomstick, Cozy Season Autumn, two distinct Spooky Goose designs,
+  In My Cozy Era, Winter Cardinal, and Winter Hockey Geese.
+- The photos were uploaded to stable Cloudinary paths under
+  `thread-and-butter/gallery/<product-slug>/image-N`. The repeatable upload utility is
+  `backend/scripts/upload_seasonal_gallery_images.rb` and reads Cloudinary credentials from the
+  backend environment without printing them.
+- Flyway V21 adds the first seven products and V22 safely adds the later Always Cold product. Every
+  record stays in the `gallery` category and carries `embroidered`, `seasonal`, and
+  `embroidery-seasonal-holidays` tags, so the same database cards appear in Gallery and Embroidery
+  > Seasonal & Holidays without duplicate frontend data.
+- Gallery now exposes a Seasonal & Holidays filter. After V22, the expected local API totals are 68
+  active Gallery products and 13 Seasonal & Holidays products.
+- The legacy V7 catalogue generator explicitly skips these post-V7 assets to prevent an accidental
+  historical migration rewrite.
+
+### 2026-08-24 — Baby Clothing embroidery catalogue expansion
+
+- Thirteen supplied photos were organized into seven ready-to-order products: a personalized knit
+  blanket, a personalized Little Goose romper, an Auntie's Favorite romper, a personalized ribbed
+  footie, a Where Mommy Goes duck bodysuit, a Silly Goose on the Loose romper, and a Hear Me Roar
+  lion romper.
+- Filename pricing was preserved: the personalized footie is $35 CAD, five products are $40 CAD,
+  and the Little Goose romper is $60 CAD. Only products that require a supplied name or year are
+  marked customizable.
+- `backend/scripts/upload_baby_gallery_images.rb` repeatably uploads the 13 source photos to stable
+  Cloudinary paths under `thread-and-butter/gallery/<product-slug>/image-N` without printing
+  credentials.
+- Flyway V23 adds the seven products to the shared `gallery` category with both `baby` and
+  `embroidery-baby-clothing` tags. The same records therefore power Gallery and Embroidery > Baby
+  Clothing, and Gallery exposes an additional Baby & Kids filter.
+- After V23, the verified local API totals are 75 active Gallery products and seven Baby Clothing
+  products. The legacy V7 catalogue generator skips these V23-managed source assets.
+
+### 2026-08-24 — Anime embroidery catalogue expansion
+
+- Twenty-two supplied photos were grouped into 14 products spanning One Piece, Attack on Titan,
+  Demon Slayer, Hunter x Hunter, Vinland Saga, Haikyuu, Naruto, and Fullmetal Alchemist. The batch
+  contains 12 hoodies, one crewneck, and one embroidered hat.
+- Filename prices were retained: the Devil Fruit hoodie is $60 CAD, the transmutation-circle
+  crewneck is $65 CAD, the Flamel-symbol hat is $50 CAD, and the remaining hoodies are $70 CAD.
+  The Itachi filename omitted a price, so $70 was inferred from the directly comparable hoodies in
+  the same batch.
+- `backend/scripts/upload_anime_gallery_images.rb` repeatably uploads the 22 source photos to stable
+  Cloudinary paths under `thread-and-butter/gallery/<product-slug>/image-N` without exposing
+  credentials.
+- Flyway V24 adds the 14 records to the shared `gallery` category with `anime-inspired` and
+  `embroidery-anime` tags. The existing Gallery Anime-Inspired filter and Embroidery > Anime page
+  therefore reuse the same product records without duplicated frontend catalogue data.
+- After V24, the verified local API totals are 89 active Gallery products and 36 Anime products.
+  The legacy V7 catalogue generator skips the V24-managed priced assets.
+
+### 2026-08-24 — Customer reviews page
+
+- Added `/reviews` and placed **Reviews** at the far right of the primary/sticky navigation. The
+  existing footer destination now resolves to the same implemented route.
+- Added all 45 named customer ratings supplied in the screenshots to
+  `frontend/src/data/customerReviews.ts`. Records retain reviewer first/display name, date, star
+  rating, visible written feedback, and customer-service highlights.
+- Reviews are sorted newest-first from 2026-08-25 through 2025-07-08. The aggregate is 4.98/5:
+  44 five-star ratings and one four-star rating. Rating-only records explicitly say no written
+  comment was provided rather than inventing copy; the one visibly truncated Jibran comment is
+  labelled as an excerpt.
+- `ReviewsPage` uses default profile icons rather than copying customer profile photos and presents
+  every review in a single newest-first collection.
+- Replaced the four “reviews coming soon” sections on T-Shirts, Polo Shirts, Sweatshirts & Fleece,
+  and Hats with `CustomerReviewsPreview`, which shows three real recent reviews and links to the
+  complete page.
 
 ---
 

@@ -15,6 +15,7 @@ import SweatshirtsFleecePage from "./components/pages/SweatshirtsFleecePage";
 import HatsPage from "./components/pages/HatsPage";
 import GalleryPage from "./components/pages/GalleryPage";
 import ClothingPage from "./components/pages/ClothingPage";
+import ReviewsPage from "./components/pages/ReviewsPage";
 import QuickRequestLauncher from "./components/quick-request/QuickRequestLauncher";
 import CartDrawer from "./components/cart/CartDrawer";
 import CheckoutSuccessPage from "./components/pages/CheckoutSuccessPage";
@@ -50,7 +51,7 @@ export default function App() {
             <Route
               key={collection.path}
               path={collection.path}
-              element={<CategoryPage title={collection.label} category={collection.category} />}
+              element={<CategoryPage title={collection.label} tag={collection.tag} />}
             />
           ))}
           <Route
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/services/hats" element={<HatsPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/clothing" element={<ClothingPage />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
           <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
           {PRINTING_COLLECTIONS.filter(
@@ -72,7 +74,7 @@ export default function App() {
             <Route
               key={collection.path}
               path={collection.path}
-              element={<CategoryPage title={collection.label} category={collection.category} />}
+              element={<CategoryPage title={collection.label} tag={collection.tag} />}
             />
           ))}
           <Route
@@ -83,6 +85,7 @@ export default function App() {
           <Route path="/home-decor" element={<CategoryPage title="Home Decor" category="home-decor" />} />
           <Route path="/kids" element={<KidsPage />} />
           <Route path="/business-events" element={<CategoryPage title="Business & Events" category="business-events" />} />
+          <Route path="/about" element={<FaqPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/products/:slug" element={<ProductDetailPage />} />
         </Routes>

@@ -1,15 +1,16 @@
 # Printing Catalog Population Guide
 
-The Printing dropdown contains two database-backed collection pages:
+The Printing dropdown contains one tag-backed product collection plus the Custom Printing Studio:
 
-| Page | Route | Exact `products.category` value |
+| Page | Route | Exact collection tag |
 |---|---|---|
 | Popular designs | `/printing/popular-designs` | `printing-popular-designs` |
-| Custom | `/printing/custom` | `printing-custom` |
+| Custom | `/printing/custom` | Opens the studio; it is not a product collection |
 
 Use **Popular designs** for ready-to-order printed products and **Custom** for products where the customer supplies or personalizes wording, artwork, photos, branding, or another approved design.
 
-Add products through PostgreSQL using the same workflow described in `embroidery_catalog_guide.md`. The important difference is the category value.
+Gallery products remain in category `gallery`. Add `printed` and `printing-popular-designs` to
+their `tags` array so the same record appears in Gallery and Popular designs.
 
 Example ready-to-order product:
 
@@ -35,7 +36,7 @@ INSERT INTO products (
   'Printed Example Design',
   'Replace this with a short customer-facing description.',
   'Replace this with print method, garment or product details, sizes, colours, care instructions, and turnaround time.',
-  'printing-popular-designs',
+  'gallery',
   3500,
   'CAD',
   '["printing/example-design-front"]',
@@ -44,7 +45,7 @@ INSERT INTO products (
   false,
   null,
   false,
-  ARRAY['printing', 'popular-design'],
+  ARRAY['gallery', 'printed', 'printing-popular-designs'],
   null
 );
 ```
@@ -53,8 +54,7 @@ For a customizable product, use:
 
 ```sql
 UPDATE products
-SET category = 'printing-custom',
-    is_customizable = true,
+SET is_customizable = true,
     updated_at = now()
 WHERE slug = '<product-slug>';
 ```
@@ -66,8 +66,10 @@ Verify both Printing collections:
 ```sql
 SELECT slug, name, category, price_cents, is_customizable, is_active
 FROM products
-WHERE category LIKE 'printing-%'
-ORDER BY category, name;
+WHERE 'printing-popular-designs' = ANY(tags)
+ORDER BY name;
 ```
 
-No placeholder Printing products are seeded automatically. Until migrations or an admin catalog exists, reflect approved products in `backend/init.sql` or a reviewed import so a database reset does not lose them.
+Flyway V20 assigns every active Gallery product tagged `printed` to Popular designs. Add future
+approved products through a reviewed migration or catalog-management workflow so fresh databases
+receive the same collection membership.

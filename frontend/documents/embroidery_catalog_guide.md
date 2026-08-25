@@ -1,19 +1,20 @@
 # Embroidery Catalog Population Guide
 
-The Embroidery navigation contains six database-backed collection pages. Each page calls the existing product API with one exact category value.
+The Embroidery navigation contains five tag-backed product collections plus the Custom Design
+Studio. A Gallery product can appear in multiple relevant collections without duplicating its row.
 
-## Page-to-category mapping
+## Page-to-tag mapping
 
-| Page | Route | Exact `products.category` value |
+| Page | Route | Exact collection tag |
 |---|---|---|
 | Anime | `/embroidery/anime` | `embroidery-anime` |
 | Baby clothing | `/embroidery/baby-clothing` | `embroidery-baby-clothing` |
 | Father's Day | `/embroidery/fathers-day` | `embroidery-fathers-day` |
 | Mother's Day | `/embroidery/mothers-day` | `embroidery-mothers-day` |
 | Seasonal & Holidays | `/embroidery/seasonal-holidays` | `embroidery-seasonal-holidays` |
-| Custom Designs | `/embroidery/custom-designs` | `embroidery-custom-designs` |
+| Custom Designs | `/embroidery/custom-designs` | Opens the studio; it is not a product collection |
 
-All category identifiers use lowercase words separated by hyphens. Use the exact values above.
+All collection tags use lowercase words separated by hyphens. Use the exact values above.
 
 ## What products belong in each collection
 
@@ -22,9 +23,9 @@ All category identifiers use lowercase words separated by hyphens. Use the exact
 - **Father's Day:** dad/grandfather apparel, hats, workwear, hobby designs, children's handwriting designs, and personalized gifts.
 - **Mother's Day:** mom/grandmother apparel, totes, sweaters, floral designs, children's handwriting designs, and personalized gifts.
 - **Seasonal & Holidays:** Ramadan, Eid, winter, autumn, spring, graduation, back-to-school, and other time-limited embroidered products.
-- **Custom Designs:** products where the customer supplies wording, names, artwork, a business logo, or another approved design.
+- **Custom Designs:** the request studio where a customer supplies wording, names, artwork, a business logo, or another approved design.
 
-Avoid copyrighted characters, logos, or artwork unless Isa's Signs & Designs owns the work or has permission/licensing to sell it.
+Avoid copyrighted characters, logos, or artwork unless Thread & Butter owns the work or has permission/licensing to sell it.
 
 ## Required product data
 
@@ -33,7 +34,7 @@ At minimum, every product needs:
 - a unique lowercase hyphenated `slug`;
 - a customer-facing `name`;
 - a short `description`;
-- one of the exact Embroidery category values;
+- primary category `gallery` for ready-to-order cards;
 - `price_cents` as an integer (`3500` means `$35.00`);
 - `currency`, normally `CAD`;
 - `images` as a JSON array of Cloudinary public IDs;
@@ -83,7 +84,7 @@ INSERT INTO products (
   'Personalized Baby Name Sweater',
   'A soft baby sweater embroidered with a custom name.',
   'Replace this with the complete product description, available sizes, thread colours, care instructions, turnaround time, and customization details.',
-  'embroidery-baby-clothing',
+  'gallery',
   4500,
   'CAD',
   '["embroidery/baby-name-sweater-front", "embroidery/baby-name-sweater-detail"]',
@@ -92,7 +93,7 @@ INSERT INTO products (
   false,
   null,
   true,
-  ARRAY['embroidery', 'baby', 'sweater', 'personalized', 'name', 'gift'],
+  ARRAY['gallery', 'embroidered', 'baby', 'sweater', 'personalized', 'name', 'gift', 'embroidery-baby-clothing'],
   null
 );
 ```
@@ -102,7 +103,7 @@ The `images` values must be Cloudinary public IDs, not local `/assets/...` paths
 Refresh the matching page after inserting. Vite proxies the page's request to, for example:
 
 ```http
-GET /api/products?category=embroidery-baby-clothing
+GET /api/products?tag=embroidery-baby-clothing
 ```
 
 ## Verify collection data
@@ -110,21 +111,21 @@ GET /api/products?category=embroidery-baby-clothing
 ```sql
 SELECT slug, name, category, price_cents, is_active
 FROM products
-WHERE category LIKE 'embroidery-%'
-ORDER BY category, name;
+WHERE 'embroidery-baby-clothing' = ANY(tags)
+ORDER BY name;
 ```
 
 Test one collection directly:
 
 ```bash
-curl "http://localhost:8081/api/products?category=embroidery-baby-clothing"
+curl "http://localhost:8081/api/products?tag=embroidery-baby-clothing"
 ```
 
 ## Move or correct an existing product
 
 ```sql
 UPDATE products
-SET category = 'embroidery-seasonal-holidays',
+SET tags = array_append(tags, 'embroidery-seasonal-holidays'),
     updated_at = now()
 WHERE slug = '<existing-product-slug>';
 ```

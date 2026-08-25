@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.AuthServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-22T21:47:46.145Z" hostname="Mac.lan" time="0.65">
+<testsuite name="com.isasigns.backend.service.AuthServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-24T20:42:15.849Z" hostname="Usmans-Mac-mini.local" time="0.606">
   <properties/>
-  <testcase name="signupRequiresMatchingEmailsAndVerifiesTheEmailedCode()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.639"/>
-  <testcase name="unknownLoginReturnsGenericChallengeWithoutSendingEmail()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.004"/>
-  <testcase name="signupRejectsMismatchedConfirmationBeforeCreatingAUser()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.002"/>
+  <testcase name="signupRequiresMatchingEmailsAndVerifiesTheEmailedCode()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.591"/>
+  <testcase name="unknownLoginReturnsGenericChallengeWithoutSendingEmail()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.006"/>
+  <testcase name="signupRejectsMismatchedConfirmationBeforeCreatingAUser()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.004"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/Users/u3quresh/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.19/154da3a65b4f4a909d3e5bdec55d1b2b4cbb6ce1/byte-buddy-agent-1.14.19.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning

@@ -6,11 +6,12 @@ import type { Product } from "../../types/product";
 type CategoryPageProps = {
   title: string;
 } & (
-  | { category: string; featured?: never }
-  | { category?: never; featured: true }
+  | { category: string; tag?: never; featured?: never }
+  | { category?: never; tag: string; featured?: never }
+  | { category?: never; tag?: never; featured: true }
 );
 
-export default function CategoryPage({ title, category, featured }: CategoryPageProps) {
+export default function CategoryPage({ title, category, tag, featured }: CategoryPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,11 @@ export default function CategoryPage({ title, category, featured }: CategoryPage
     setLoading(true);
     setError(null);
 
-    const query = featured ? "featured=true" : `category=${encodeURIComponent(category)}`;
+    const query = featured
+      ? "featured=true"
+      : tag
+        ? `tag=${encodeURIComponent(tag)}`
+        : `category=${encodeURIComponent(category ?? "")}`;
 
     fetch(`/api/products?${query}`, {
       signal: controller.signal,
@@ -41,7 +46,7 @@ export default function CategoryPage({ title, category, featured }: CategoryPage
       });
 
     return () => controller.abort();
-  }, [category, featured]);
+  }, [category, featured, tag]);
 
   if (loading) {
     return (

@@ -171,6 +171,13 @@ export default function HomePage() {
             <p className="mt-6 text-[clamp(0.135rem,1.75vw,1.75rem)] font-semibold tracking-[0.06em] text-[hsl(var(--theme-kids-bg)/0.9)] sm:mt-9">
               Your Style Is Our Bread &amp; Butter.
             </p>
+            <Link
+              to="/about#contact-form"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--theme-kids-bg))] px-[clamp(0.75rem,1.5vw,1.5rem)] py-[clamp(0.4rem,0.7vw,0.7rem)] text-[clamp(0.55rem,0.9vw,0.95rem)] font-bold text-[hsl(var(--theme-brown-footer))] transition-transform hover:-translate-y-0.5 sm:mt-5"
+            >
+              Connect with an Embroidery Pro
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </div>
 
