@@ -94,14 +94,35 @@ class AuthServiceTest {
     }
 
     @Test
-    void unknownLoginReturnsGenericChallengeWithoutSendingEmail() {
+    void signupRejectsAnExistingActiveEmailWithoutSendingACode() {
+        var existing = new AppUser(
+                "Avery", "Customer", "avery@example.com", "avery@example.com",
+                null, null, false);
+        existing.activate();
+        when(userRepository.findByNormalizedEmail("avery@example.com"))
+                .thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> service.startSignup(new SignupRequest(
+                "Someone", "Else", "avery@example.com", "avery@example.com", "", false),
+                "127.0.0.1"))
+                .isInstanceOf(AuthRequestException.class)
+                .hasMessage("An account with this email address already exists. Please sign in instead.");
+
+        verify(emailService, never()).sendCode(anyString(), anyString(), any());
+        verify(challengeRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void unknownLoginExplainsThatTheEmailIsNotRegistered() {
         when(userRepository.findByNormalizedEmail("missing@example.com")).thenReturn(Optional.empty());
 
-        var response = service.startLogin(new LoginRequest("missing@example.com"), "127.0.0.1");
-
-        assertThat(response.challengeId()).isNotNull();
-        assertThat(response.message()).doesNotContain("account");
+        assertThatThrownBy(() -> service.startLogin(
+                new LoginRequest("missing@example.com"), "127.0.0.1"))
+                .isInstanceOf(AuthRequestException.class)
+                .hasMessage("No account is registered with this email address. Please sign up first.");
         verify(emailService, never()).sendCode(anyString(), anyString(), any());
+        verify(challengeRepository, never()).save(any());
     }
 
     private AuthProperties properties() {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.AuthSessionServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-24T20:42:16.456Z" hostname="Usmans-Mac-mini.local" time="0.054">
+<testsuite name="com.isasigns.backend.service.AuthSessionServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-27T18:31:16.539Z" hostname="Usmans-Mac-mini.local" time="0.05">
   <properties/>
-  <testcase name="refreshRotatesOpaqueTokenAndReuseRevokesFamily()" classname="com.isasigns.backend.service.AuthSessionServiceTest" time="0.053"/>
+  <testcase name="refreshRotatesOpaqueTokenAndReuseRevokesFamily()" classname="com.isasigns.backend.service.AuthSessionServiceTest" time="0.049"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

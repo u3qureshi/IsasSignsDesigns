@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { CheckCircle2 } from "lucide-react";
 
 export interface AuthUser {
   id: string;
@@ -127,6 +128,7 @@ async function loadInitialSession(): Promise<AuthUser | null> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signedInToastName, setSignedInToastName] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -146,6 +148,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!signedInToastName) return;
+    const timeout = window.setTimeout(() => setSignedInToastName(""), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [signedInToastName]);
+
   const startSignup = useCallback((details: SignupDetails) => request<AuthChallenge>(
     "/api/auth/signup",
     { method: "POST", body: JSON.stringify(details) },
@@ -162,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ challengeId, code }),
     });
     setUser(nextUser);
+    setSignedInToastName(nextUser.firstName);
     return nextUser;
   }, []);
 
@@ -199,7 +208,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
   }), [user, loading, startSignup, startLogin, verifyCode, updateProfile, logout]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {signedInToastName && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed left-1/2 top-5 z-[200] flex w-[min(92vw,30rem)] -translate-x-1/2 items-center justify-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-4 text-center font-bold text-emerald-900 shadow-[0_18px_55px_rgba(20,83,45,0.22)]"
+        >
+          <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" strokeWidth={3} aria-hidden="true" />
+          <span>You are now signed in {signedInToastName}!</span>
+        </div>
+      )}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

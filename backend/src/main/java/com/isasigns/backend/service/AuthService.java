@@ -64,9 +64,9 @@ public class AuthService {
 
         AppUser user = userRepository.findByNormalizedEmail(email).orElse(null);
         if (user != null && user.isActive()) {
-            // Keep signup neutral: an existing account receives the same kind of code and is
-            // signed in after proof of mailbox control, without overwriting its saved profile.
-            return createAndSendChallenge(user, email, AuthChallengePurpose.SIGNUP, requestIpDigest);
+            throw new AuthRequestException(
+                    HttpStatus.CONFLICT,
+                    "An account with this email address already exists. Please sign in instead.");
         }
         if (user == null) {
             user = new AppUser(firstName, lastName, email, email,
@@ -89,7 +89,9 @@ public class AuthService {
 
         AppUser user = userRepository.findByNormalizedEmail(email)
                 .filter(AppUser::isActive)
-                .orElse(null);
+                .orElseThrow(() -> new AuthRequestException(
+                        HttpStatus.NOT_FOUND,
+                        "No account is registered with this email address. Please sign up first."));
         return createAndSendChallenge(user, email, AuthChallengePurpose.LOGIN, requestIpDigest);
     }
 

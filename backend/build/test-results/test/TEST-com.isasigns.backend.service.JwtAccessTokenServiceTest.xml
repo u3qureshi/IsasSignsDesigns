@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.JwtAccessTokenServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-24T20:42:16.760Z" hostname="Usmans-Mac-mini.local" time="0.06">
+<testsuite name="com.isasigns.backend.service.JwtAccessTokenServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-27T18:31:16.819Z" hostname="Usmans-Mac-mini.local" time="0.044">
   <properties/>
-  <testcase name="signsAndValidatesShortLivedAccessToken()" classname="com.isasigns.backend.service.JwtAccessTokenServiceTest" time="0.06"/>
+  <testcase name="signsAndValidatesShortLivedAccessToken()" classname="com.isasigns.backend.service.JwtAccessTokenServiceTest" time="0.043"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
