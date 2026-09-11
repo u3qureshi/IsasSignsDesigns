@@ -2,7 +2,10 @@
 .env
 .env.*
 !.env.example
+deploy/production.env
+deploy/local.env
+deploy/.rollback-images.yml
+deploy/*.local.yml
 
 # Operating-system metadata
 .DS_Store
-

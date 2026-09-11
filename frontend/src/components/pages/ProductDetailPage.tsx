@@ -2,20 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronDown, ChevronUp, Minus, Plus, ShoppingCart } from "lucide-react";
 import { getCloudinaryUrl } from "../../lib/cloudinary";
+import { formatPrice, salePriceCents } from "../../lib/pricing";
 import type { Product } from "../../types/product";
 import { useCart } from "../cart/CartContext";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
 /* ── Price helpers ──────────────────────────────────────────────────────── */
-
-function formatPrice(cents: number, currency: string): string {
-  return `$${(cents / 100).toFixed(2)} ${currency}`;
-}
-
-function salePriceCents(priceCents: number, percent: number): number {
-  return Math.round(priceCents * (1 - percent / 100));
-}
 
 function PriceDisplay({ product }: { product: Product }) {
   const { priceCents, currency, onSale } = product;
@@ -80,15 +73,38 @@ function AskAQuestion({ productName }: { productName: string }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [website, setWebsite] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [submitError, setSubmitError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: wire to backend / email service
-    setSubmitted(true);
+    setStatus("sending");
+    setSubmitError("");
+    try {
+      const response = await fetch("/api/contact-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          subject: `Product question: ${productName}`,
+          message: `Product: ${productName}\n\n${message.trim()}`,
+          website,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { message?: string; details?: string[] } | null;
+        throw new Error(body?.details?.[0] || body?.message || "Your question could not be sent.");
+      }
+      setStatus("sent");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Your question could not be sent.");
+      setStatus("error");
+    }
   }
 
-  if (submitted) {
+  if (status === "sent") {
     return (
       <p className="rounded-lg bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
         Thank you! Your question has been sent. We'll get back to you shortly.
@@ -98,6 +114,10 @@ function AskAQuestion({ productName }: { productName: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <label className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+        Website
+        <input type="text" value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+      </label>
       <input type="hidden" value={productName} readOnly />
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -140,10 +160,12 @@ function AskAQuestion({ productName }: { productName: string }) {
       </div>
       <button
         type="submit"
-        className="w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 active:scale-[0.98]"
+        disabled={status === "sending"}
+        className="w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
       >
-        Send Question
+        {status === "sending" ? "Sending…" : "Send Question"}
       </button>
+      {status === "error" && <p role="alert" className="text-sm font-semibold text-red-700">{submitError}</p>}
     </form>
   );
 }
@@ -152,6 +174,11 @@ function AskAQuestion({ productName }: { productName: string }) {
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  if (!slug) return <div className="flex min-h-[70vh] items-center justify-center text-gray-500">Product not found.</div>;
+  return <ProductDetail key={slug} slug={slug} />;
+}
+
+function ProductDetail({ slug }: { slug: string }) {
   const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,9 +190,6 @@ export default function ProductDetailPage() {
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    setActiveIndex(0);
     fetch(`/api/products/${slug}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -316,6 +340,8 @@ export default function ProductDetailPage() {
                       <img
                         src={thumbSrc}
                         alt={`${product.name} ${i + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover"
                         onError={(e) => {
                           e.currentTarget.onerror = null;

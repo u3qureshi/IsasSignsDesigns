@@ -1,0 +1,61 @@
+[
+  {
+    "id": "20",
+    "name": "Black",
+    "slug": "black",
+    "hex": "#262629",
+    "image": "thread-and-butter/clothing/gildan-18200/black",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ]
+  },
+  {
+    "id": "106",
+    "name": "Sport Grey",
+    "slug": "sport-grey",
+    "hex": "#a8a8a5",
+    "image": "thread-and-butter/clothing/gildan-18200/sport-grey",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ]
+  },
+  {
+    "id": "343",
+    "name": "Navy Blue",
+    "slug": "navy-blue",
+    "hex": "#27334a",
+    "image": "thread-and-butter/clothing/gildan-18200/navy-blue",
+    "sizes": [
+      "S",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ]
+  },
+  {
+    "id": "264",
+    "name": "Ash",
+    "slug": "ash",
+    "hex": "#d6d6d1",
+    "image": "thread-and-butter/clothing/gildan-18200/ash",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ]
+  }
+]

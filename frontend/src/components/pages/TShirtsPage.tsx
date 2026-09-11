@@ -11,9 +11,9 @@ import {
 import CustomerReviewsPreview from "../reviews/CustomerReviewsPreview";
 import { openQuickRequest } from "../../types/quickRequest";
 import heroImage from "../../assets/brand/custom-tshirts-hero.webp";
-import classicTShirtImage from "../../assets/brand/vecteezy_ai-generated-tshirt-isolated-on-transparent-background_35200581.png";
+import classicTShirtImage from "../../assets/brand/vecteezy_ai-generated-tshirt-isolated-on-transparent-background_35200581.webp";
 import tankTopImage from "../../assets/brand/shirt-tank.webp";
-import longSleeveImage from "../../assets/brand/blank-white-long-sleeve-tshirt-mockup-design-presentation_632498-25179.png";
+import longSleeveImage from "../../assets/brand/blank-white-long-sleeve-tshirt-mockup-design-presentation_632498-25179.webp";
 import oversizedTShirtImage from "../../assets/brand/shirt-oversized.webp";
 
 const PLACEMENTS = [

@@ -48,7 +48,13 @@ public class ProductController {
     public List<ProductResponse> list(
             @Parameter(description = "Category identifier (case-insensitive)", example = "kids") @RequestParam(required = false) String category,
             @Parameter(description = "Exact collection tag", example = "embroidery-anime") @RequestParam(required = false) String tag,
+            @Parameter(description = "Search product names, descriptions, and tags", example = "hoodie") @RequestParam(required = false, name = "q") String query,
             @Parameter(description = "When true, return active featured products", example = "true") @RequestParam(required = false) Boolean featured) {
+        if (query != null && !query.isBlank()) {
+            String normalizedQuery = query.trim();
+            if (normalizedQuery.length() < 2) return List.of();
+            return repo.searchActive(normalizedQuery).stream().map(this::toResponse).toList();
+        }
         if (Boolean.TRUE.equals(featured)) {
             return repo.findByIsFeaturedTrueAndIsActiveTrue().stream().map(this::toResponse).toList();
         }

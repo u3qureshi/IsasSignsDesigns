@@ -29,13 +29,16 @@ class CheckoutServiceTest {
     private final CustomerOrderRepository orderRepository = mock(CustomerOrderRepository.class);
     private final CheckoutPaymentClient paymentClient = mock(CheckoutPaymentClient.class);
     private final OrderPaymentService orderPaymentService = mock(OrderPaymentService.class);
+    private final CurrentUserService currentUserService = mock(CurrentUserService.class);
     private CheckoutService service;
 
     @BeforeEach
     void setUp() {
         service = new CheckoutService(
                 productRepository, orderRepository, paymentClient, new ObjectMapper(), orderPaymentService,
+                currentUserService,
                 10_000, 1_500);
+        when(currentUserService.currentUserId()).thenReturn(Optional.empty());
         when(orderRepository.findByOrderNumber(any())).thenReturn(Optional.empty());
         when(paymentClient.create(any())).thenReturn(
                 new CheckoutPaymentClient.CreatedCheckoutSession("cs_test_123", "https://checkout.stripe.test/session"));

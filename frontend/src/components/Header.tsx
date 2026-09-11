@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, ShoppingCart, Truck } from "lucide-react";
+import { Menu, Search, ShoppingCart, Truck, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import Brand from "./Brand";
 import mapleLeafLogo from "../assets/brand/Maple_Leaf.svg";
@@ -10,12 +10,13 @@ import { SERVICE_COLLECTIONS } from "../config/serviceCollections";
 import NavDropdown from "./NavDropdown";
 import UserAccountMenu from "./auth/UserAccountMenu";
 import { useCart } from "./cart/CartContext";
+import ProductSearch from "./ProductSearch";
 
 export default function Header() {
   const { openCart, totalQuantity } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [stickySearchOpen, setStickySearchOpen] = useState(false);
-  const [showStickySearchPlaceholder, setShowStickySearchPlaceholder] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPromoBar, setShowPromoBar] = useState(true);
   const topRowRef = useRef<HTMLDivElement | null>(null);
   const scrollTriggerRef = useRef(80);
@@ -42,24 +43,18 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    if (!isScrolled) {
-      setStickySearchOpen(false);
-      setShowStickySearchPlaceholder(false);
-    }
-  }, [isScrolled]);
-
-  useEffect(() => {
-    if (!stickySearchOpen) {
-      setShowStickySearchPlaceholder(false);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setShowStickySearchPlaceholder(true);
-    }, 300);
-
-    return () => window.clearTimeout(timer);
-  }, [stickySearchOpen]);
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <>
@@ -148,23 +143,15 @@ export default function Header() {
       <header>
         <div ref={topRowRef} className="relative bg-white">
           {!isScrolled && (
-            <div className="absolute right-3 top-3 z-[60]">
+            <div className="absolute right-3 top-3 z-[60] hidden min-[1350px]:block">
               <UserAccountMenu />
             </div>
           )}
 
           <div className="mx-auto flex max-w-6xl items-start px-3 pt-[5px] pb-2">
-            <div className="w-[clamp(0rem,18vw,18rem)] shrink-0 overflow-hidden pt-[clamp(0rem,1.8vw,2.5rem)] pl-[clamp(3rem,4.7vw,4.5rem)] max-[770px]:w-0 max-[770px]:overflow-hidden">
-              <div className="ml-auto w-[clamp(0rem,calc(15vw-2.4rem),14.25rem)] overflow-hidden">
-              <div className="flex items-center gap-[clamp(0.25rem,0.6vw,0.5rem)] border-b border-[hsl(var(--theme-sage-200))] pb-1">
-                <Search className="h-[clamp(0.875rem,1.2vw,1.25rem)] w-[clamp(0.875rem,1.2vw,1.25rem)] text-[hsl(var(--theme-green-700))]" />
-                <input
-                  className="w-full bg-transparent text-[clamp(0.75rem,0.9vw,0.875rem)] text-[hsl(var(--theme-sage-300))] placeholder:text-[hsl(var(--theme-sage-300))] outline-none"
-                  type="text"
-                  placeholder="Search"
-                  aria-label="Search"
-                />
-              </div>
+            <div className="w-[clamp(0rem,18vw,18rem)] shrink-0 overflow-visible pt-[clamp(0rem,1.8vw,2.5rem)] pl-[clamp(3rem,4.7vw,4.5rem)] max-[770px]:hidden">
+              <div className="ml-auto w-[clamp(0rem,calc(15vw-2.4rem),14.25rem)] overflow-visible">
+                <ProductSearch placeholder="Search" />
               </div>
             </div>
 
@@ -184,8 +171,18 @@ export default function Header() {
       {/* Row 2: Sticky nav */}
       <div className="sticky top-0 z-50 border-b border-[hsl(var(--theme-sand-300))] bg-white">
         <div className="relative flex items-center px-3 py-0.5">
-          <div className="w-[clamp(0rem,20vw,20rem)] shrink-0 overflow-hidden">
-            <div className="flex items-center gap-3 pl-[clamp(0.5rem,2vw,2.5rem)] max-[1366px]:hidden">
+          <button
+            type="button"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen(true)}
+            className="rounded-full p-2.5 text-[hsl(var(--theme-brown-900))] min-[1350px]:hidden"
+          >
+            <Menu className="h-6 w-6" strokeWidth={2.5} />
+          </button>
+
+          <div className="hidden w-[clamp(0rem,20vw,20rem)] shrink-0 overflow-visible min-[1350px]:block">
+            <div className="flex items-center gap-3 pl-[clamp(0.5rem,2vw,2.5rem)]">
               <div
                 className={[
                   isScrolled ? "visible" : "invisible pointer-events-none",
@@ -211,28 +208,14 @@ export default function Header() {
                   <Search className="h-5 w-5" />
                 </button>
 
-                <div className="relative w-[clamp(9rem,12vw,12rem)] overflow-hidden">
-                  <input
-                    className={[
-                      "w-full bg-transparent pb-1 text-[clamp(0.75rem,0.9vw,0.875rem)] text-[hsl(var(--theme-sage-300))] placeholder:text-[hsl(var(--theme-sage-300))] outline-none transition-opacity duration-200",
-                      stickySearchOpen ? "opacity-100" : "opacity-0 pointer-events-none",
-                    ].join(" ")}
-                    type="text"
-                    placeholder={showStickySearchPlaceholder ? "Search" : ""}
-                    aria-label="Sticky search"
-                  />
-                  <span
-                    className={[
-                      "absolute bottom-0 left-0 h-[2px] w-full origin-left bg-[hsl(var(--theme-sage-200))] transition-transform duration-300",
-                      stickySearchOpen ? "scale-x-100" : "scale-x-0",
-                    ].join(" ")}
-                  />
+                <div className={`relative w-[clamp(9rem,12vw,12rem)] transition-opacity duration-200 ${stickySearchOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+                  <ProductSearch placeholder="Search" />
                 </div>
               </div>
             </div>
           </div>
 
-          <nav className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-[clamp(0.9rem,2vw,3rem)] whitespace-nowrap text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))]">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center justify-center gap-[clamp(0.9rem,2vw,3rem)] whitespace-nowrap text-[clamp(0.72rem,1.02vw,1.125rem)] font-bold text-[hsl(var(--theme-brown-900))] min-[1350px]:flex">
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/">Home</Link>
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/best-sellers">Best Sellers</Link>
             <NavDropdown label="Embroidery" menuId="embroidery-menu" items={EMBROIDERY_COLLECTIONS} />
@@ -244,8 +227,10 @@ export default function Header() {
             <Link className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[#4e3b31] after:transition-transform after:duration-300 hover:after:scale-x-100" to="/reviews">Reviews</Link>
           </nav>
 
-          <div className="ml-auto flex w-32 shrink-0 items-center justify-end gap-3">
-            {isScrolled && <UserAccountMenu />}
+          <div className="ml-auto flex shrink-0 items-center justify-end gap-3 min-[1350px]:w-32">
+            <div className={isScrolled ? "" : "min-[1350px]:invisible min-[1350px]:pointer-events-none"}>
+              <UserAccountMenu />
+            </div>
             <button
               className="group relative rounded-full bg-[hsl(var(--theme-kids-bg))] p-2.5 text-[hsl(var(--theme-isa-green))]"
               type="button"
@@ -281,6 +266,62 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[110] min-[1350px]:hidden" role="dialog" aria-modal="true" aria-label="Site navigation">
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            className="absolute inset-0 bg-black/45"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <aside className="absolute left-0 top-0 flex h-full w-[min(90vw,25rem)] flex-col overflow-y-auto bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <Brand variant="icon" />
+              <button
+                type="button"
+                aria-label="Close navigation menu"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-full bg-[hsl(var(--theme-kids-bg))] p-2.5 text-[hsl(var(--theme-brown-900))]"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <ProductSearch className="mt-6" autoFocus onNavigate={() => setMobileMenuOpen(false)} />
+
+            <nav className="mt-7 space-y-7 text-[hsl(var(--theme-brown-900))]">
+              <div className="grid gap-1">
+                {[
+                  ["Home", "/"],
+                  ["Best Sellers", "/best-sellers"],
+                  ["Gallery", "/gallery"],
+                  ["Clothing", "/clothing"],
+                  ["About Us", "/about"],
+                  ["Reviews", "/reviews"],
+                ].map(([label, path]) => (
+                  <Link key={path} to={path} onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2.5 text-lg font-bold hover:bg-[hsl(var(--theme-sage-100)/0.4)]">{label}</Link>
+                ))}
+              </div>
+
+              {[
+                ["Embroidery", EMBROIDERY_COLLECTIONS],
+                ["Printing", PRINTING_COLLECTIONS],
+                ["Services", SERVICE_COLLECTIONS],
+              ].map(([heading, items]) => (
+                <section key={heading as string}>
+                  <h2 className="px-3 text-xs font-black uppercase tracking-[0.18em] text-[hsl(var(--theme-brown-600))]">{heading as string}</h2>
+                  <div className="mt-2 grid gap-1 border-l-2 border-[hsl(var(--theme-sage-200))] pl-2">
+                    {(items as typeof EMBROIDERY_COLLECTIONS).map((item) => (
+                      <Link key={item.path} to={item.path} onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-base font-semibold hover:bg-[hsl(var(--theme-sage-100)/0.4)]">{item.label}</Link>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </nav>
+          </aside>
+        </div>
+      )}
     </>
   );
 }

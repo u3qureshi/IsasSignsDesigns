@@ -26,5 +26,20 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             """, nativeQuery = true)
     List<Product> findActiveByTag(@Param("tag") String tag);
 
+    @Query(value = """
+            SELECT *
+            FROM products
+            WHERE is_active = true
+              AND (
+                  name ILIKE concat('%', :query, '%')
+                  OR coalesce(description, '') ILIKE concat('%', :query, '%')
+                  OR coalesce(long_description, '') ILIKE concat('%', :query, '%')
+                  OR array_to_string(tags, ' ') ILIKE concat('%', :query, '%')
+              )
+            ORDER BY is_featured DESC, name
+            LIMIT 40
+            """, nativeQuery = true)
+    List<Product> searchActive(@Param("query") String query);
+
     Optional<Product> findBySlugAndIsActiveTrue(String slug);
 }

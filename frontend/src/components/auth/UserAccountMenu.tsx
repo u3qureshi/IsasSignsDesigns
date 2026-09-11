@@ -9,8 +9,9 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import AuthDialog, { type AuthDialogView } from "./AuthDialog";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./auth-context";
 
 export default function UserAccountMenu() {
   const { user, loading, logout } = useAuth();
@@ -116,26 +117,26 @@ export default function UserAccountMenu() {
                   Account settings
                   <ChevronRight className="ml-auto h-4 w-4 text-stone-300" />
                 </button>
-                <button
-                  type="button"
+                <Link
+                  to="/account/custom-requests"
                   role="menuitem"
-                  disabled
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-stone-400"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-[hsl(var(--theme-brown-900))] transition hover:bg-[hsl(var(--theme-sand-300)/0.25)]"
                 >
-                  <ClipboardList className="h-4 w-4" />
-                  My embroidery requests
-                  <span className="ml-auto text-[0.6rem] font-bold uppercase tracking-wide">Soon</span>
-                </button>
-                <button
-                  type="button"
+                  <ClipboardList className="h-4 w-4 text-[#711f3d]" />
+                  My custom requests
+                  <ChevronRight className="ml-auto h-4 w-4 text-stone-300" />
+                </Link>
+                <Link
+                  to="/account/orders"
                   role="menuitem"
-                  disabled
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-stone-400"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-[hsl(var(--theme-brown-900))] transition hover:bg-[hsl(var(--theme-sand-300)/0.25)]"
                 >
-                  <PackageOpen className="h-4 w-4" />
+                  <PackageOpen className="h-4 w-4 text-[#711f3d]" />
                   My orders
-                  <span className="ml-auto text-[0.6rem] font-bold uppercase tracking-wide">Soon</span>
-                </button>
+                  <ChevronRight className="ml-auto h-4 w-4 text-stone-300" />
+                </Link>
                 <div className="mx-4 border-t border-stone-100" />
                 <button
                   type="button"

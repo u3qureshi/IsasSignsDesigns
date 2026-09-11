@@ -41,6 +41,7 @@ public class CheckoutService {
     private final CheckoutPaymentClient paymentClient;
     private final ObjectMapper objectMapper;
     private final OrderPaymentService orderPaymentService;
+    private final CurrentUserService currentUserService;
     private final long freeShippingThresholdCents;
     private final long standardShippingCents;
 
@@ -50,6 +51,7 @@ public class CheckoutService {
             CheckoutPaymentClient paymentClient,
             ObjectMapper objectMapper,
             OrderPaymentService orderPaymentService,
+            CurrentUserService currentUserService,
             @Value("${app.checkout.free-shipping-threshold-cents:10000}") long freeShippingThresholdCents,
             @Value("${app.checkout.standard-shipping-cents:1500}") long standardShippingCents) {
         this.productRepository = productRepository;
@@ -57,6 +59,7 @@ public class CheckoutService {
         this.paymentClient = paymentClient;
         this.objectMapper = objectMapper;
         this.orderPaymentService = orderPaymentService;
+        this.currentUserService = currentUserService;
         this.freeShippingThresholdCents = freeShippingThresholdCents;
         this.standardShippingCents = standardShippingCents;
     }
@@ -108,6 +111,7 @@ public class CheckoutService {
                 .sum();
         long shipping = subtotal >= freeShippingThresholdCents ? 0 : standardShippingCents;
         var order = new CustomerOrder(createOrderNumber(), currency.toUpperCase(Locale.ROOT), subtotal, shipping);
+        currentUserService.currentUserId().ifPresent(order::assignToUser);
         for (ResolvedLine line : resolved) {
             order.addItem(new OrderItem(
                     line.product().getId(),

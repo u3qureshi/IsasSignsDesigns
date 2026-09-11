@@ -1,17 +1,7 @@
 import { useState } from "react";
 import { getCloudinaryUrl } from "../../lib/cloudinary";
+import { formatPrice, salePriceCents } from "../../lib/pricing";
 import type { Product } from "../../types/product";
-
-export function formatPrice(cents: number, currency: string): string {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency,
-  }).format(cents / 100);
-}
-
-export function salePriceCents(priceCents: number, percent: number): number {
-  return Math.round(priceCents * (1 - percent / 100));
-}
 
 export function ProductPrice({ product }: { product: Product }) {
   const { priceCents, currency, onSale } = product;
@@ -57,6 +47,8 @@ export default function ProductCard({ product }: { product: Product }) {
           key={src}
           src={src}
           alt={activeVariant ? `${product.name} in ${activeVariant.name}` : product.name}
+          loading="lazy"
+          decoding="async"
           className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
             variants.length > 0 ? "object-contain p-3 mix-blend-multiply" : "object-cover"
           }`}

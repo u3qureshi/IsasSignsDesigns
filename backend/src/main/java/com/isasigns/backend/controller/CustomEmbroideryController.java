@@ -12,6 +12,7 @@ import com.isasigns.backend.dto.customembroidery.PreviewResponse;
 import com.isasigns.backend.dto.customembroidery.SubmitResponse;
 import com.isasigns.backend.service.CustomEmbroideryPreviewService;
 import com.isasigns.backend.service.CustomEmbroiderySubmissionService;
+import com.isasigns.backend.service.SpamProtectionService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,12 +23,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class CustomEmbroideryController {
     private final CustomEmbroideryPreviewService previewService;
     private final CustomEmbroiderySubmissionService submissionService;
+    private final SpamProtectionService spamProtectionService;
 
     public CustomEmbroideryController(
             CustomEmbroideryPreviewService previewService,
-            CustomEmbroiderySubmissionService submissionService) {
+            CustomEmbroiderySubmissionService submissionService,
+            SpamProtectionService spamProtectionService) {
         this.previewService = previewService;
         this.submissionService = submissionService;
+        this.spamProtectionService = spamProtectionService;
     }
 
     @Operation(summary = "Generate one AI embroidery preview")
@@ -35,6 +39,7 @@ public class CustomEmbroideryController {
     public PreviewResponse preview(
             @RequestPart("request") CustomEmbroideryPayload request,
             @RequestPart(value = "customerImage", required = false) MultipartFile customerImage) {
+        spamProtectionService.rejectFilledHoneypot(request.website());
         return previewService.generate(request, customerImage);
     }
 
@@ -45,6 +50,7 @@ public class CustomEmbroideryController {
             @RequestPart(value = "customerImage", required = false) MultipartFile customerImage,
             @RequestPart(value = "generatedImage", required = false) MultipartFile generatedImage,
             @RequestPart(value = "previewToken", required = false) String previewToken) {
+        spamProtectionService.rejectFilledHoneypot(request.website());
         return submissionService.submit(request, customerImage, generatedImage, previewToken);
     }
 }

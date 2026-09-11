@@ -46,8 +46,39 @@ server:
   port: 8081
   forward-headers-strategy: framework
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db,diskSpace
+        liveness:
+          include: livenessState
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Thread & Butter Storefront
+    version: ${APP_VERSION:local}
+
 app:
   time-zone: ${APP_TIME_ZONE:America/Toronto}
+  public-submission-limits:
+    contact-limit: ${PUBLIC_CONTACT_LIMIT:5}
+    contact-window-seconds: ${PUBLIC_CONTACT_WINDOW_SECONDS:900}
+    request-limit: ${PUBLIC_REQUEST_LIMIT:5}
+    request-window-seconds: ${PUBLIC_REQUEST_WINDOW_SECONDS:3600}
+    preview-limit: ${PUBLIC_PREVIEW_LIMIT:10}
+    preview-window-seconds: ${PUBLIC_PREVIEW_WINDOW_SECONDS:3600}
   auth:
     email-enabled: ${AUTH_EMAIL_ENABLED:${EMAIL_NOTIFICATIONS_ENABLED:false}}
     otp-pepper: ${AUTH_OTP_PEPPER:local-development-otp-pepper-change-before-production}

@@ -3063,6 +3063,76 @@ feature, this entry and the current source code supersede it.
   and Hats with `CustomerReviewsPreview`, which shows three real recent reviews and links to the
   complete page.
 
+### 2026-08-28 — Storefront completion and production-readiness pass
+
+- Replaced both decorative header search boxes with a shared, debounced catalogue search. It
+  queries PostgreSQL through `GET /api/products?q=...`, previews matching products with responsive
+  Cloudinary thumbnails, supports a complete `/search` results page, and is also available from the
+  mobile navigation drawer.
+- Completed the responsive header with an accessible slide-out mobile menu, account and cart
+  controls, all primary collections, body-scroll locking, backdrop dismissal, and Escape-key
+  dismissal. The desktop navigation remains centered and the sticky header keeps search, account,
+  and cart access available after scrolling.
+- Corrected footer navigation: removed Track Your Order, connected Login to the actual passwordless
+  auth flow, hides Login for signed-in customers, and added links to the store policies and business
+  contact page. Social placeholders were deliberately left unchanged for a later pass.
+- Product questions now submit through the existing `/api/contact-messages` email workflow and
+  show success only after the backend accepts the message. Added a branded catch-all 404 page and a
+  real `/login` route.
+- Published Shipping & Pickup, Returns/Refunds/Cancellations, Custom Orders, Privacy, Terms of
+  Service, and Business Contact pages. These contain business decisions that the owner must review
+  before launch; in particular, confirm the proposed 14-day return window for unused,
+  non-personalized goods and all tax/shipping representations.
+- Added authenticated **My Orders** and **My Custom Requests** pages. Flyway V25 associates new
+  orders and custom requests with the current user and backfills earlier records by verified,
+  normalized email. The account endpoints also include eligible guest history submitted under the
+  account's verified email. `/api/account/**` requires authentication.
+- Added a custom embroidery needle/thread favicon, robots directives for checkout/account routes,
+  richer description/Open Graph/Twitter metadata, and LocalBusiness JSON-LD. Canonical URLs,
+  `og:url`, and the sitemap remain intentionally pending until the final production domain exists.
+- Moved both homepage videos to Cloudinary and changed playback to responsive 720p automatic-eco
+  delivery. The videos load only when near the viewport and no local video is emitted in the
+  production bundle. Large active apparel PNG imports were replaced with compact WebP files,
+  below-the-fold media is lazy-loaded, and route-level code splitting reduced the initial JS chunk
+  from approximately 522 KB to 331 KB before gzip.
+- Verification on 2026-08-28: frontend lint passed with no errors, the production build passed,
+  backend tests passed, Flyway V25 applied to local PostgreSQL, product search returned live
+  catalogue matches, unauthenticated account history returned HTTP 401, the unknown API smoke test
+  returned HTTP 404, and `git diff --check` passed.
+
+**Production domain and Stripe cutover**
+
+> Portfolio-mode decision (2026-08-28): the first public deployment exists for recruiters and
+> learning, not for real customers. Keep Stripe in sandbox/test mode and do not enable live
+> payments until the owner intentionally changes the site to a real commercial storefront.
+
+1. Register the selected public domain, deploy the approved EC2 architecture, associate its
+   Elastic IP, and point the domain's DNS A record to that address.
+2. Open inbound ports 80 and 443 only and configure the domain in Caddy. With correct DNS and
+   persistent Caddy data, Caddy obtains/renews TLS certificates and redirects HTTP to HTTPS.
+3. Deploy and verify the complete site with Stripe sandbox/test keys first. Production must set
+   `STOREFRONT_URL=https://<domain>`, `AUTH_SECURE_COOKIES=true`, and production-specific auth
+   issuer/JWT/OTP secrets from AWS SSM Parameter Store.
+4. For the portfolio deployment, create a **sandbox** HTTPS webhook
+   `https://<domain>/api/checkout/webhooks/stripe` and subscribe to
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+   `checkout.session.async_payment_failed`, and `checkout.session.expired`.
+5. Store the sandbox `sk_test_...` and that endpoint's separate `whsec_...` in SSM, redeploy, and
+   use Stripe's endpoint delivery log to confirm a successful signed delivery. A future commercial
+   launch requires a deliberate live-key and live-webhook cutover.
+
+**Portfolio-mode operational protection**
+
+- Implemented per-client rate limits for public contact messages, custom/quick requests, and AI
+  previews. Limits are configurable through `PUBLIC_*` environment variables.
+- Added backend-enforced honeypots to contact, product-question, quick-request, embroidery, and
+  printing forms.
+- Added minimal Actuator liveness/readiness health endpoints without sensitive detail. Use the
+  readiness endpoint for EC2/deployment checks.
+- Deliberately deferred automated PostgreSQL backups, restore drills, expanded CloudWatch alerting,
+  and frontend Playwright E2E coverage while the site is a non-commercial portfolio demo. Complete
+  those before enabling real payments or accepting customer orders.
+
 ---
 
 ## 30. Source material used

@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import embroideryVideo from "../../assets/gifs/embroidery_edit.web.mp4";
 import embroideryPoster from "../../assets/gifs/embroidery_edit.poster.webp";
-import printingVideo from "../../assets/gifs/printing_edit.web.mp4";
 import printingPoster from "../../assets/gifs/printing_edit.poster.webp";
 import embroideryHoodie from "../../assets/brand/goosebumps_embroidered_hoodie.webp";
-import attackOnTitanShirt from "../../assets/brand/aot_tshirt_print.png";
+import attackOnTitanShirt from "../../assets/brand/aot_tshirt_print.optimized.webp";
 import itachiHoodie from "../../assets/brand/itachi_hoodie_print.webp";
 import precisionIcon from "../../assets/brand/precision-icon.png";
 import promoteIcon from "../../assets/brand/promote-icon.png";
 import stitchedWithStyleIcon from "../../assets/brand/stitched-with-style-icon.png";
 import threadAndButterOutline from "../../assets/brand/threadnbutterLogoOutlineIMG.svg";
+import { getCloudinaryVideoUrl } from "../../lib/cloudinary";
+
+const embroideryVideo = getCloudinaryVideoUrl("thread-and-butter/home/embroidery-showcase");
+const printingVideo = getCloudinaryVideoUrl("thread-and-butter/home/printing-showcase");
 
 const SERVICE_HIGHLIGHTS = [
   {
@@ -35,17 +37,13 @@ const SERVICE_HIGHLIGHTS = [
 
 function useScrollReveal() {
   const elementRef = useRef<HTMLDivElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element) return;
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) {
-      setIsVisible(true);
-      return;
-    }
+    if (!element || isVisible) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -61,9 +59,9 @@ function useScrollReveal() {
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [isVisible]);
 
-  return { elementRef, isVisible };
+  return [elementRef, isVisible] as const;
 }
 
 function HeroVideo({
@@ -93,8 +91,14 @@ function HeroVideo({
     };
 
     const observer = new IntersectionObserver(
-      ([entry]) => updatePlayback(entry.isIntersecting),
-      { threshold: 0.15 },
+      ([entry]) => {
+        if (entry.isIntersecting && !video.src && src) {
+          video.src = src;
+          video.load();
+        }
+        updatePlayback(entry.isIntersecting);
+      },
+      { threshold: 0.15, rootMargin: "200px 0px" },
     );
     const handleMotionChange = () => updatePlayback(true);
 
@@ -106,19 +110,18 @@ function HeroVideo({
       observer.disconnect();
       reducedMotion.removeEventListener("change", handleMotionChange);
     };
-  }, []);
+  }, [src]);
 
   return (
     <video
       ref={videoRef}
       className={className}
-      src={src}
       poster={poster}
       autoPlay
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="none"
       disablePictureInPicture
       aria-hidden="true"
     />
@@ -126,9 +129,9 @@ function HeroVideo({
 }
 
 export default function HomePage() {
-  const conceptReveal = useScrollReveal();
-  const embroideryReveal = useScrollReveal();
-  const printingReveal = useScrollReveal();
+  const [conceptRevealRef, conceptVisible] = useScrollReveal();
+  const [embroideryRevealRef, embroideryVisible] = useScrollReveal();
+  const [printingRevealRef, printingVisible] = useScrollReveal();
 
   return (
     <main className="bg-[hsl(var(--theme-kids-bg))]">
@@ -191,7 +194,7 @@ export default function HomePage() {
       </section>
 
       <section
-        ref={conceptReveal.elementRef}
+        ref={conceptRevealRef}
         aria-labelledby="home-concept-title"
         className="bg-[hsl(var(--theme-kids-bg))] px-6 py-16 sm:px-10 sm:py-20"
       >
@@ -209,6 +212,7 @@ export default function HomePage() {
             <img
               src={threadAndButterOutline}
               alt=""
+              loading="lazy"
               className="h-12 w-12 shrink-0 object-contain sm:h-16 sm:w-16"
             />
             <span className="h-px flex-1 bg-[hsl(var(--theme-brown-700)/0.45)]" />
@@ -220,12 +224,12 @@ export default function HomePage() {
                 key={highlight.title}
                 className={[
                   "relative flex min-h-[18rem] flex-col items-center rounded-3xl bg-white px-7 pb-9 pt-20 text-center shadow-[0_18px_48px_rgba(50,31,21,0.08)] transition-[transform,opacity] duration-1000 ease-out",
-                  conceptReveal.isVisible
+                  conceptVisible
                     ? "translate-y-0 opacity-100"
                     : "translate-y-24 opacity-0",
                 ].join(" ")}
                 style={{
-                  transitionDelay: conceptReveal.isVisible ? `${index * 140}ms` : "0ms",
+                  transitionDelay: conceptVisible ? `${index * 140}ms` : "0ms",
                 }}
               >
                 <div className="absolute -top-10 flex h-20 w-20 items-center justify-center rounded-2xl bg-[hsl(var(--theme-brown-footer))] p-3 shadow-lg sm:h-24 sm:w-24">
@@ -248,7 +252,7 @@ export default function HomePage() {
       </section>
 
       <section
-        ref={embroideryReveal.elementRef}
+        ref={embroideryRevealRef}
         aria-labelledby="home-embroidery-title"
         className="grid min-h-[42rem] overflow-hidden bg-[hsl(var(--theme-sand-300)/0.34)] md:grid-cols-2"
       >
@@ -256,7 +260,7 @@ export default function HomePage() {
           <div
             className={[
               "flex h-full w-full items-center justify-center transition-[transform,opacity] duration-1000 ease-out",
-              embroideryReveal.isVisible
+              embroideryVisible
                 ? "translate-y-0 opacity-100"
                 : "translate-y-32 opacity-0",
             ].join(" ")}
@@ -264,6 +268,7 @@ export default function HomePage() {
             <img
               src={embroideryHoodie}
               alt="Black Goosebumps hoodie with a detailed embroidered chest design"
+              loading="lazy"
               className="max-h-[44rem] w-[112%] max-w-[44rem] object-contain object-center drop-shadow-[0_28px_34px_rgba(49,27,18,0.2)]"
             />
           </div>
@@ -305,7 +310,7 @@ export default function HomePage() {
       </section>
 
       <section
-        ref={printingReveal.elementRef}
+        ref={printingRevealRef}
         aria-labelledby="home-printing-title"
         className="grid min-h-[44rem] overflow-hidden bg-[hsl(var(--theme-sage-100)/0.3)] md:grid-cols-2"
       >
@@ -347,24 +352,26 @@ export default function HomePage() {
           <img
             src={attackOnTitanShirt}
             alt="Green Attack on Titan printed T-shirt"
+            loading="lazy"
             className={[
               "absolute bottom-[8%] left-[-5%] z-10 w-[61%] max-w-[34rem] object-contain drop-shadow-[0_28px_34px_rgba(28,63,42,0.2)] transition-[transform,opacity] duration-1000 ease-out",
-              printingReveal.isVisible
+              printingVisible
                 ? "translate-y-0 -rotate-12 opacity-100"
                 : "translate-y-40 -rotate-12 opacity-0",
             ].join(" ")}
-            style={{ transitionDelay: printingReveal.isVisible ? "90ms" : "0ms" }}
+            style={{ transitionDelay: printingVisible ? "90ms" : "0ms" }}
           />
           <img
             src={itachiHoodie}
             alt="White Itachi hoodie with a large printed back design"
+            loading="lazy"
             className={[
               "absolute bottom-[-8%] right-[-27%] z-20 w-[124%] max-w-[66rem] object-contain drop-shadow-[0_30px_38px_rgba(28,63,42,0.24)] transition-[transform,opacity] duration-1000 ease-out",
-              printingReveal.isVisible
+              printingVisible
                 ? "translate-y-0 rotate-12 opacity-100"
                 : "translate-y-48 rotate-12 opacity-0",
             ].join(" ")}
-            style={{ transitionDelay: printingReveal.isVisible ? "290ms" : "0ms" }}
+            style={{ transitionDelay: printingVisible ? "290ms" : "0ms" }}
           />
         </div>
       </section>

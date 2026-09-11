@@ -1,0 +1,9 @@
+.env
+.env.*
+.gradle
+build
+boot.log
+boot.pid
+docs
+scripts
+*.iml

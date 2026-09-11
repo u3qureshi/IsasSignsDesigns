@@ -508,8 +508,11 @@ export default function CustomEmbroideryPage({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
+  const [website, setWebsite] = useState("");
   const tabsRef = useRef<HTMLElement>(null);
   const scrollAfterStepChangeRef = useRef(false);
+  const imagePreviewUrlRef = useRef("");
+  const generatedPreviewUrlRef = useRef("");
 
   const step = steps[currentStep];
   const StepIcon = step.Icon;
@@ -518,27 +521,10 @@ export default function CustomEmbroideryPage({
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [studioType]);
 
-  useEffect(() => {
-    if (!form.uploadedImage) {
-      setImagePreviewUrl("");
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(form.uploadedImage);
-    setImagePreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [form.uploadedImage]);
-
-  useEffect(() => {
-    if (!generatedPreview) {
-      setGeneratedPreviewUrl("");
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(generatedPreview.blob);
-    setGeneratedPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [generatedPreview]);
+  useEffect(() => () => {
+    if (imagePreviewUrlRef.current) URL.revokeObjectURL(imagePreviewUrlRef.current);
+    if (generatedPreviewUrlRef.current) URL.revokeObjectURL(generatedPreviewUrlRef.current);
+  }, []);
 
   useEffect(() => {
     if (!scrollAfterStepChangeRef.current) return;
@@ -577,11 +563,26 @@ export default function CustomEmbroideryPage({
   ) {
     setForm((current) => ({ ...current, [field]: value }));
     if (PREVIEW_DEPENDENT_FIELDS.has(field)) {
-      setGeneratedPreview(null);
+      replaceGeneratedPreview(null);
       setAiPreviewFailed(false);
     }
     setStepErrors([]);
     setApiError("");
+  }
+
+  function replaceImagePreview(file: File | null) {
+    if (imagePreviewUrlRef.current) URL.revokeObjectURL(imagePreviewUrlRef.current);
+    const nextUrl = file ? URL.createObjectURL(file) : "";
+    imagePreviewUrlRef.current = nextUrl;
+    setImagePreviewUrl(nextUrl);
+  }
+
+  function replaceGeneratedPreview(preview: GeneratedPreview | null) {
+    if (generatedPreviewUrlRef.current) URL.revokeObjectURL(generatedPreviewUrlRef.current);
+    const nextUrl = preview ? URL.createObjectURL(preview.blob) : "";
+    generatedPreviewUrlRef.current = nextUrl;
+    setGeneratedPreviewUrl(nextUrl);
+    setGeneratedPreview(preview);
   }
 
   function goToStep(index: number) {
@@ -596,6 +597,7 @@ export default function CustomEmbroideryPage({
     setUploadError("");
 
     if (!file) {
+      replaceImagePreview(null);
       updateField("uploadedImage", null);
       return;
     }
@@ -611,6 +613,7 @@ export default function CustomEmbroideryPage({
       return;
     }
 
+    replaceImagePreview(file);
     updateField("uploadedImage", file);
   }
 
@@ -718,7 +721,7 @@ export default function CustomEmbroideryPage({
       placement: nextPlacements.includes(current.placement) ? current.placement : "",
       otherPlacement: nextPlacements.includes(current.placement) ? current.otherPlacement : "",
     }));
-    setGeneratedPreview(null);
+    replaceGeneratedPreview(null);
     setAiPreviewFailed(false);
     setStepErrors([]);
     setApiError("");
@@ -747,6 +750,7 @@ export default function CustomEmbroideryPage({
       quantity: form.quantity,
       estimateAccepted: form.estimateAccepted,
       aiPreviewFailed,
+      website,
     };
   }
 
@@ -806,7 +810,7 @@ export default function CustomEmbroideryPage({
         previewToken: string;
         expiresAt: string;
       };
-      setGeneratedPreview({
+      replaceGeneratedPreview({
         blob: base64ToBlob(result.imageBase64, result.mediaType),
         token: result.previewToken,
         expiresAt: result.expiresAt,
@@ -874,9 +878,10 @@ export default function CustomEmbroideryPage({
 
   function resetForm() {
     setForm(INITIAL_FORM);
+    replaceImagePreview(null);
     setCurrentStep(0);
     setHighestVisitedStep(0);
-    setGeneratedPreview(null);
+    replaceGeneratedPreview(null);
     setAiPreviewFailed(false);
     setShowPreviewFailureToast(false);
     setSubmissionResult(null);
@@ -1519,6 +1524,10 @@ export default function CustomEmbroideryPage({
         </nav>
 
         <form onSubmit={handleSubmit} className="mt-1">
+          <label className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+            Website
+            <input type="text" value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+          </label>
           <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-[0_18px_55px_rgba(76,54,42,0.08)]">
             <header className="border-b border-stone-100 bg-gradient-to-r from-[hsl(var(--theme-sand-300)/0.18)] to-white px-5 py-4 sm:px-7">
               <div className="flex items-start gap-4">

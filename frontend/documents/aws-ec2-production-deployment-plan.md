@@ -1,9 +1,22 @@
 # Thread & Butter AWS EC2 Production Deployment Plan
 
-> Status: approved architecture; implementation not started  
+For diagrams and a learning-oriented explanation of the running components, see
+[`thread-and-butter-production-architecture.md`](./thread-and-butter-production-architecture.md).
+
+> Status: production container stack implemented and smoke-tested locally; images are in ECR and
+> the `threadandbutter-prod` EC2 host is running at Elastic IP `15.175.154.30`, and all three
+> production containers are healthy. Spaceship DNS records are configured; CIRA delegation and
+> public HTTPS remain pending.
 > Decision date: 2026-08-22  
 > Primary goals: keep the storefront live at low cost, gain practical AWS experience, and create a
 > credible production deployment for a software-engineering portfolio
+
+> **Portfolio-mode update — 2026-08-28:** The first public release is a recruiter-facing demo with
+> no real customers. Use the AWS Free account plan for the first six months, Stripe sandbox keys,
+> and the smallest practical EC2 deployment. Set a reminder during month five: upgrade to the Paid
+> plan if the résumé URL should remain online, because AWS closes a Free-plan account when its
+> six-month period or credits end. The backup/restore and full monitoring sections below remain the
+> required checklist before converting the demo into a real commercial storefront.
 
 ## 1. Context and constraints
 
@@ -27,9 +40,11 @@ rotating refresh sessions. Amazon SES will handle verification and password-rese
 
 ## 2. Architecture decision
 
-Deploy the containerized monolith to one Amazon EC2 instance in `ca-central-1`. Run PostgreSQL on
-the same instance initially, but keep its data on a dedicated encrypted EBS volume. Store nightly
-logical backups in a private, versioned S3 bucket.
+Deploy the containerized monolith to one Amazon EC2 instance in `ca-central-1`. The portfolio
+release starts on a `t3.micro` (2 vCPU, 1 GiB RAM) with explicit container limits and a 2 GiB swap
+file. Run PostgreSQL on the same instance in a persistent Docker volume backed by encrypted EBS.
+Move the database to a dedicated EBS volume and add S3 logical backups before accepting real
+orders.
 
 ```text
 Internet
@@ -38,7 +53,7 @@ Route 53 or Cloudflare DNS
    |
 Elastic IP
    |
-EC2 t4g.small (2 vCPU, 2 GB RAM)
+EC2 t3.micro (2 vCPU, 1 GiB RAM + 2 GiB emergency swap)
    |
    +-- Caddy: TLS termination and HTTP -> HTTPS redirect
    +-- Spring Boot: API plus compiled React storefront
@@ -68,11 +83,12 @@ must be documented and mitigated with tested backups, monitoring, and a recovery
 
 ## 4. Initial AWS resources
 
-Provision the following resources with Terraform:
+Create the first recruiter-facing deployment through the AWS console so each service is learned
+directly. Capture it in Terraform after the manual deployment works.
 
 | Service | Initial use |
 |---|---|
-| EC2 | One `t4g.small` Graviton instance running the production containers |
+| EC2 | One `t3.micro` x86 instance running the production containers |
 | VPC | One VPC and public subnet in `ca-central-1` |
 | Security Group | Public `80/443`; no public PostgreSQL; administration through SSM |
 | Elastic IP | Stable public address for the storefront |
@@ -91,12 +107,11 @@ Manager Session Manager instead of password-based SSH.
 
 ## 5. Production container layout
 
-Use a production Docker Compose definition containing:
+The implemented production Docker Compose definition contains:
 
-1. `proxy`: Caddy, serving HTTPS and forwarding requests to the application;
-2. `app`: a multi-stage image that builds React, packages the compiled assets with Spring Boot, and
-   runs the Java 21 application;
-3. `db`: PostgreSQL with its data directory mounted from the dedicated EBS volume.
+1. `web`: a multi-stage image that builds React, then uses Caddy to serve it and terminate HTTPS;
+2. `app`: a multi-stage Java 21 image that builds and runs Spring Boot as a non-root user;
+3. `db`: PostgreSQL with its data directory in a persistent Docker volume on encrypted EBS.
 
 Only the proxy publishes host ports. The application and database communicate over a private
 Docker network.
@@ -111,7 +126,7 @@ Every deployment from the protected `main` branch should:
 
 1. run backend tests;
 2. run frontend type-checking, linting, and the production build;
-3. build the ARM64 production container;
+3. build the Linux AMD64 backend and frontend production containers;
 4. scan the image and dependencies;
 5. authenticate to AWS with GitHub Actions OIDC rather than permanent access keys;
 6. push an immutable commit-tagged image to ECR;

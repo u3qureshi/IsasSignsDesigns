@@ -32,6 +32,7 @@ public class CustomEmbroiderySubmissionService {
     private final CustomEmbroideryRequestRepository requestRepository;
     private final CustomEmbroideryRequestImageRepository imageRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final CurrentUserService currentUserService;
     private final ZoneId businessTimeZone;
 
     public CustomEmbroiderySubmissionService(
@@ -44,6 +45,7 @@ public class CustomEmbroiderySubmissionService {
             CustomEmbroideryRequestRepository requestRepository,
             CustomEmbroideryRequestImageRepository imageRepository,
             ApplicationEventPublisher eventPublisher,
+            CurrentUserService currentUserService,
             @Value("${app.time-zone}") String businessTimeZone) {
         this.validationService = validationService;
         this.imageValidationService = imageValidationService;
@@ -54,6 +56,7 @@ public class CustomEmbroiderySubmissionService {
         this.requestRepository = requestRepository;
         this.imageRepository = imageRepository;
         this.eventPublisher = eventPublisher;
+        this.currentUserService = currentUserService;
         this.businessTimeZone = ZoneId.of(businessTimeZone);
     }
 
@@ -154,6 +157,7 @@ public class CustomEmbroiderySubmissionService {
                     aiUsed ? "Cloudflare Workers AI" : null,
                     aiUsed ? cloudflareImageService.getModel() : null,
                     prompt);
+            currentUserService.currentUserId().ifPresent(request::assignToUser);
             requestRepository.saveAndFlush(request);
 
             int displayOrder = 0;

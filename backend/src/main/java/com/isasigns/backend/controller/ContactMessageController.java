@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.isasigns.backend.dto.contact.ContactMessageRequest;
 import com.isasigns.backend.service.ContactMessageService;
+import com.isasigns.backend.service.SpamProtectionService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,15 +21,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Contact Messages", description = "Website contact-form messages")
 public class ContactMessageController {
     private final ContactMessageService contactMessageService;
+    private final SpamProtectionService spamProtectionService;
 
-    public ContactMessageController(ContactMessageService contactMessageService) {
+    public ContactMessageController(
+            ContactMessageService contactMessageService,
+            SpamProtectionService spamProtectionService) {
         this.contactMessageService = contactMessageService;
+        this.spamProtectionService = spamProtectionService;
     }
 
     @Operation(summary = "Send a website contact message")
     @PostMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void submit(@Valid @RequestBody ContactMessageRequest request) {
+        spamProtectionService.rejectFilledHoneypot(request.website());
         contactMessageService.send(request);
     }
 }

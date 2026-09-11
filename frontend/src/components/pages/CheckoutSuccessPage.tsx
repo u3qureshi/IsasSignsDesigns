@@ -2,7 +2,7 @@ import { CheckCircle2, Clock3, LoaderCircle, Mail, RefreshCw } from "lucide-reac
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCart } from "../cart/CartContext";
-import { formatPrice } from "../products/ProductCard";
+import { formatPrice } from "../../lib/pricing";
 import type { CheckoutOrder } from "../../types/checkout";
 
 const MAX_POLLS = 8;
@@ -17,12 +17,7 @@ export default function CheckoutSuccessPage() {
   const { clearCart } = useCart();
 
   useEffect(() => {
-    if (!sessionId) {
-      setError("This confirmation link is missing its checkout session.");
-      return;
-    }
-    setError(null);
-    setTimedOut(false);
+    if (!sessionId) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -55,6 +50,9 @@ export default function CheckoutSuccessPage() {
   }, [clearCart, retryCount, sessionId]);
 
   const paid = order?.status === "PAID";
+  const displayError = sessionId
+    ? error
+    : "This confirmation link is missing its checkout session.";
 
   return (
     <main className="bg-[hsl(var(--theme-kids-bg))] px-5 py-14 sm:py-20">
@@ -82,7 +80,7 @@ export default function CheckoutSuccessPage() {
           </p>
         </div>
 
-        {error && <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-700">{error}</p>}
+        {displayError && <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-700">{displayError}</p>}
 
         {order && (
           <div className="mt-8 border-t border-stone-100 pt-6">
@@ -115,7 +113,11 @@ export default function CheckoutSuccessPage() {
           <div className="mt-7 text-center">
             <button
               type="button"
-              onClick={() => setRetryCount((count) => count + 1)}
+              onClick={() => {
+                setError(null);
+                setTimedOut(false);
+                setRetryCount((count) => count + 1);
+              }}
               className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--theme-green-900))] px-6 py-3 text-sm font-bold text-[hsl(var(--theme-green-900))] transition hover:bg-[hsl(var(--theme-sage-100)/0.55)]"
             >
               <RefreshCw className="h-4 w-4" /> Check payment again

@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me").authenticated()
+                        .requestMatchers("/api/account/**").authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(
                         (request, response, exception) -> response.sendError(401)))

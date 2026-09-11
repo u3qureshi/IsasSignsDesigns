@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.ContactMessageServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-08-27T18:31:16.792Z" hostname="Usmans-Mac-mini.local" time="0.014">
+<testsuite name="com.isasigns.backend.service.ContactMessageServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-08-31T22:38:46.137Z" hostname="Usmans-Mac-mini.local" time="0.014">
   <properties/>
   <testcase name="sendsTheMessageToTheBusinessAndConfirmationToTheCustomer()" classname="com.isasigns.backend.service.ContactMessageServiceTest" time="0.013"/>
   <testcase name="suppliesTheDefaultSubjectAndRequiresEmailConfiguration()" classname="com.isasigns.backend.service.ContactMessageServiceTest" time="0.001"/>

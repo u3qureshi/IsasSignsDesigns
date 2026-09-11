@@ -66,6 +66,9 @@ public class CustomerOrder implements Persistable<UUID> {
     @Column(name = "customer_phone")
     private String customerPhone;
 
+    @Column(name = "user_id", columnDefinition = "uuid")
+    private UUID userId;
+
     @Column(name = "shipping_address", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private String shippingAddress;
@@ -118,6 +121,8 @@ public class CustomerOrder implements Persistable<UUID> {
         this.stripeCheckoutSessionId = sessionId;
     }
 
+    public void assignToUser(UUID userId) { this.userId = userId; }
+
     public void markCheckoutFailed() {
         if (status == OrderStatus.PENDING_PAYMENT) status = OrderStatus.CHECKOUT_FAILED;
     }
@@ -167,6 +172,7 @@ public class CustomerOrder implements Persistable<UUID> {
     public String getCustomerEmail() { return customerEmail; }
     public String getCustomerName() { return customerName; }
     public String getCustomerPhone() { return customerPhone; }
+    public UUID getUserId() { return userId; }
     public String getShippingAddress() { return shippingAddress; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getPaidAt() { return paidAt; }

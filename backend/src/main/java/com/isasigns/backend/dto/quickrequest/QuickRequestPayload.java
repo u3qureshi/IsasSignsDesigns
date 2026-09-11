@@ -10,5 +10,17 @@ public record QuickRequestPayload(
         String lastName,
         String email,
         String phone,
-        String company) {
+        String company,
+        String website) {
+    public QuickRequestPayload(
+            String service,
+            List<QuickRequestProductPayload> products,
+            String notes,
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            String company) {
+        this(service, products, notes, firstName, lastName, email, phone, company, "");
+    }
 }

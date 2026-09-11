@@ -12,10 +12,11 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useCallback,
   type FormEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./auth-context";
 
 export type AuthDialogView = "login" | "signup" | "account";
 
@@ -65,6 +66,13 @@ export default function AuthDialog({
   const [busy, setBusy] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
 
+  const requestClose = useCallback(() => {
+    if (closeRequestedRef.current) return;
+    closeRequestedRef.current = true;
+    setClosing(true);
+    closeTimerRef.current = window.setTimeout(onClose, 220);
+  }, [onClose]);
+
   useLayoutEffect(() => {
     const panel = panelRef.current;
     if (!panel) return;
@@ -100,7 +108,7 @@ export default function AuthDialog({
       document.body.style.paddingRight = previousPaddingRight;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [requestClose]);
 
   useEffect(() => {
     if (resendSeconds <= 0) return;
@@ -109,13 +117,6 @@ export default function AuthDialog({
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [resendSeconds]);
-
-  function requestClose() {
-    if (closeRequestedRef.current) return;
-    closeRequestedRef.current = true;
-    setClosing(true);
-    closeTimerRef.current = window.setTimeout(onClose, 220);
-  }
 
   function switchView(nextView: "login" | "signup") {
     setView(nextView);

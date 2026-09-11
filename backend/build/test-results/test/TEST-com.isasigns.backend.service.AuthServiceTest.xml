@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.isasigns.backend.service.AuthServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-08-27T18:31:15.965Z" hostname="Usmans-Mac-mini.local" time="0.573">
+<testsuite name="com.isasigns.backend.service.AuthServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-08-31T22:38:45.343Z" hostname="Usmans-Mac-mini.local" time="0.569">
   <properties/>
-  <testcase name="signupRejectsAnExistingActiveEmailWithoutSendingACode()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.556"/>
+  <testcase name="signupRejectsAnExistingActiveEmailWithoutSendingACode()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.55"/>
   <testcase name="signupRequiresMatchingEmailsAndVerifiesTheEmailedCode()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.007"/>
   <testcase name="signupRejectsMismatchedConfirmationBeforeCreatingAUser()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.003"/>
   <testcase name="unknownLoginExplainsThatTheEmailIsNotRegistered()" classname="com.isasigns.backend.service.AuthServiceTest" time="0.003"/>

@@ -2,7 +2,7 @@ import { LoaderCircle, Minus, Plus, ShieldCheck, ShoppingBag, Trash2, X } from "
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCloudinaryUrl } from "../../lib/cloudinary";
-import { formatPrice } from "../products/ProductCard";
+import { formatPrice } from "../../lib/pricing";
 import { useCart } from "./CartContext";
 
 const FREE_SHIPPING_THRESHOLD_CENTS = 10_000;

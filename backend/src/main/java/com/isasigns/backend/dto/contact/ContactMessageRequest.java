@@ -16,4 +16,9 @@ public record ContactMessageRequest(
         String subject,
         @NotBlank(message = "Enter your message.")
         @Size(max = 5000, message = "Message must be 5,000 characters or fewer.")
-        String message) {}
+        String message,
+        String website) {
+    public ContactMessageRequest(String name, String email, String subject, String message) {
+        this(name, email, subject, message, "");
+    }
+}

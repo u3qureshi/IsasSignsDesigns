@@ -50,9 +50,12 @@ export function getCloudinaryUrl(
 
   const transformStr = transforms.join(",");
 
-  const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transformStr}/${publicId}`;
-  console.log("[cloudinary] publicId:", publicId, "→", url);
-  return url;
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transformStr}/${publicId}`;
+}
+
+export function getCloudinaryVideoUrl(publicId: string): string {
+  if (!publicId || !CLOUD_NAME) return "";
+  return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/f_mp4,q_auto:eco,w_720/${publicId}.mp4`;
 }
 
 /**

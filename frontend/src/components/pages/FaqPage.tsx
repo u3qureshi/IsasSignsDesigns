@@ -219,6 +219,7 @@ export default function FaqPage() {
       email: String(formData.get("email") ?? "").trim(),
       subject: String(formData.get("subject") ?? "").trim(),
       message: String(formData.get("message") ?? "").trim(),
+      website: String(formData.get("website") ?? "").trim(),
     };
 
     setContactStatus("sending");
@@ -385,6 +386,10 @@ export default function FaqPage() {
             </div>
 
             <form className="mt-5 grid gap-3 sm:grid-cols-2" onSubmit={handleContactMessage}>
+              <label className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+                Website
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" />
+              </label>
               <label className="block">
                 <span className="text-xs font-black uppercase tracking-[0.14em] text-[hsl(var(--theme-brown-700))]">
                   What's your name?

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Info, Mail, Star, HelpCircle, LogIn, Package, MessageCircle } from "lucide-react";
+import { Instagram, Facebook, Info, Mail, Star, HelpCircle, LogIn, MessageCircle } from "lucide-react";
 import logo from "../assets/brand/threadnbutterLogoIMG.png";
-import { useAuth } from "./auth/AuthContext";
+import { useAuth } from "./auth/auth-context";
 
 /* ── Pinterest icon (not in lucide) ─────────────────────────────────────── */
 function PinterestIcon({ size = 28 }: { size?: number }) {
@@ -63,9 +63,17 @@ const NAV_LINKS = [
   { label: "Reviews",          icon: <Star size={15} />,         to: "/reviews" },
   { label: "FAQ",              icon: <HelpCircle size={15} />,   to: "/about#faq" },
   { label: "Login",            icon: <LogIn size={15} />,        to: "/login" },
-  { label: "Track Your Order", icon: <Package size={15} />,      to: "/track" },
   { label: "WhatsApp",         icon: <MessageCircle size={15} />, href: "https://wa.me/16477005182" },
 ];
+
+const POLICY_LINKS = [
+  { label: "Shipping & Pickup", to: "/policies/shipping-pickup" },
+  { label: "Returns & Refunds", to: "/policies/returns-refunds" },
+  { label: "Custom Orders", to: "/policies/custom-order-policy" },
+  { label: "Privacy", to: "/policies/privacy" },
+  { label: "Terms", to: "/policies/terms" },
+  { label: "Business Contact", to: "/contact" },
+] as const;
 
 export default function Footer() {
   const { user, loading } = useAuth();
@@ -182,9 +190,16 @@ export default function Footer() {
 
       {/* ── Copyright ────────────────────────────────────────────────────── */}
       <div
-        className="text-center text-xs pb-6"
+        className="border-t border-white/10 px-5 pb-6 pt-5 text-center text-xs"
         style={{ color: "hsl(var(--theme-sand-300) / 0.5)" }}
       >
+        <nav className="mb-4 flex flex-wrap justify-center gap-x-5 gap-y-2" aria-label="Store policies">
+          {POLICY_LINKS.map((link) => (
+            <Link key={link.to} to={link.to} onClick={() => handleInternalFooterLink(link.to)} className="font-semibold text-white/75 transition hover:text-white">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
         © {new Date().getFullYear()} Thread & Butter. All rights reserved.
       </div>
     </footer>

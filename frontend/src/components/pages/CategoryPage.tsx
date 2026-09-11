@@ -19,9 +19,6 @@ export default function CategoryPage({ title, category, tag, featured }: Categor
   useEffect(() => {
     const controller = new AbortController();
 
-    setLoading(true);
-    setError(null);
-
     const query = featured
       ? "featured=true"
       : tag

@@ -59,7 +59,19 @@ Postal code: any valid-looking Canadian postal code
 
 No card is charged in test mode. Stripe also provides test cards for declines, authentication, and other outcomes. Keep `CHECKOUT_AUTOMATIC_TAX_ENABLED=false` until Stripe Tax is configured and the business's GST/HST registration requirements are confirmed.
 
-Before production, replace both Stripe values with live-mode secrets, register the production webhook URL in Stripe, set `STOREFRONT_URL` to the public HTTPS site, and perform a final low-value live transaction and refund.
+Before production, keep a deployed sandbox/test configuration for end-to-end testing, then replace
+both Stripe values in the production environment with live-mode secrets, register the production
+webhook URL in Stripe, and set `STOREFRONT_URL` to the public HTTPS site. Test cards must only be
+used with sandbox/test keys; do not use real card details merely to test live mode. The production
+webhook endpoint is:
+
+```text
+https://YOUR_DOMAIN/api/checkout/webhooks/stripe
+```
+
+Subscribe it to `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, and `checkout.session.expired`. Store that endpoint's
+live `whsec_...` separately from the Stripe CLI or sandbox webhook secret.
 
 ## Passwordless customer authentication
 

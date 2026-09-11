@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.isasigns.backend.dto.customembroidery.SubmitResponse;
 import com.isasigns.backend.dto.quickrequest.QuickRequestPayload;
 import com.isasigns.backend.service.QuickRequestSubmissionService;
+import com.isasigns.backend.service.SpamProtectionService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,9 +20,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Quick Requests", description = "AI-free printing and embroidery requests")
 public class QuickRequestController {
     private final QuickRequestSubmissionService submissionService;
+    private final SpamProtectionService spamProtectionService;
 
-    public QuickRequestController(QuickRequestSubmissionService submissionService) {
+    public QuickRequestController(
+            QuickRequestSubmissionService submissionService,
+            SpamProtectionService spamProtectionService) {
         this.submissionService = submissionService;
+        this.spamProtectionService = spamProtectionService;
     }
 
     @Operation(summary = "Submit an AI-free printing or embroidery request")
@@ -29,6 +34,7 @@ public class QuickRequestController {
     public SubmitResponse submit(
             @RequestPart("request") QuickRequestPayload request,
             @RequestPart(value = "designFile", required = false) MultipartFile designFile) {
+        spamProtectionService.rejectFilledHoneypot(request.website());
         return submissionService.submit(request, designFile);
     }
 }

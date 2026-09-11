@@ -116,6 +116,7 @@ export default function QuickRequestLauncher() {
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [fileError, setFileError] = useState("");
+  const [website, setWebsite] = useState("");
   const [draft, setDraft] = useState<QuickRequestDraft>({
     service: "",
     products: [createProduct(1)],
@@ -272,6 +273,7 @@ export default function QuickRequestLauncher() {
       const { designFile, products, ...requestFields } = draft;
       const request = {
         ...requestFields,
+        website,
         products: products.map(({ itemType, customItem, quantity }) => ({
           itemType,
           customItem,
@@ -383,6 +385,10 @@ export default function QuickRequestLauncher() {
             ) : (
               <>
                 <div className="space-y-7 px-5 py-6 sm:px-8 sm:py-8">
+                  <label className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+                    Website
+                    <input type="text" value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+                  </label>
                   {step === 1 ? (
                     <>
                       <fieldset>

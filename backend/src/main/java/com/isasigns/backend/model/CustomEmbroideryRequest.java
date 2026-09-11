@@ -35,6 +35,9 @@ public class CustomEmbroideryRequest {
     @Column(name = "customer_phone")
     private String customerPhone;
 
+    @Column(name = "user_id", columnDefinition = "uuid")
+    private UUID userId;
+
     @Column(name = "sms_consent", nullable = false)
     private boolean smsConsent;
 
@@ -224,6 +227,14 @@ public class CustomEmbroideryRequest {
 
     public String getCustomerPhone() {
         return customerPhone;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void assignToUser(UUID userId) {
+        this.userId = userId;
     }
 
     public boolean isSmsConsent() {
